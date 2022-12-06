@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %} Model {% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+    <div class="row">
+    </div>
+    <div class="mb-3 mt-3 col-sm-3">
+        <label for="provider_search" class="form-label">Provider:</label>
+        <input type="text" class="form-control" id="provider_search" placeholder="Enter Provider" name="provider_search">
+      </div>
+    <form action="{% url 'result' %}" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-3">
+                {% csrf_token %}
+                <input class="form-control" type="file" id="formFile" name="perbandinganModel">
+            </div>
+
+            <div class="col-sm-3">
+                <select class="form-select" name="insurance_option">
+                    {% for insurance in list_insurance %}
+                    <option value="{{insurance.nama_asuransi}}">{{ insurance.nama_asuransi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary">Bandingkan</button>
+
+            </div>
+
+        </div>
+    </form>
+
+    <div class="container">
+        <div class="row">
+            <select class="form-select" id="select_label">
+                <option value="Compared">Compared</option>
+                <option value="Not Compared">Not Compared</option>
+                <option value="Mix">Mix</option>
+            </select>
+            <table id="albumse" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                <tr>
+                    <th data-data="rank">Provider Name</th>
+                    <th data-data="rank">Alamat</th>
+                    <th data-data="rank">Alamat Prediction</th>
+
+                    <th data-data="rank">Label</th>
+                    <th data-data="rank">Score</th>
+                    <th data-data="rank"></th>
+
+                </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+
+
+
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+        
+
+        $('#provider_search').on( 'keyup', function () {
+            table
+            .columns( 0 )
+            .search( this.value )
+            .draw();
+        } );
+
+
+        var $row = $('.table').closest("tr"),       // Finds the closest row <tr>
+        $tds = $row.find("td");             // Finds all children <td> elements
+
+        console.log($tds);
+        var temporer_url = "{% url "temporer" %}";
+
+         $('#albumse ').on('click','tbody tr', function (e) {
+            e.preventDefault();
+
+            var data = table.row($(this)).data();
+            console.log(data);
+
+
+             $.ajax(
+                {
+                    dataType: 'text',
+                    type:"POST",
+                    url: "/temporer-store/",
+                    data:{
+                        "post_idew": data.nama_provider,
+                        "alamat": data.alamat,
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                        console.log(200)
+                         window.open(temporer_url, "popupWindow", "width=600,height=600,scrollbars=yes");
+                    }
+                 })
+
+
+        });
+
+
+
+
+         var table =     $('#albumse').DataTable({
+
+              ajax: {
+              url: "{% url 'tampungan_rev' %}",
+              type: 'GET',
+              dataSrc: "",
+          },
+            columnDefs: [
+                  {  targets: 5,
+                     render: function (data, type, row, meta) {
+                      return '<button id="delete_row" type="button" class="btn btn-primary">Delete</button>'
+                     }
+
+                  }
+                ],
+
+          columns: [
+                  {   data: "nama_provider" },
+                  {   data: "alamat" },
+                  {   data: "alamat_prediction"},
+                  {   data: "label_name" },
+                  {   data: "proba_score" },
+                  {   data: "-" },
+
+              ],
+
+
+          });
+
+
+                  $("#check1").change(function () {
+                    if ($("#check1").is(":checked")) {
+                        table
+                        .columns( 3 )
+                        .search(1)
+                        .draw();
+                    }else{
+                        table
+                        .columns( 3 )
+                        .search(0)
+                        .draw();
+                    }
+
+                    });
+
+                   $('#select_label').on('change', function() {
+                          if(this.value == "Compared"){
+                            table
+                            .columns( 5 )
+                            .search(1)
+                            .draw();
+                          }
+
+                          if (this.value == "Not Compared"){
+                          table
+                            .columns( 5 )
+                            .search(0)
+                            .draw();
+                          }
+
+                          if(this.value === "Mix"){
+                            console.log("Mixe");
+                            table
+                            .columns( 5 )
+                            .search("")
+                            .draw();
+
+                            }
+
+                    });
+
+
+    table.column(1).visible(true);
+
+
+
+      $('#albumse tbody').on('click', '#delete_row', function (ev) {
+                  ev.stopPropagation();
+
+            var dats = table.row($(this).parents('tr')).data();
+            console.log(data.nama_provider);
+<!--            var perbandingan_tampilan = "{% url "perbandingan" %}";-->
+<!--            var perbandingan = "{% url "perbandingan_rev" %}";-->
+
+            $.ajax(
+                {
+                    dataType: 'json',
+                    method:"POST",
+                    url: "{% url 'hapus_tampungan' %}",
+                    data:{
+                        "nama_provider": data,
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+<!--                         window.location.href = perbandingan_tampilan;-->
+                        console.log("OK");
+                                    var classes = $(this).parents('tr').remove();
+
+                    }
+                 })
+                 return false;
+
+        });
+
+
+    });
+
+
+
+
+
+</script>
+{% endblock %}

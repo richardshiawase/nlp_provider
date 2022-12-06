@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block title %} Model {% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <p class="h1 ">Dataset</p>
+
+    </div>
+</div>
+
+<div class="container-fluid mt-5">
+    <input type="hidden" class="form-control" id="id_link_result" placeholder="Enter Provider" name="link_result" value ="{{ link_result }}">
+
+    <div id="isi_data" class="row">
+        <form action="{% url 'add_to_dataset' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for provider in list %}
+            <div id="baris_main_{{forloop.counter}}" class="row">
+                <div class="row mt-1 ms-2">
+
+                </select>
+                    <div class="col-sm-5">
+
+                        <input class="form-control" type="text" name="nama_provider" id="select_provider_{{forloop.counter}}"
+                               value="{{ provider }}" readonly="readonly">
+                    </div>
+                    <div class="col-sm-5">
+                        <select class=" select_picker form-control" name="nama_label" id="select_label_{{forloop.counter}}" data-live-search="true">
+                            {% for label in label_list %}
+                            <option value="{{ label }}" >{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <button type="button" class="copy_btn_class btn btn-primary" id="copy_btn"
+                                value="{{forloop.counter}}">Copy
+                        </button>
+                        <button type="button" class="delete_btn_class_main btn btn-danger"
+                                id="delete_btn_main_{{forloop.counter}}"
+                                value="{{forloop.counter}}">Delete
+                        </button>
+
+                        <button type="button" class="add_master_btn_class_main btn btn-success"
+                                id="add_master_btn_main_{{forloop.counter}}"
+                                value="{{forloop.counter}}">Add
+                        </button>
+
+                    </div>
+
+
+                </div>
+            </div>
+            {% endfor %}
+            <div id="submit_btn" class="row mt-1">
+                <div class="col-sm-1">
+                    <button type="submit" class="btn btn-primary" id="proses_btn">Proses</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+
+    var row_index = 0 ;
+    $(".select_picker").select2();
+<!--    $(".select_picker").select2({-->
+<!--          theme: "classic"-->
+<!--    });-->
+    $('body').on('click','.copy_btn_class',function(){
+
+        var nilai = $(this).attr("value");
+        var label_main = $('#select_label_'+nilai).val();
+        console.log(nilai,label_main);
+        var added_html = $("<div id = 'row_"+nilai+"' class='row mt-1 ms-2' value='test'>"+
+                               "<div class='col-sm-3'><input class='form-control' type='text' id='nama_provider"+row_index+"' name='nama_provider' value='{{ provider }}' ></div>"+
+                               "<div class='col-sm-3'><input type='text' id='select_label"+row_index+"' class='form-control select_picker' name='nama_label'><option value='{{ label }}'>{{ label }}</option></select></div>"+
+
+                               "<div class='col-sm-1'><button type='button' class='delete_btn_class btn btn-danger' id='delete_btn_"+row_index+"' value='"+nilai+"'>Delete</button></div>"+
+                               "</div>" );
+
+        added_html.appendTo($('#baris_main_'+nilai)).parent();
+        $("#select_label"+row_index).val(label_main).change();
+
+        row_index+=1;
+
+
+
+    })
+
+     $('.delete_btn_class_main').click(function(){
+            var nilai = $(this).attr("value");
+            var classes = $('#baris_main_'+nilai).remove();
+            console.log(nilai);
+            console.log(row_index);
+     });
+
+     $('.add_master_btn_class_main').click(function(){
+            var nilai = $(this).attr("value");
+            var classes = $('#select_provider_'+nilai).val();
+            console.log(classes);
+<!--            console.log(row_index);-->
+
+
+                $.ajax(
+                {
+                    dataType: 'text',
+                    type:"POST",
+                    url: "/add-to-master/",
+                    data:{
+                        "post_idew": classes,
+                        "link_result":$("#id_link_result").val(),
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                        console.log(200)
+                        $('#baris_main_'+nilai).remove();
+                    }
+                 })
+
+     });
+
+
+
+        $('#isi_data').on('click','.delete_btn_class',function(){
+            console.log("delete");
+            var nilai = $(this).attr("value");
+            var classes = $('#row_'+nilai).remove();
+            console.log(classes);
+
+        });
+
+
+
+
+
+
+    });
+
+
+
+
+
+
+
+
+
+
+</script>
+{% endblock %}

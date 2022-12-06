@@ -1,0 +1,123 @@
+<!-- templates/home.html-->
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+
+
+
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-12">
+        <table id="albums" class="table table-striped table-bordered" style="width:100%" >
+          <thead>
+            <tr>
+              <th data-data="rank">Asuransi</th>
+              <th data-data="rank">Result File</th>
+              <th data-data="rank">Tanggal upload</th>
+              <th data-data="rank">Status</th>
+              <th data-data="rank">Report</th>
+              <th data-data="rank">Action</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+ <script>
+      $(document).ready(function() {
+        var table =     $('#albums').DataTable({
+
+              ajax: {
+              url: "{% url 'newe' %}",
+              type: 'GET',
+              dataSrc: "",
+          },
+
+          columnDefs: [
+
+                   {
+                    "render" : function(data,type,row){
+                      return '<button id="proses_file" type="button" class="btn btn-primary">Proses File</button>'
+                    },
+                    targets : 5
+                  },
+
+                   {
+                    "render" : function(data,type,row){
+                      return '<button id="buka_file" type="button" class="btn btn-primary">Open File</button>'
+                    },
+                    targets : 4
+                  }
+              ],
+          columns: [
+                  {   data: "nama_asuransi" },
+                  {   data: "file_location_result" },
+                  {   data: "created_at" },
+                  {   data: "match_percentage" },
+              ],
+
+
+          });
+
+
+     $('#albums tbody').on('click', '#buka_file', function () {
+            var data = table.row($(this).parents('tr')).data();
+            var perbandingan_tampilan = "{% url "perbandingan" %}";
+            var perbandingan = "{% url "perbandingan_rev" %}";
+
+            $.ajax(
+                {
+                    dataType: 'text',
+                    method:"POST",
+                    url: "{% url 'perbandingan' %}",
+                    data:{
+                        "file_location": data.file_location_result,
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                         window.location.href = perbandingan_tampilan;
+
+                    }
+                 })
+                 return false;
+
+        });
+
+
+
+        $('#albums tbody').on('click', '#proses_file', function () {
+            var data = table.row($(this).parents('tr')).data();
+            console.log(data);
+            var result = "{% url "result" %}";
+            $.ajax(
+                {
+                    dataType: 'text',
+                    method:"POST",
+                    url: "{% url 'result' %}",
+                    data:{
+                        "perbandinganModelFile": data.file_location,
+                        "insurance_option": data.nama_asuransi,
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                         window.location.href = result;
+
+                    }
+                 })
+                 return false;
+
+        });
+
+      });
+  </script>
+
+{% endblock %}

@@ -1,0 +1,4 @@
+/finalized_model.sav
+/db.sqlite3
+/tfidf_vec.pickle
+*.xlsx

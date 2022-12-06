@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %} Model {% endblock %}
+
+{% block content %}
+
+<form action="{% url 'result' %}" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-3">
+                {% csrf_token %}
+                <input class="form-control" type="file" id="formFile" name="perbandinganModel">
+            </div>
+
+            <div class="col-sm-3">
+                <select class="form-select" name="insurance_option">
+                    {% for insurance in list_insurance %}
+                    <option value="{{insurance.nama_asuransi}}">{{ insurance.nama_asuransi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary">Bandingkan</button>
+
+            </div>
+
+        </div>
+    </form>
+
+{% endblock %}

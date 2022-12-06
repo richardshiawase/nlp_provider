@@ -1,0 +1,133 @@
+<!-- templates/home.html-->
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="row">
+    </div>
+    <div class="mb-3 mt-3 col-sm-3">
+        <label for="provider_search" class="form-label">Provider:</label>
+        <input type="text" class="form-control" id="provider_search" placeholder="Enter Provider" name="provider_search">
+      </div>
+    <form action="{% url 'result' %}" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-3">
+                {% csrf_token %}
+                <input class="form-control" type="file" id="formFile" name="perbandinganModel">
+            </div>
+
+            <div class="col-sm-3">
+                <select class="form-select" name="insurance_option">
+                    {% for insurance in list_insurance %}
+                    <option value="{{insurance.nama_asuransi}}">{{ insurance.nama_asuransi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary">Bandingkan</button>
+
+            </div>
+
+        </div>
+    </form>
+
+    <div class="container">
+        <div class="row">
+
+            <table id="albumse" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                <tr>
+                    <th style="width:30%" data-data="rank">Provider Name</th>
+                    <th data-data="rank">Alamat</th>
+                    <th data-data="rank">Alamat Prediction</th>
+                    <th data-data="rank">Label</th>
+                    <th data-data="rank">Score</th>
+                    <th data-data="rank">Status</th>
+                    <th data-data="rank">Nama Asuransi</th>
+
+                </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+
+
+
+</div>
+
+ <script>
+      $(document).ready(function() {
+
+        $('#provider_search').on( 'keyup', function () {
+            table
+            .columns( 0 )
+            .search( this.value )
+            .draw();
+        } );
+
+        var temporer_url = "{% url "temporer" %}";
+
+
+         var table =     $('#albumse').DataTable({
+
+              ajax: {
+              url: "{% url 'kompilasi_data' %}",
+              type: 'GET',
+              dataSrc: "",
+          },
+
+
+          columns: [
+                  {   data: "nama_provider" },
+                  {   data: "alamat" },
+                  {   data: "alamat_prediction"},
+                  {   data: "label_name" },
+                  {   data: "proba_score" },
+                  {   data: "selected" },
+                  {   data: "nama_asuransi" },
+
+              ],
+
+
+          });
+
+
+
+          $('#albumse ').on('click','tbody tr', function (e) {
+            e.preventDefault();
+
+            var data = table.row($(this)).data();
+            console.log(data);
+
+
+             $.ajax(
+                {
+                    dataType: 'text',
+                    type:"POST",
+                    url: "/temporer-store/",
+                    data:{
+                        "post_idew": data.nama_provider,
+                        "alamat":data.alamat,
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                        console.log(200)
+                         window.open(temporer_url, "popupWindow", "width=600,height=600,scrollbars=yes");
+                    }
+                 })
+
+
+        });
+
+
+
+
+      });
+  </script>
+
+{% endblock %}
