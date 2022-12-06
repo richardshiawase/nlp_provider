@@ -150,7 +150,8 @@ def perbandingan(request):
         print(file_location)
     # elif request.method == "GET":
         # file_location="media/demo.xlsx"
-
+    else:
+        file_location = "-"
     try:
         dfs = pd.read_excel(file_location)
     except:
