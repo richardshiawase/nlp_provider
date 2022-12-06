@@ -191,17 +191,17 @@
                   ev.stopPropagation();
 
             var dats = table.row($(this).parents('tr')).data();
-            console.log(data.nama_provider);
+            console.log(dats.nama_provider);
 <!--            var perbandingan_tampilan = "{% url "perbandingan" %}";-->
 <!--            var perbandingan = "{% url "perbandingan_rev" %}";-->
 
             $.ajax(
                 {
-                    dataType: 'json',
+                    dataType: 'text',
                     method:"POST",
                     url: "{% url 'hapus_tampungan' %}",
                     data:{
-                        "nama_provider": data,
+                        "nama_provider": dats.nama_provider,
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
                     success: function( data )

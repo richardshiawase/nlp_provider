@@ -252,16 +252,16 @@ def hapus_tampungan(request):
     dfs = pd.read_excel("basket_provider.xlsx")
 
     if request.method == "POST":
-        # nama = request.POST.get('nama_provider')
-        nama = json.load(request).get('nama_provider')
+        nama = request.POST['nama_provider']
+        # nama = json.load(request).get('dats')
         print(nama)
         dfs = dfs[dfs["course_title"].str.contains(nama.upper()) == False]
         # print(dfs)
 
-        dfs.to_excel('basket_provider.xlsx')
+        dfs.to_excel('basket_provider.xlsx',index=False)
 
 
-    return JsonResponse()
+    return HttpResponse("OK")
 
 def upload_master(request):
     global provider_liste
@@ -601,6 +601,15 @@ def add_master_store(request):
                 print(rese.index.item())
                 deo = dfs.drop(rese.index.item())
                 deo.to_excel(link_result, sheet_name='Sheet1', index=False)
+                dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
+                print(dat[0]["file_location"],os.getcwd())
+                dw = pd.read_excel(dat[0]["file_location"])
+                val = (dw['Nama Provider'].eq(nama_provider.upper()))
+                reseq = dw[val]
+                if not reseq.empty:
+                    deoq = dw.drop(reseq.index.item())
+                    deoq.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
+
 
 
 
@@ -748,6 +757,7 @@ def process_perbandingan(df,perbandingan_model):
     loaded_model = pickle.load(open(filename, 'rb'))
     for index, row in tqdm(df.iterrows(),total=df.shape[0]):
         new_string = row['Nama Provider'].strip().lower()
+        print(new_string)
         alamat = str(row['Alamat']).strip().lower()
         value = new_string+"#"+alamat
         new_string = value.replace('&', '')
@@ -931,7 +941,7 @@ def perbandingan_result(request):
             uploaded_file = request.FILES['perbandinganModel']
             file_extension = pathlib.Path("media/" + uploaded_file.name).suffix
             filename = fs.save(uploaded_file.name, uploaded_file)
-
+        print(uploaded_file)
         menu_insurance = request.POST['insurance_option']
 
         if file_extension != ".xlsx":
