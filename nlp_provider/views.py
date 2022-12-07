@@ -150,8 +150,8 @@ def perbandingan(request):
         print(file_location)
     # elif request.method == "GET":
         # file_location="media/demo.xlsx"
-    else:
-        file_location = "-"
+    # else:
+    #     file_location = "-"
     try:
         dfs = pd.read_excel(file_location)
     except:
@@ -255,7 +255,6 @@ def hapus_tampungan(request):
     if request.method == "POST":
         nama = request.POST['nama_provider']
         # nama = json.load(request).get('dats')
-        print(nama)
         dfs = dfs[dfs["course_title"].str.contains(nama.upper()) == False]
         # print(dfs)
 
@@ -758,7 +757,6 @@ def process_perbandingan(df,perbandingan_model):
     loaded_model = pickle.load(open(filename, 'rb'))
     for index, row in tqdm(df.iterrows(),total=df.shape[0]):
         new_string = row['Nama Provider'].strip().lower()
-        print(new_string)
         alamat = str(row['Alamat']).strip().lower()
         value = new_string+"#"+alamat
         new_string = value.replace('&', '')
@@ -942,7 +940,6 @@ def perbandingan_result(request):
             uploaded_file = request.FILES['perbandinganModel']
             file_extension = pathlib.Path("media/" + uploaded_file.name).suffix
             filename = fs.save(uploaded_file.name, uploaded_file)
-        print(uploaded_file)
         menu_insurance = request.POST['insurance_option']
 
         if file_extension != ".xlsx":
