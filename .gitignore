@@ -2,3 +2,4 @@
 /db.sqlite3
 /tfidf_vec.pickle
 *.xlsx
+/settings.py
