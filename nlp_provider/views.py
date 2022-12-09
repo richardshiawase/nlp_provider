@@ -140,6 +140,7 @@ def perbandingan_rev(request):
 def perbandingan(request):
     global provider_liste
     global file_location
+    # file_location = "-"
     provider_liste = []
     response = requests.get('https://asateknologi.id/api/insuranceall')
     response = response.json()
