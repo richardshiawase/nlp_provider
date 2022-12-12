@@ -5,6 +5,8 @@ import pickle
 import re
 import shutil
 from collections import defaultdict
+from functools import reduce
+from multiprocessing import Process, Pool
 
 import numpy as np
 import requests
@@ -21,7 +23,8 @@ from django.http import JsonResponse
 from sklearn import metrics
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import precision_score, f1_score, accuracy_score
-
+import django
+django.setup()
 from model import models
 from model.views import create_model
 from .utils import ItemPembanding, Prediction, MasterData, PredictionId
@@ -732,6 +735,253 @@ def vectorize_text(text,tfidf_vec):
     my_vec = tfidf_vec.transform([text])
     return my_vec.toarray()
 
+def process_df(df,perbandingan_model,x):
+    print("Perbandingan")
+    # dataframe Name and Age columns
+    pd.options.display.max_colwidth = None
+    provider_name_list = []
+    provider_name_predict_list = []
+    score_list = []
+    provider_object_list = []
+
+    writer = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result"+"_"+str(x)+".xlsx", engine='xlsxwriter')
+    # writer = pd.ExcelWriter('demo.xlsx', engine='xlsxwriter')
+    perbandingan_model.file_location_result = "/" + perbandingan_model.nama_asuransi + "_result.xlsx"
+    perbandingan_model.save()
+
+    df_result = pd.DataFrame()
+    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+    filename = 'tfidf_vec.pickle'
+    tfidf_vec = pickle.load(open(filename, 'rb'))
+    filename = 'finalized_model.sav'
+    loaded_model = pickle.load(open(filename, 'rb'))
+    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+        new_string = row['Nama Provider'].strip().lower()
+        # print(new_string)
+        alamat = str(row['Alamat']).strip().lower()
+        value = new_string + "#" + alamat
+        new_string = value.replace('&', '')
+        new_string = new_string.replace('.', '')
+        provider_name = new_string.replace('-', '')
+        provider_name_label = row['Nama Provider']
+        new = df_dataset['course_title'].str.split("#", n=1, expand=True)
+        df_dataset["course_titles"] = new[0]
+
+        val = (df_dataset['course_titles'].str.lower().eq(provider_name_label.split("#")[0].lower()))
+        res = df_dataset[val]
+        data_append = {}
+
+        regex = re.compile('[^a-zA-Z]')
+        # alamat = regex.sub('',alamat)
+        # value = provider_name +" "+ alamat
+        provider_name_list.append(provider_name_label)
+        # load the model from disk
+        sample1 = vectorize_text(new_string, tfidf_vec)
+        y_preds = loaded_model.predict(sample1)
+        p = loaded_model.predict_proba(sample1)
+        ix = p.argmax(1).item()
+        nil = (f'{p[0, ix]:.2}')
+        # if(float(nil.strip("%")) < 1.0):
+        # y_preds = "-"
+
+        provider_name_predict_list.append(y_preds)
+        score_list.append(nil)
+        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+
+        if not res.empty:
+            pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+            val_master = (df_dataset['subject'].eq(pred))
+            res_master = df_dataset[val_master]
+
+            al = res_master["alamat"].head(1)
+
+            alamat_pred = al.values[0]
+            data_append = {
+                "Provider Name": provider_name_label,
+                "Alamat": alamat,
+                "Prediction": y_preds,
+                "Alamat Prediction": alamat_pred,
+                "Score": nil,
+                "Compared": 1,
+                "Clean": new_string
+            }
+            provider_object.set_alamat_prediction(alamat_pred)
+            df1 = pd.DataFrame(data_append)
+
+        elif res.empty:
+
+            data_append = {
+                "Provider Name": provider_name_label,
+                "Alamat": alamat,
+                "Prediction": y_preds,
+                "Alamat Prediction": "-",
+                "Score": nil,
+                "Compared": 0,
+                "Clean": new_string
+            }
+            provider_object.set_alamat_prediction("-")
+            df1 = pd.DataFrame(data_append)
+        provider_object_list.append(provider_object)
+        df_result = df_result.append(df1, ignore_index=True)
+        Provider_Perbandingan_data = models.Provider_Perbandingan(nama_asuransi=perbandingan_model.nama_asuransi,
+                                                                  perbandingan_id=1,
+                                                                  name=provider_name_label, address="-", selected=0)
+        Provider_Perbandingan_data.save()
+    # # Convert the dataframe to an XlsxWriter Excel object.
+    df_result.to_excel(writer, sheet_name='Sheet1', index=False)
+    # # Close the Pandas Excel writer and output the Excel file.
+    writer.close()
+    return True
+def pool_process_df(df):
+    # for df in df_list:
+    # dataframe Name and Age columns
+    pd.options.display.max_colwidth = None
+    provider_name_list = []
+    provider_name_predict_list = []
+    score_list = []
+    provider_object_list = []
+
+
+    df_result = pd.DataFrame()
+    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+    filename = 'tfidf_vec.pickle'
+    tfidf_vec = pickle.load(open(filename, 'rb'))
+    filename = 'finalized_model.sav'
+    loaded_model = pickle.load(open(filename, 'rb'))
+    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+        new_string = row['Nama Provider'].strip().lower()
+        # print(new_string)
+        alamat = str(row['Alamat']).strip().lower()
+        value = new_string + "#" + alamat
+        new_string = value.replace('&', '')
+        new_string = new_string.replace('.', '')
+        provider_name = new_string.replace('-', '')
+        provider_name_label = row['Nama Provider']
+        new = df_dataset['course_title'].str.split("#", n=1, expand=True)
+        df_dataset["course_titles"] = new[0]
+
+        val = (df_dataset['course_titles'].str.lower().eq(provider_name_label.split("#")[0].lower()))
+        res = df_dataset[val]
+        data_append = {}
+
+        regex = re.compile('[^a-zA-Z]')
+        # alamat = regex.sub('',alamat)
+        # value = provider_name +" "+ alamat
+        provider_name_list.append(provider_name_label)
+        # load the model from disk
+        sample1 = vectorize_text(new_string, tfidf_vec)
+        y_preds = loaded_model.predict(sample1)
+        p = loaded_model.predict_proba(sample1)
+        ix = p.argmax(1).item()
+        nil = (f'{p[0, ix]:.2}')
+        # if(float(nil.strip("%")) < 1.0):
+        # y_preds = "-"
+
+        provider_name_predict_list.append(y_preds)
+        score_list.append(nil)
+        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+
+        if not res.empty:
+            pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+            val_master = (df_dataset['subject'].eq(pred))
+            res_master = df_dataset[val_master]
+
+            al = res_master["alamat"].head(1)
+
+            alamat_pred = al.values[0]
+            data_append = {
+                "Provider Name": provider_name_label,
+                "Alamat": alamat,
+                "Prediction": y_preds,
+                "Alamat Prediction": alamat_pred,
+                "Score": nil,
+                "Compared": 1,
+                "Clean": new_string
+            }
+            provider_object.set_alamat_prediction(alamat_pred)
+            df1 = pd.DataFrame(data_append)
+
+        elif res.empty:
+
+            data_append = {
+                "Provider Name": provider_name_label,
+                "Alamat": alamat,
+                "Prediction": y_preds,
+                "Alamat Prediction": "-",
+                "Score": nil,
+                "Compared": 0,
+                "Clean": new_string
+            }
+            provider_object.set_alamat_prediction("-")
+            df1 = pd.DataFrame(data_append)
+        provider_object_list.append(provider_object)
+        df_result = df_result.append(df1, ignore_index=True)
+        # Provider_Perbandingan_data = models.Provider_Perbandingan(nama_asuransi=perbandingan_model.nama_asuransi,
+        #                                                           perbandingan_id=1,
+        #                                                           name=provider_name_label, address="-", selected=0)
+        # Provider_Perbandingan_data.save()
+
+
+
+    return df_result
+
+def pool_handler(df,perbandingan_model):
+
+    # # # Split dataframe to many
+    df_list = cacah_dataframe(df)
+
+    # # # Using multiprocess with pool as many as dataframe list
+    p = Pool(len(df_list))
+
+    # # # Use Pool Multiprocessing
+    x = p.map(pool_process_df,df_list)
+
+    # # # Declare write
+    writer = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result" + ".xlsx",
+                            engine='xlsxwriter')
+
+    # # # Save Perbandingan Model
+    perbandingan_model.file_location_result = "/" + perbandingan_model.nama_asuransi + "_result.xlsx"
+    perbandingan_model.save()
+
+    # # # Concat list of dataframe
+    full_dfw = pd.concat(list(x),ignore_index=True)
+
+    # # # Convert the dataframe to an XlsxWriter Excel object.
+    full_dfw.to_excel(writer, sheet_name='Sheet1', index=False)
+
+    # # # Close the Pandas Excel writer and output the Excel file.
+    writer.close()
+
+def process_handler(df_list,perbandingan_model):
+    number_of_process = len(df_list)
+
+    processes = []
+    for x in range(number_of_process):
+        p = Process(target=process_df,args=(df_list[x],perbandingan_model,x))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
+def cacah_dataframe(df):
+    split_row_each = 800
+    start_index = 0
+    iteration_count = int(df.shape[0]/split_row_each)
+    sisa = df.shape[0]%split_row_each
+    sisa_row = iteration_count*split_row_each+sisa
+    df_list = []
+    for x in range(iteration_count):
+        end_index = start_index + split_row_each
+        df_new= df.iloc[start_index:end_index]
+        start_index = end_index
+        # df_list.append([df_new,lr])
+        df_list.append(df_new)
+    aw = lambda x,y : y if x > 0 else 0
+    df_last = df.iloc[start_index:aw(sisa, sisa_row)]
+    df_list.append(df_last)
+
+    return df_list
 
 
 
@@ -965,7 +1215,12 @@ def perbandingan_result(request):
         # if check_header(df) is not True:
         #     return HttpResponse("Header tidak sesuai")
 
-        process_perbandingan(df,perbandingan_model)
+        # process_handler(df_list,perbandingan_model)
+
+        pool_handler(df,perbandingan_model)
+        # process_perbandingan(df,perbandingan_model)
+
+
 
         dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
         prediction_list = []
