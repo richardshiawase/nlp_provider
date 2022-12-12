@@ -965,7 +965,7 @@ def process_handler(df_list,perbandingan_model):
     for p in processes:
         p.join()
 def cacah_dataframe(df):
-    split_row_each = 500
+    split_row_each = 800
     start_index = 0
     iteration_count = int(df.shape[0]/split_row_each)
     sisa = df.shape[0]%split_row_each
