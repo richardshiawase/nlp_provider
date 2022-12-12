@@ -267,10 +267,10 @@ def hapus_tampungan(request):
     if request.method == "POST":
         nama = request.POST['nama_provider']
         # nama = json.load(request).get('dats')
-        print(nama)
-        dfs = dfs[dfs["course_title"].str.contains(nama.upper()) == False]
+        print(nama.upper())
+        delete_row = dfs[dfs["course_title"] == nama.upper()].index
+        dfs = dfs.drop(delete_row)
         # print(dfs)
-
         dfs.to_excel('basket_provider.xlsx',index=False)
 
 
