@@ -263,10 +263,10 @@ def hapus_tampungan(request):
     if request.method == "POST":
         nama = request.POST['nama_provider']
         # nama = json.load(request).get('dats')
-        print(nama)
-        dfs = dfs[dfs["course_title"].str.contains(nama.upper()) == False]
+        print(nama.upper())
+        delete_row = dfs[dfs["course_title"] == nama.upper()].index
+        dfs = dfs.drop(delete_row)
         # print(dfs)
-
         dfs.to_excel('basket_provider.xlsx',index=False)
 
 
@@ -1001,14 +1001,7 @@ def perbandingan_result(request):
             perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
 
         df = pd.read_excel(uploaded_file)
-        # if check_header(df) is not True:
-        #     return HttpResponse("Header tidak sesuai")
-
-        # process_handler(df_list,perbandingan_model)
-
         pool_handler(df,perbandingan_model)
-        # process_perbandingan(df,perbandingan_model)
-
 
 
         dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
