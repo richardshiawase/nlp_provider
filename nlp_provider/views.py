@@ -187,7 +187,11 @@ def perbandingan(request):
 
 
 def tampungan(request):
-    context = {"provider_list":[]}
+    link_result = file_location
+    if link_result is None:
+        link_result = "-"
+
+    context = {"provider_list":[],"link_result":link_result}
     return render(request, 'matching/perbandingan_basket.html', context=context)
 
 
@@ -588,6 +592,22 @@ def temporer_store(request):
     # return HttpResponse(context)
     return render(request,'matching/temporer.html',context=context)
 
+def read_link_result_and_delete_provider_name(nama_provider):
+    dfs = pd.read_excel(link_result)
+    val = (dfs['Provider Name'].eq(nama_provider.upper()))
+    rese = dfs[val]
+    if not rese.empty:
+        print(rese.index.item())
+        deo = dfs.drop(rese.index.item())
+        deo.to_excel(link_result, sheet_name='Sheet1', index=False)
+        dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
+        print(dat[0]["file_location"], os.getcwd())
+        dw = pd.read_excel(dat[0]["file_location"])
+        val = (dw['Nama Provider'].eq(nama_provider.upper()))
+        reseq = dw[val]
+        if not reseq.empty:
+            deoq = dw.drop(reseq.index.item())
+            deoq.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
 
 def add_master_store(request):
     if request.method == "POST":
@@ -598,27 +618,13 @@ def add_master_store(request):
         link_result = request.POST["link_result"]
         val = (df['provider_name'].str.lower().eq(nama_provider.lower()))
         res = df[val]
-
+        # # # kalau kosong alias belum ada nama provider di dalam file master add, maka proses
         if res.empty:
             row = pd.Series({'provider_name': nama_provider, 'alamat': alamat})
             df = df.append(row, ignore_index=True)
             df.to_excel("Master_Add.xlsx",index=False)
-            dfs = pd.read_excel(link_result)
-            val = (dfs['Provider Name'].eq(nama_provider.upper()))
-            rese = dfs[val]
-            if not rese.empty:
-                print(rese.index.item())
-                deo = dfs.drop(rese.index.item())
-                deo.to_excel(link_result, sheet_name='Sheet1', index=False)
-                dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
-                print(dat[0]["file_location"],os.getcwd())
-                dw = pd.read_excel(dat[0]["file_location"])
-                val = (dw['Nama Provider'].eq(nama_provider.upper()))
-                reseq = dw[val]
-                if not reseq.empty:
-                    deoq = dw.drop(reseq.index.item())
-                    deoq.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
 
+        read_link_result_and_delete_provider_name(nama_provider)
 
 
 

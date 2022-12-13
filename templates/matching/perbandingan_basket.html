@@ -9,6 +9,8 @@
     <div class="mb-3 mt-3 col-sm-3">
         <label for="provider_search" class="form-label">Provider:</label>
         <input type="text" class="form-control" id="provider_search" placeholder="Enter Provider" name="provider_search">
+        <input type="hidden" class="form-control" id="id_link_result" placeholder="Enter Provider" name="link_result" value ="{{ link_result }}">
+
       </div>
     <form action="{% url 'result' %}" method="post" enctype="multipart/form-data">
         <div class="row">
@@ -95,7 +97,7 @@
                     url: "/temporer-store/",
                     data:{
                         "post_idew": data.nama_provider,
-                        "alamat": data.alamat,
+                        "link_result": $("#id_link_result").val(),                        "alamat": data.alamat,
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
                     success: function( data )
