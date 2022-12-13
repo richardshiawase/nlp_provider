@@ -33,7 +33,10 @@
 .select_picker .select_picker--above {
       margin-top: 336px;
 }
+
+
 </style>
+{% load static %}
 
 </head>
 <body>
@@ -67,7 +70,7 @@
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Model</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'model:model_route'%}">Create</a></li>
-                        <li><a class="dropdown-item" href="{% url 'model:train_model' %}">Train</a></li>
+                        <li><a id="train" class="dropdown-item" href="{% url 'model:train_model' %}">Train</a></li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
@@ -111,8 +114,9 @@
         </div>
     </div>
 </nav>
+              <img id="meditatew" style = "position:absolute; left: 20%; height:60%;width:50%;"src="{% static 'meditate.gif' %}" alt="My Image">
 
-<main>
+<main id = "main">
     {% block content %}
     {% endblock %}
 </main>
@@ -186,3 +190,19 @@
 </div>
 
 </html>
+
+<script>
+          $(document).ready(function() {
+            $('#meditatew').hide();
+
+            $("#train").click(function(){
+                $('#meditatew').show();
+                $("main").hide();
+
+            });
+
+
+          });
+
+</script>
+
