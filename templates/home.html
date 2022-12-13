@@ -1,16 +1,20 @@
 <!-- templates/home.html-->
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Home{% endblock %}
-
 {% block content %}
+
 <div class="container mt-3">
 
 
 
   <div class="container">
     <div class="row">
-      <div class="col-sm-12">
+              <img id="meditate" style = "position:absolute; left: 20%; height:80%;width:50%;"src="{% static 'meditate.gif' %}" alt="My Image">
+
+      <div id="tampungan" class="col-sm-12">
+
         <table id="albums" class="table table-striped table-bordered" style="width:100%" >
           <thead>
             <tr>
@@ -32,6 +36,8 @@
 
  <script>
       $(document).ready(function() {
+        $("#meditate").hide();
+
         var table =     $('#albums').DataTable({
 
               ajax: {
@@ -81,9 +87,12 @@
                         "file_location": data.file_location_result,
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
+
                     success: function( data )
                     {
+                         $("#meditate").hide();
                          window.location.href = perbandingan_tampilan;
+
 
                     }
                  })
@@ -96,6 +105,8 @@
         $('#albums tbody').on('click', '#proses_file', function () {
             var data = table.row($(this).parents('tr')).data();
             console.log(data);
+            $("#meditate").show();
+            $("#tampungan").hide();
             var result = "{% url "result" %}";
             $.ajax(
                 {
@@ -109,7 +120,9 @@
                     },
                     success: function( data )
                     {
-                         window.location.href = result;
+<!--                         window.location.href = result;-->
+                        $("#meditate").hide();
+                        $("#tampungan").show();
 
                     }
                  })
