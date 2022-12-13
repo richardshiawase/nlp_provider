@@ -1007,14 +1007,7 @@ def perbandingan_result(request):
             perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
 
         df = pd.read_excel(uploaded_file)
-        # if check_header(df) is not True:
-        #     return HttpResponse("Header tidak sesuai")
-
-        # process_handler(df_list,perbandingan_model)
-
         pool_handler(df,perbandingan_model)
-        # process_perbandingan(df,perbandingan_model)
-
 
 
         dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
