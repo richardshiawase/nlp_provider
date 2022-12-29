@@ -1,11 +1,18 @@
 class ItemPembanding:
-    def __init__(self,nama_provider,alamat,label_name,proba_score,count_label):
+    def __init__(self,nama_provider,alamat,label_name,proba_score,count_label,ri,rj):
         self.nama_provider = str(nama_provider).strip()
         self.alamat = str(alamat).strip()
         self.label_name = str(label_name).strip()
         self.proba_score = str(proba_score).strip()
         self.count_label_name = str(count_label).strip()
+        self.ri = str(ri).strip()
+        self.rj = str(rj).strip()
 
+    def get_ri(self):
+        return self.ri
+
+    def get_rj(self):
+        return self.rj
 
     def set_alamat_prediction(self,alamat_prediction):
         self.alamat_prediction = str(alamat_prediction)

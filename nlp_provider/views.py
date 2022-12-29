@@ -74,7 +74,9 @@ def kompilasi_data(request):
         for index, row in dfs.iterrows():
             alamat = row['Alamat']
             alamat_prediksi = row['Alamat Prediction']
-            item_obj = ItemPembanding(row['Provider Name'], row['Alamat'], row["Prediction"], row["Score"], 0)
+            ri = row['RI']
+            rj = row['RJ']
+            item_obj = ItemPembanding(row['Provider Name'], row['Alamat'], row["Prediction"], row["Score"], 0,ri,rj)
             item_obj.set_nama_asuransi(pembanding.nama_asuransi)
             item_obj.set_selected(str(row['Compared']))
             item_obj.set_alamat_prediction(alamat_prediksi)
@@ -123,11 +125,13 @@ def perbandingan_rev(request):
             alamat_prediksi = row['Alamat Prediction']
             nil = row["Score"]
             compared = row["Compared"]
+            # ri = row['RI']
+            # rj = row['RJ']
             # city = row["City"]
             # print(city)
             prediction_dict[y_preds] += 1
 
-            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,0,0)
             provider_object.set_selected(compared)
             provider_object.set_alamat_prediction(alamat_prediksi)
             provider_list.append(provider_object.__dict__)
@@ -173,7 +177,9 @@ def perbandingan(request):
             alamat_prediction = row["Alamat Prediction"]
             nil = row["Score"]
             compared = row["Compared"]
-            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+            # ri= row["RI"]
+            # rj = row["RJ"]
+            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,0,0)
             provider_object.set_selected(compared)
             provider_object.set_alamat_prediction(alamat_prediction)
 
@@ -218,7 +224,7 @@ def tampungan_rev(request):
 
     provider_list = []
     if dfs is not None:
-        for index, row in dfs.iterrows():
+        for index, row in tqdm(dfs.iterrows(),total=dfs.shape[0]):
             new = df_dataset['course_title'].str.split("#", n=1, expand=True)
             df_dataset["course_titles"] = new[0]
 
@@ -240,7 +246,7 @@ def tampungan_rev(request):
 
             val = (df_dataset['course_titles'].str.lower().eq(provider_name_label))
             res = df_dataset[val]
-            provider_object = ItemPembanding(provider_name_label, alamat, y_preds, nil, 0)
+            provider_object = ItemPembanding(provider_name_label, alamat, y_preds, nil, 0,0,0)
 
             if not res.empty:
                 pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
@@ -302,7 +308,9 @@ def upload_master(request):
             alamat_prediction = row['Alamat Prediction']
             y_preds = row["Prediction"]
             nil = row["Score"]
-            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+            ri = row["RI"]
+            rj = row["RJ"]
+            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,ri,rj)
             provider_object.set_alamat_prediction(alamat_prediction)
             provider_list.append(provider_object)
     page = request.GET.get('page', 1)
@@ -764,6 +772,8 @@ def pool_process_df(df):
     for row in tqdm(df.itertuples(), total=df.shape[0]):
         new_string = (row._3).strip().lower()
         alamat = str(row.Alamat).strip().lower()
+        ri = str(row.RI).strip()
+        rj = str(row.RJ).strip()
         value = new_string + "#" + alamat
         new_string = value.replace('&', '')
         new_string = new_string.replace('.', '')
@@ -785,7 +795,7 @@ def pool_process_df(df):
 
         provider_name_predict_list.append(y_preds)
         score_list.append(nil)
-        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,ri,rj)
 
         if not res.empty:
             pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
@@ -802,7 +812,9 @@ def pool_process_df(df):
                 "Alamat Prediction": alamat_pred,
                 "Score": nil,
                 "Compared": 1,
-                "Clean": new_string
+                "Clean": new_string,
+                "ri":ri,
+                "rj":rj
             }
             provider_object.set_alamat_prediction(alamat_pred)
             df1 = pd.DataFrame(data_append)
@@ -816,7 +828,9 @@ def pool_process_df(df):
                 "Alamat Prediction": "-",
                 "Score": nil,
                 "Compared": 0,
-                "Clean": new_string
+                "Clean": new_string,
+                "ri":ri,
+                "rj":rj
             }
             provider_object.set_alamat_prediction("-")
             df1 = pd.DataFrame(data_append)
@@ -934,13 +948,17 @@ def create_result_file_final(dfs,prediction_list):
     id_list_final = []
     provider_name_predict_list_final = []
     score_list_final = []
+    ri_list = []
+    rj_list = []
     for index, row in dfs.iterrows():
         provider_name = row['Provider Name']
         y_preds = row["Prediction"]
         nil = row["Score"]
         alamat = row["Alamat"]
+        ri = row["ri"]
+        rj = row["rj"]
         alamat_pred = row["Alamat Prediction"]
-        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0)
+        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,ri,rj)
         provider_object.set_id_master("-")
         provider_object.set_alamat_prediction(alamat_pred)
 
@@ -953,13 +971,17 @@ def create_result_file_final(dfs,prediction_list):
         provider_name_predict_list_final.append(provider_object.get_label_name())
         score_list_final.append(provider_object.get_proba_score())
         id_list_final.append(provider_object.get_id_master())
+        ri_list.append(provider_object.get_ri())
+        rj_list.append(provider_object.get_rj())
 
         provider_list.append(provider_object)
 
     df = pd.DataFrame(
         {'id_master': id_list_final, 'Provider Name': provider_name_list_final,
          'Prediction': provider_name_predict_list_final,
-         'Score': score_list_final,'ri':'0','rj':'0'})
+         'Score': score_list_final,
+         'ri':ri_list,
+         'rj':rj_list})
     # # Convert the dataframe to an XlsxWriter Excel object.
     df.to_excel(writere, sheet_name='Sheet1', index=False)
     # # Close the Pandas Excel writer and output the Excel file.
@@ -988,7 +1010,7 @@ def perbandingan_result(request):
             uploaded_file = request.FILES['perbandinganModel']
             file_extension = pathlib.Path("media/" + uploaded_file.name).suffix
             filename = fs.save(uploaded_file.name, uploaded_file)
-        # print(uploaded_file)
+        print(uploaded_file)
         menu_insurance = request.POST['insurance_option']
 
         if file_extension != ".xlsx":
