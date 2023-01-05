@@ -440,7 +440,7 @@ def process_partially(df):
 
 def create_model(df):
     print("Create Model")
-    lr_model = LogisticRegression(solver='sag',warm_start=False)
+    lr_model = LogisticRegression(solver='liblinear')
     df['clean_course_title'] = df['course_title'].astype(str)
     # df['clean_course_title'] = df['clean_course_title'].apply(lambda x: ' '.join([ps.stem(word) for word in x.split() if word not in set(all_stopwords)]))
     df['clean_course_title'] = df['clean_course_title'].fillna('').astype(str).replace('', np.nan, regex=False)
