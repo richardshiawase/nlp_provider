@@ -186,7 +186,7 @@ def perbandingan(request):
             provider_list.append(provider_object)
 
 
-    context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":file_location}
+    context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":"-"}
 
 
     return render(request, 'matching/perbandingan.html',context=context)
@@ -801,7 +801,7 @@ def pool_process_df(df):
             pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
             val_master = (df_dataset['subject'].eq(pred))
             res_master = df_dataset[val_master]
-
+            print(res_master)
             al = res_master["alamat"].head(1)
 
             alamat_pred = al.values[0]
