@@ -454,7 +454,7 @@ def sinkron_dataset_process(request):
                 pass
 
         except:
-            row = pd.Series({'course_title': master_data.nama_provider + "#" + master_data.alamat,'subject': master_data.nama_provider},
+            row = pd.Series({'course_title': master_data.nama_provider + "#" + master_data.alamat,'alamat': master_data.alamat,'subject': master_data.nama_provider},
                             name=3)
             df = df.append(row)
             df.reset_index(drop=True, inplace=True)
