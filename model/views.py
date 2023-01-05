@@ -73,7 +73,7 @@ def work_log(work_data):
     #
     #
     # # Build Model
-    print("Fit Model")
+    print("Fit Modelz")
     lr_model.fit(x_train,y_train)
     #
     print(lr_model.score(x_test,y_test))
@@ -245,7 +245,7 @@ def biasa_aja(df,lr_model,cnt):
 
     print(pred)
     print("Finish Creating Model")
-    print("Fit Model")
+    print("Fit Model1")
 
 
 def pool_handler(df_list):
@@ -280,7 +280,7 @@ def queue_handler(df_list,lr_model):
         #
         #
         # # Build Model
-        print("Fit Model")
+        print("Fit Model2")
         lr_model.fit(x_train, y_train)
         #
         print(lr_model.score(x_test, y_test))
@@ -390,7 +390,7 @@ def process_partially(df):
     #
     # # Build Model
     lr_model = LogisticRegression(warm_start=True)
-    print("Fit Model")
+    print("Fit Model3")
     lr_model.fit(x_train, y_train)
     #
     print(lr_model.score(x_test, y_test))
@@ -466,8 +466,11 @@ def create_model(df):
     #
     #
     # # Build Model
-    print("Fit Model")
-    lr_model.fit(x_train, y_train)
+    print("Fit Model4")
+    try:
+        lr_model.fit(x_train, y_train)
+    except:
+        print("Sumting wong")
     #
     print(lr_model.score(x_test, y_test))
 
