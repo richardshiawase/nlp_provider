@@ -803,21 +803,24 @@ def pool_process_df(df):
             res_master = df_dataset[val_master]
 
             al = res_master["alamat"].head(1)
+            try:
+                alamat_pred = al.values[0]
+                data_append = {
+                    "Provider Name": provider_name_label,
+                    "Alamat": alamat,
+                    "Prediction": y_preds,
+                    "Alamat Prediction": alamat_pred,
+                    "Score": nil,
+                    "Compared": 1,
+                    "Clean": new_string,
+                    "ri": ri,
+                    "rj": rj
+                }
+                provider_object.set_alamat_prediction(alamat_pred)
+                df1 = pd.DataFrame(data_append)
+            except:
+                print("error")
 
-            alamat_pred = al.values[0]
-            data_append = {
-                "Provider Name": provider_name_label,
-                "Alamat": alamat,
-                "Prediction": y_preds,
-                "Alamat Prediction": alamat_pred,
-                "Score": nil,
-                "Compared": 1,
-                "Clean": new_string,
-                "ri":ri,
-                "rj":rj
-            }
-            provider_object.set_alamat_prediction(alamat_pred)
-            df1 = pd.DataFrame(data_append)
 
         elif res.empty:
 
