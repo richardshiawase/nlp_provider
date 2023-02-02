@@ -11,6 +11,7 @@ from multiprocessing import Process, Pool
 import numpy as np
 import requests
 from django.core import serializers
+from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponse
@@ -32,7 +33,12 @@ from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 # from .forms import UploadFileForm
 # Create your views here.
-df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+
+df_dataset = cache.get('dataset')
+if df_dataset is None:
+    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+    cache.set('dataset', df_dataset)
+
 new_course_title = df_dataset['course_title'].str.split("#", n=1, expand=True)
 
 
@@ -705,9 +711,11 @@ def process_temporer_store(request):
     global link_result
     if request.method == "POST":
         link_result  = request.POST["link_result"]
-    dfs = pd.read_excel("dataset_excel_copy.xlsx")
-    # dfs = dfs.sort_values(by=['subject'], ascending = True)
-    # dfa = dfs.drop_duplicates(subset='subject')
+
+    dfs = cache.get('dataset')
+    if dfs is None:
+        dfs = pd.read_excel("dataset_excel_copy.xlsx")
+        cache.set('dataset', dfs)
     dfz = dfs.dropna(subset="alamat")
     dfa = dfz.drop_duplicates(subset='subject')
     label_list = []
@@ -717,8 +725,9 @@ def process_temporer_store(request):
         label = row["subject"]
         if label+"#"+alamat not in label_list:
             label_list.append(label+"#"+alamat)
+    print(label_list)
     print(link_result)
-    context = {"label_list":label_list,"list":provider_liste,"link_result":link_result}
+    context = {"label_list":dfs,"list":provider_liste,"link_result":link_result}
     # return HttpResponse("Process Temporer")
     return render(request,'matching/proses_temporer.html',context=context)
 
@@ -801,7 +810,6 @@ def pool_process_df(df):
             pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
             val_master = (df_dataset['subject'].eq(pred))
             res_master = df_dataset[val_master]
-            print(res_master)
             al = res_master["alamat"].head(1)
             try:
                 alamat_pred = al.values[0]
