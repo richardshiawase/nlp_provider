@@ -7,12 +7,10 @@ import shutil
 from collections import defaultdict
 from functools import reduce
 from multiprocessing import Process, Pool
-from numba import jit, cuda
-import numba
+
 import numpy as np
 import requests
 from django.core import serializers
-from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponse
@@ -32,9 +30,9 @@ from model.views import create_model
 from .utils import ItemPembanding, Prediction, MasterData, PredictionId
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
+from django.core.cache import cache
 # from .forms import UploadFileForm
 # Create your views here.
-
 df_dataset = cache.get('dataset')
 if df_dataset is None:
     df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
@@ -59,7 +57,6 @@ def index(request):
         list_pembanding.append(pembanding)
 
     context = {"list_pembanding":list_pembanding}
-
     return render(request, 'home.html', context)
 
 
@@ -173,14 +170,18 @@ def perbandingan(request):
     if request.method == "POST":
         file_location = "media"+request.POST["file_location"]
         print(file_location)
+        loop_delete(file_location)
+
+
     # elif request.method == "GET":
         # file_location="media/demo.xlsx"
     # else:
     #     file_location = "-"
     try:
         dfs = pd.read_excel(file_location)
-    except:
-        print("dataframe not founde")
+
+    except Exception as e:
+        print("dataframe not founde "+ str(e))
     provider_list = []
     if dfs is not None:
         for index, row in dfs.iterrows():
@@ -199,7 +200,7 @@ def perbandingan(request):
             provider_list.append(provider_object)
 
 
-    context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":"-"}
+    context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":file_location}
 
 
     return render(request, 'matching/perbandingan.html',context=context)
@@ -226,29 +227,27 @@ def tampungan_rev(request):
     except:
         print("dataframe not founde")
 
-    filename = 'tfidf_vec.pickle'
-    tfidf_vec = pickle.load(open(filename, 'rb'))
-    filename = 'finalized_model.sav'
-    loaded_model = pickle.load(open(filename, 'rb'))
+
     provider_name_list = []
     provider_name_predict_list = []
     score_list = []
     # df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
 
+
+
     provider_list = []
     if dfs is not None:
-        for index, row in tqdm(dfs.iterrows(),total=dfs.shape[0]):
-            new = df_dataset['course_title'].str.split("#", n=1, expand=True)
-            df_dataset["course_titles"] = new[0]
+        for index,row in tqdm(dfs.iterrows(),total=dfs.shape[0]):
+
 
 
             provider_name_label = str(row['course_title']).strip().lower()
             alamat = str(row['alamat']).strip().lower()
             concat = provider_name_label+"#"+alamat
             concat = concat.replace('&','').replace('.','')
-            sample1 = vectorize_text(concat, tfidf_vec)
-            y_preds = loaded_model.predict(sample1)
-            p = loaded_model.predict_proba(sample1)
+            sample1 = vectorize_text(concat, tfidf_vec1)
+            y_preds = loaded_model1.predict(sample1)
+            p = loaded_model1.predict_proba(sample1)
             ix = p.argmax(1).item()
             nil = (f'{p[0, ix]:.2}')
             # if(float(nil.strip("%")) < 1.0):
@@ -257,18 +256,20 @@ def tampungan_rev(request):
             provider_name_predict_list.append(y_preds)
             score_list.append(nil)
 
-            val = (df_dataset['course_titles'].str.lower().eq(provider_name_label))
-            res = df_dataset[val]
+            val = (df_non_duplicate['course_titles'].eq(provider_name_label))
+            res = df_non_duplicate[val]
             provider_object = ItemPembanding(provider_name_label, alamat, y_preds, nil, 0,0,0)
 
             if not res.empty:
                 pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
-                val_master = (df_dataset['subject'].eq(pred))
-                res_master = df_dataset[val_master]
+                val_master = (df_non_duplicate['subject'].eq(pred))
+                res_master = df_non_duplicate[val_master]
 
                 al = res_master["alamat"].head(1)
-
-                alamat_pred = al.values[0]
+                try:
+                    alamat_pred = al.values[0]
+                except:
+                    print("error")
             elif res.empty:
                 alamat_pred = "-"
 
@@ -444,8 +445,11 @@ def sinkron_dataset_process(request):
     dfs_varian = None
     try:
         dfs = pd.read_excel("master_provider.xlsx")
-        df = pd.read_excel("dataset_excel_copy.xlsx")
-        dfs_varian = pd.read_excel("dataset_excel_copy.xlsx").groupby('subject')
+        df = cache.get('dataset')
+        if df is None:
+            df = pd.read_excel("dataset_excel_copy.xlsx")
+            cache.set('dataset', df)
+        dfs_varian = df.groupby('subject')
     except:
         print("dataframe not found")
     for index, row in dfs.iterrows():
@@ -489,6 +493,7 @@ def master_varian_process(request):
     dfs_varian = None
     try:
         dfs = pd.read_excel("master_provider.xlsx")
+
         dfs_varian = pd.read_excel("dataset_excel_copy.xlsx").groupby('subject')
     except:
         print("dataframe not found")
@@ -613,22 +618,89 @@ def temporer_store(request):
     # return HttpResponse(context)
     return render(request,'matching/temporer.html',context=context)
 
+
+def read_link_result_and_delete_provider_name2(nama_provider,link_result):
+    global dfs
+
+    val = (dfs['Provider Name'].str.lower().eq(nama_provider.lower()))
+    rese = dfs[val]
+
+    # if not rese.empty:
+    #     print(rese.index.item())
+    # print(dfs)
+    global deo
+    global deoq
+    if not rese.empty:
+        #
+
+        try:
+            deo = dfs.drop(rese.index.item(),inplace=True)
+
+            val = (dw['Nama Provider'].str.lower().eq(nama_provider.lower()))
+            reseq = dw[val]
+            if not reseq.empty:
+                deoq = dw.drop(reseq.index.item(),inplace=True)
+                # deoq = dw
+                # if (nama_provider == "klinik takenoko sudirman"):
+                #     vae = deoq['Nama Provider'].str.strip().str.lower().eq("klinik takenoko sudirman")
+                #     print(deoq[vae])
+        except Exception as e:
+            for x in rese.index.tolist():
+                deo = dfs.drop(x, inplace=True)
+
+
+            pass
+
 def read_link_result_and_delete_provider_name(nama_provider):
     dfs = pd.read_excel(link_result)
     val = (dfs['Provider Name'].eq(nama_provider.upper()))
     rese = dfs[val]
+    print("hapus1 " + nama_provider, rese)
+
     if not rese.empty:
-        print(rese.index.item())
+        print("hapus "+nama_provider,rese)
         deo = dfs.drop(rese.index.item())
         deo.to_excel(link_result, sheet_name='Sheet1', index=False)
         dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
-        print(dat[0]["file_location"], os.getcwd())
         dw = pd.read_excel(dat[0]["file_location"])
         val = (dw['Nama Provider'].eq(nama_provider.upper()))
         reseq = dw[val]
         if not reseq.empty:
             deoq = dw.drop(reseq.index.item())
             deoq.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
+
+
+def loop_delete(link_result):
+    print("loop data2 ",link_result)
+    df = pd.read_excel("Master_Add.xlsx")
+    global dfs
+    global deo
+    global deoq
+    global dw
+    deo=None
+    deoq=None
+    dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
+    dw = pd.read_excel(dat[0]["file_location"])
+    print(dat[0]["file_location"])
+    dfs = pd.read_excel(link_result)
+    for index, row in tqdm(df.iterrows(),total=df.shape[0]):
+        # nama_provider = row['Provider Name']
+        nama_provider = row['provider_name']
+        read_link_result_and_delete_provider_name2(nama_provider,link_result)
+
+
+
+    dfs.to_excel(link_result, sheet_name='Sheet1', index=False)
+    # dw.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
+
+    # if(deo is not None and deoq is not None):
+        # deo.to_excel(link_result, sheet_name='Sheet1', index=False)
+        # deoq.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
+        # deoq.to_excel("tay.xlsx", sheet_name='Sheet1', index=False)
+        # deo.to_excel("onkar.xlsx", sheet_name='Sheet1', index=False)
+        # dfs.to_excel("to.xlsx",sheet_name='Sheet1',index=False)
+
+
 
 def add_master_store(request):
     if request.method == "POST":
@@ -675,7 +747,11 @@ def update_temporer_store(request):
 def add_to_dataset(request):
     if request.method == "POST":
         # OPEN DATASET FILE
-        df = pd.read_excel("dataset_excel_copy.xlsx")
+        df = cache.get('dataset')
+        if df is None:
+            df = pd.read_excel("dataset_excel_copy.xlsx")
+            cache.set('dataset', df)
+
         df_basket = pd.read_excel("basket_provider.xlsx")
 
         # SEARCH PROVIDER IN DATASET
@@ -723,6 +799,8 @@ def process_temporer_store(request):
     if dfs is None:
         dfs = pd.read_excel("dataset_excel_copy.xlsx")
         cache.set('dataset', dfs)
+
+    # dfa = dfs.drop_duplicates(subset='subject')
     dfz = dfs.dropna(subset="alamat")
     dfa = dfz.drop_duplicates(subset='subject')
     label_list = []
@@ -732,15 +810,17 @@ def process_temporer_store(request):
         label = row["subject"]
         if label+"#"+alamat not in label_list:
             label_list.append(label+"#"+alamat)
-    print(label_list)
     print(link_result)
-    context = {"label_list":dfs,"list":provider_liste,"link_result":link_result}
+    context = {"label_list":label_list,"list":provider_liste,"link_result":link_result}
     # return HttpResponse("Process Temporer")
     return render(request,'matching/proses_temporer.html',context=context)
 
 
 def get_label(request):
-    dfs = pd.read_excel("dataset_excel_copy.xlsx")
+    dfs = cache.get('dataset')
+    if dfs is None:
+        dfs = pd.read_excel("dataset_excel_copy.xlsx")
+        cache.set('dataset', dfs)
     dfs = dfs.sort_values(by=['subject'], ascending=True)
     dfz = dfs.dropna(subset="alamat")
     dfa = dfz.drop_duplicates(subset='subject')
@@ -770,7 +850,7 @@ def vectorize_text(text,tfidf_vec):
     return my_vec.toarray()
 
 
-def pool_process_df(df):
+def pool_process_tampungan(dfs):
     # for df in df_list:
     # dataframe Name and Age columns
     pd.options.display.max_colwidth = None
@@ -780,9 +860,56 @@ def pool_process_df(df):
     provider_object_list = []
 
     df_result = pd.DataFrame()
-    # df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+    if dfs is not None:
+        for index, row in tqdm(dfs.iterrows(), total=dfs.shape[0]):
+
+            provider_name_label = str(row['course_title']).strip().lower()
+            alamat = str(row['alamat']).strip().lower()
+            concat = provider_name_label + "#" + alamat
+            concat = concat.replace('&', '').replace('.', '')
+            sample1 = vectorize_text(concat, tfidf_vec)
+            y_preds = loaded_model.predict(sample1)
+            p = loaded_model.predict_proba(sample1)
+            ix = p.argmax(1).item()
+            nil = (f'{p[0, ix]:.2}')
+            # if(float(nil.strip("%")) < 1.0):
+            # y_preds = "-"
+            provider_name_list.append(provider_name_label)
+            provider_name_predict_list.append(y_preds)
+            score_list.append(nil)
+
+            val = (df_non_duplicate['course_titles'].eq(provider_name_label))
+            res = df_non_duplicate[val]
+            provider_object = ItemPembanding(provider_name_label, alamat, y_preds, nil, 0, 0, 0)
+
+            if not res.empty:
+                pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+                val_master = (df_non_duplicate['subject'].eq(pred))
+                res_master = df_non_duplicate[val_master]
+
+                al = res_master["alamat"].head(1)
+                try:
+                    alamat_pred = al.values[0]
+                except:
+                    print("error")
+            elif res.empty:
+                alamat_pred = "-"
+
+            provider_object.set_alamat_prediction(alamat_pred)
+
+            provider_list.append(provider_object.__dict__)
+
+def pool_process_df(df):
+    # for df in df_list:
+    # dataframe Name and Age columns
+    pd.options.display.max_colwidth = None
+    provider_name_list = []
+    provider_name_predict_list = []
+    score_list = []
+    provider_object_list = []
 
 
+    df_result = pd.DataFrame()
     for row in tqdm(df.itertuples(), total=df.shape[0]):
         new_string = row.nama
         alamat = row.alamat
@@ -793,7 +920,8 @@ def pool_process_df(df):
         nama_alamat = row.nama_alamat
 
         provider_name = new_string
-        val = (df_non_duplicate['course_titles'].eq(nama_alamat))
+        val = (df_non_duplicate['course_title'].eq(provider_name))
+
         res = df_non_duplicate[val]
 
 
@@ -853,7 +981,7 @@ def pool_process_df(df):
         df_result = df_result.append(df1, ignore_index=True)
         # Provider_Perbandingan_data = models.Provider_Perbandingan(nama_asuransi=perbandingan_model.nama_asuransi,
         #                                                           perbandingan_id=1,
-        #                                                           name=provider_name, address="-", selected=0)
+        #                                                           name=provider_name_label, address="-", selected=0)
         # Provider_Perbandingan_data.save()
 
 
@@ -862,25 +990,25 @@ def pool_process_df(df):
 
 def pool_handler(df,perbandingan_model):
     print("pool handler")
-    # # # Split dataframe to many
-    df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
 
+    df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
     df_alamat = df['Alamat'].str.lower().str.strip()
     df_ri = df['RI']
     df_rj = df['RJ']
-    df_nama_alamat = df_nama.map(str) +'#'+ df_alamat.map(str)
+    df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
+    df_lengkap = pd.DataFrame(
+        {'nama': df_nama, 'alamat': df_alamat, 'RI': df_ri, 'RJ': df_rj, 'nama_alamat': df_nama_alamat})
 
-    df_lengkap = pd.DataFrame({'nama':df_nama,'alamat':df_alamat,'RI':df_ri,'RJ':df_rj,'nama_alamat':df_nama_alamat})
+    # # # Split dataframe to many
     df_list = cacah_dataframe(df_lengkap)
 
-    print(df_non_duplicate.head())
 
-    # # Using multiprocess with pool as many as dataframe list
+
+    # # # Using multiprocess with pool as many as dataframe list
     p = Pool(len(df_list))
-
     # # # Use Pool Multiprocessing
     x = p.map(pool_process_df,df_list)
-    #
+
     # # # Declare write
     writer = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result" + ".xlsx",
                             engine='xlsxwriter')
@@ -899,7 +1027,7 @@ def pool_handler(df,perbandingan_model):
     writer.close()
 
 def cacah_dataframe(df):
-    split_row_each = 600
+    split_row_each = 800
     start_index = 0
     iteration_count = int(df.shape[0]/split_row_each)
     sisa = df.shape[0]%split_row_each
@@ -1034,7 +1162,6 @@ def perbandingan_result(request):
             uploaded_file = request.FILES['perbandinganModel']
             file_extension = pathlib.Path("media/" + uploaded_file.name).suffix
             filename = fs.save(uploaded_file.name, uploaded_file)
-        print(uploaded_file)
         menu_insurance = request.POST['insurance_option']
 
         if file_extension != ".xlsx":
