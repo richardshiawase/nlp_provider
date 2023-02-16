@@ -7,7 +7,8 @@ import shutil
 from collections import defaultdict
 from functools import reduce
 from multiprocessing import Process, Pool
-
+from numba import jit, cuda
+import numba
 import numpy as np
 import requests
 from django.core import serializers
@@ -39,7 +40,13 @@ if df_dataset is None:
     df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
     cache.set('dataset', df_dataset)
 
-new_course_title = df_dataset['course_title'].str.split("#", n=1, expand=True)
+new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
+df_dataset["course_titles"] = new_course_title[0]
+df_non_duplicate = df_dataset.drop_duplicates(['course_title'], keep='first')
+filename = 'tfidf_vec.pickle'
+tfidf_vec1 = pickle.load(open(filename, 'rb'))
+filename = 'finalized_model.sav'
+loaded_model1 = pickle.load(open(filename, 'rb'))
 
 
 def index(request):
@@ -762,6 +769,7 @@ def vectorize_text(text,tfidf_vec):
     my_vec = tfidf_vec.transform([text])
     return my_vec.toarray()
 
+
 def pool_process_df(df):
     # for df in df_list:
     # dataframe Name and Age columns
@@ -771,33 +779,29 @@ def pool_process_df(df):
     score_list = []
     provider_object_list = []
 
-
     df_result = pd.DataFrame()
     # df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
-    filename = 'tfidf_vec.pickle'
-    tfidf_vec = pickle.load(open(filename, 'rb'))
-    filename = 'finalized_model.sav'
-    loaded_model = pickle.load(open(filename, 'rb'))
+
+
     for row in tqdm(df.itertuples(), total=df.shape[0]):
-        new_string = (row._3).strip().lower()
-        alamat = str(row.Alamat).strip().lower()
-        ri = str(row.RI).strip()
-        rj = str(row.RJ).strip()
-        value = new_string + "#" + alamat
-        new_string = value.replace('&', '')
-        new_string = new_string.replace('.', '')
-        provider_name = new_string.replace('-', '')
-        provider_name_label = row._3
-        df_dataset["course_titles"] = new_course_title[0]
-        val = (df_dataset['course_titles'].str.lower().eq(provider_name_label.split("#")[0].lower()))
-        res = df_dataset[val]
+        new_string = row.nama
+        alamat = row.alamat
+        ri = row.RI
+        rj = row.RJ
+
+        # replace with df_nama_alamat
+        nama_alamat = row.nama_alamat
+
+        provider_name = new_string
+        val = (df_non_duplicate['course_titles'].eq(nama_alamat))
+        res = df_non_duplicate[val]
 
 
-        provider_name_list.append(provider_name_label)
+        provider_name_list.append(provider_name)
         # load the model from disk
-        sample1 = vectorize_text(new_string, tfidf_vec)
-        y_preds = loaded_model.predict(sample1)
-        p = loaded_model.predict_proba(sample1)
+        sample1 = vectorize_text(new_string, tfidf_vec1)
+        y_preds = loaded_model1.predict(sample1)
+        p = loaded_model1.predict_proba(sample1)
         ix = p.argmax(1).item()
         nil = (f'{p[0, ix]:.2}')
 
@@ -808,13 +812,13 @@ def pool_process_df(df):
 
         if not res.empty:
             pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
-            val_master = (df_dataset['subject'].eq(pred))
-            res_master = df_dataset[val_master]
+            val_master = (df_non_duplicate['subject'].eq(pred))
+            res_master = df_non_duplicate[val_master]
             al = res_master["alamat"].head(1)
             try:
                 alamat_pred = al.values[0]
                 data_append = {
-                    "Provider Name": provider_name_label,
+                    "Provider Name": provider_name,
                     "Alamat": alamat,
                     "Prediction": y_preds,
                     "Alamat Prediction": alamat_pred,
@@ -833,7 +837,7 @@ def pool_process_df(df):
         elif res.empty:
 
             data_append = {
-                "Provider Name": provider_name_label,
+                "Provider Name": provider_name,
                 "Alamat": alamat,
                 "Prediction": y_preds,
                 "Alamat Prediction": "-",
@@ -849,7 +853,7 @@ def pool_process_df(df):
         df_result = df_result.append(df1, ignore_index=True)
         # Provider_Perbandingan_data = models.Provider_Perbandingan(nama_asuransi=perbandingan_model.nama_asuransi,
         #                                                           perbandingan_id=1,
-        #                                                           name=provider_name_label, address="-", selected=0)
+        #                                                           name=provider_name, address="-", selected=0)
         # Provider_Perbandingan_data.save()
 
 
@@ -857,16 +861,26 @@ def pool_process_df(df):
     return df_result
 
 def pool_handler(df,perbandingan_model):
-
+    print("pool handler")
     # # # Split dataframe to many
-    df_list = cacah_dataframe(df)
+    df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
 
-    # # # Using multiprocess with pool as many as dataframe list
+    df_alamat = df['Alamat'].str.lower().str.strip()
+    df_ri = df['RI']
+    df_rj = df['RJ']
+    df_nama_alamat = df_nama.map(str) +'#'+ df_alamat.map(str)
+
+    df_lengkap = pd.DataFrame({'nama':df_nama,'alamat':df_alamat,'RI':df_ri,'RJ':df_rj,'nama_alamat':df_nama_alamat})
+    df_list = cacah_dataframe(df_lengkap)
+
+    print(df_non_duplicate.head())
+
+    # # Using multiprocess with pool as many as dataframe list
     p = Pool(len(df_list))
 
     # # # Use Pool Multiprocessing
     x = p.map(pool_process_df,df_list)
-
+    #
     # # # Declare write
     writer = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result" + ".xlsx",
                             engine='xlsxwriter')
@@ -883,7 +897,6 @@ def pool_handler(df,perbandingan_model):
 
     # # # Close the Pandas Excel writer and output the Excel file.
     writer.close()
-
 
 def cacah_dataframe(df):
     split_row_each = 600
