@@ -11,7 +11,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 from django.shortcuts import render
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier, SGDRegressor
 import django
 django.setup()
 import pickle
@@ -438,7 +438,7 @@ def process_partially(df):
     print(pred)
     print("Finish Creating Model")
 
-def create_model(df):
+def create_model_bc(df):
     print("Create Model")
     lr_model = LogisticRegression(solver='liblinear')
     df['clean_course_title'] = df['course_title'].astype(str)
@@ -514,10 +514,81 @@ def create_model(df):
     print(pred)
     print("Finish Creating Model")
 
-    # cacah_dataframe(df,lr_model)
-    # proc = Process(target=process_partially,args=(df,))
-    # proc.start()
-    # proc.join()
+
+def create_model(df):
+    print("Create Model")
+    # lr_model = LogisticRegression(solver='sag',warm_start=True)
+    lr_model = SGDClassifier(loss='modified_huber',learning_rate='constant',n_jobs=-1,random_state=0,eta0=0.1)
+    df['clean_course_title'] = df['course_title'].astype(str)
+    # df['clean_course_title'] = df['clean_course_title'].apply(lambda x: ' '.join([ps.stem(word) for word in x.split() if word not in set(all_stopwords)]))
+    df['clean_course_title'] = df['clean_course_title'].fillna('').astype(str).replace('', np.nan, regex=False)
+    new_string = df['clean_course_title'].str.replace('.', '')
+    new_string = new_string.str.lower()
+    new_string = new_string.str.replace('&', '')
+    # new_string = new_string.str.replace('-','')
+    df['clean_course_title'] = new_string
+
+
+    print("Improt Tfidf")
+    Xfeatures = df['clean_course_title']
+    ylabels = df['subject']
+    tfidf_vec = TfidfVectorizer()
+    X = tfidf_vec.fit_transform(Xfeatures.values.astype('U'))
+    print("Split Dataset ")
+
+    x_train, x_test, y_train, y_test = train_test_split(X, ylabels, test_size=0.2, random_state=1)
+    # print(X.shape)
+    try:
+        print("Fit Model")
+        lr_model.partial_fit(x_train, y_train, classes=np.unique(ylabels))
+        # calibrator = CalibratedClassifierCV(clf, cv='prefit')
+        # model = calibrator.fit(X_tr, y_train)
+        print(lr_model.score(x_test, y_test))
+
+    except Exception as e:
+        print("sumting wonge "+str(e))
+
+
+
+
+
+    print("Open Pickle")
+    pickle.dump(tfidf_vec, open('tfidf_vec.pickle', 'wb'))
+
+    # # save the model to disk
+    print("Save model to disk")
+    filename = 'finalized_model.sav'
+    pickle.dump(lr_model, open(filename, 'wb'))
+
+    print("Save Model")
+    model_create = models.Provider_Model(model_name=filename, accuracy_score=str(lr_model.score(x_test, y_test)),
+                                         model_location='drive C')
+    model_create.save()
+
+    # load the model from disk
+    print("Load Model")
+    loaded_model = pickle.load(open(filename, 'rb'))
+    result = loaded_model.score(x_test, y_test)
+    print(result)
+    from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
+
+
+
+    ## Making A Single Prediction
+    ex = "RS. CIPUTRA CITRA GARDEN CITY"
+
+    def vectorize_text(text):
+        my_vec = tfidf_vec.transform([text])
+        return my_vec.toarray()
+
+    vectorize_text(ex)
+    df.to_excel('wew.xlsx')
+    sample1 = vectorize_text(ex)
+    pred = lr_model.predict(sample1)
+    #
+    print(pred)
+    print("Finish Creating Model")
+
 
 
 def upload_file_train(request):

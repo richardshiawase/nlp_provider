@@ -9,10 +9,17 @@ class ItemPembanding:
         self.rj = str(rj).strip()
 
     def get_ri(self):
-        return self.ri
+        if(self.ri == "Y"):
+            return "1"
+        elif self.ri == "N":
+            return "0"
 
     def get_rj(self):
-        return self.rj
+        if (self.rj == "Y"):
+            return "1"
+        elif self.rj == "N":
+            return "0"
+
 
     def set_alamat_prediction(self,alamat_prediction):
         self.alamat_prediction = str(alamat_prediction)
