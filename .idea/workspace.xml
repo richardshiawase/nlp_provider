@@ -4,12 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2e17da24-143c-441b-a4de-d2b6580632cc" name="Changes" comment="er">
+    <list default="true" id="0ec03f70-e58a-4bc7-87ad-245a33167692" name="Changes" comment="er">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,7 +61,7 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="2e17da24-143c-441b-a4de-d2b6580632cc" name="Changes" comment="" />
+      <changelist id="0ec03f70-e58a-4bc7-87ad-245a33167692" name="Changes" comment="" />
       <created>1665394394507</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
