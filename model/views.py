@@ -527,6 +527,7 @@ def create_model(df):
     new_string = new_string.str.replace('&', '')
     # new_string = new_string.str.replace('-','')
     df['clean_course_title'] = new_string
+    print(new_string)
 
 
     print("Improt Tfidf")

@@ -41,6 +41,7 @@ if df_dataset is None:
 new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
 df_dataset["course_titles"] = new_course_title[0]
 df_non_duplicate = df_dataset.drop_duplicates(['course_title'], keep='first')
+
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
@@ -84,8 +85,8 @@ def kompilasi_data(request):
         for index, row in dfs.iterrows():
             alamat = row['Alamat']
             alamat_prediksi = row['Alamat Prediction']
-            ri = row['RI']
-            rj = row['RJ']
+            ri = row['ri']
+            rj = row['rj']
             item_obj = ItemPembanding(row['Provider Name'], row['Alamat'], row["Prediction"], row["Score"], 0,ri,rj)
             item_obj.set_nama_asuransi(pembanding.nama_asuransi)
             item_obj.set_selected(str(row['Compared']))
@@ -920,14 +921,16 @@ def pool_process_df(df):
         nama_alamat = row.nama_alamat
 
         provider_name = new_string
-        val = (df_non_duplicate['course_title'].eq(provider_name))
 
+        # course_title = apotik  klinik kimia farma  cilegon#jl. s.a. tirtayasa no 12
+
+        val = (df_non_duplicate['course_title'].str.lower().str.strip().eq(nama_alamat))
         res = df_non_duplicate[val]
 
 
         provider_name_list.append(provider_name)
         # load the model from disk
-        sample1 = vectorize_text(new_string, tfidf_vec1)
+        sample1 = vectorize_text(nama_alamat, tfidf_vec1)
         y_preds = loaded_model1.predict(sample1)
         p = loaded_model1.predict_proba(sample1)
         ix = p.argmax(1).item()
