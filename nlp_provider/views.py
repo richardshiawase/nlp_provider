@@ -27,7 +27,7 @@ import django
 django.setup()
 from model import models
 from model.views import create_model
-from .utils import ItemPembanding, Prediction, MasterData, PredictionId
+from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 from django.core.cache import cache
@@ -40,8 +40,8 @@ if df_dataset is None:
 
 new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
 df_dataset["course_titles"] = new_course_title[0]
-df_non_duplicate = df_dataset.drop_duplicates(['course_title'], keep='first')
-
+p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
+df_non_duplicate = p._return_df()
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
@@ -924,7 +924,9 @@ def pool_process_df(df):
 
         # course_title = apotik  klinik kimia farma  cilegon#jl. s.a. tirtayasa no 12
 
-        val = (df_non_duplicate['course_title'].str.lower().str.strip().eq(nama_alamat))
+        # val = (df_non_duplicate['course_title'].str.lower().str.strip().eq(nama_alamat))
+        val = (df_non_duplicate['course_title'].eq(nama_alamat))
+
         res = df_non_duplicate[val]
 
 
@@ -994,8 +996,10 @@ def pool_process_df(df):
 def pool_handler(df,perbandingan_model):
     print("pool handler")
 
-    df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
-    df_alamat = df['Alamat'].str.lower().str.strip()
+    # df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
+    df_nama = df['Nama Provider']
+    # df_alamat = df['Alamat'].str.lower().str.strip()
+    df_alamat = df['Alamat']
     df_ri = df['RI']
     df_rj = df['RJ']
     df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
@@ -1182,7 +1186,9 @@ def perbandingan_result(request):
         else:
             perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
 
-        df = pd.read_excel(uploaded_file)
+        dfe = pd.read_excel(uploaded_file)
+        pembersih = Pembersih(dfe)
+        df = pembersih._return_df()
         pool_handler(df,perbandingan_model)
 
 
