@@ -520,18 +520,11 @@ def create_model_bc(df):
 
 def create_model(dfc):
     print("Create Model")
-    # lr_model = LogisticRegression(solver='sag',warm_start=True)
     lr_model = SGDClassifier(loss='modified_huber',learning_rate='constant',n_jobs=-1,random_state=0,eta0=0.1)
     pembersih = Pembersih(dfc)
     df = pembersih._return_df()
     df['clean_course_title'] = df['course_title']
-    # df['clean_course_title'] = df['clean_course_title'].fillna('').astype(str).replace('', np.nan, regex=False)
-    new_string = df['clean_course_title']
-    # new_string = new_string.str.lower()
-    # new_string = new_string.str.replace('&', '')
-    # new_string = new_string.str.replace('-','')
-    # df['clean_course_title'] = new_string
-    # print(df)
+
 
 
     print("Improt Tfidf")
