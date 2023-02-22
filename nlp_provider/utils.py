@@ -1,3 +1,8 @@
+import pathlib
+
+from django.core.files.storage import FileSystemStorage
+
+
 class ItemPembanding:
     def __init__(self,nama_provider,alamat,label_name,proba_score,count_label,ri,rj):
         self.nama_provider = str(nama_provider).strip()
@@ -116,19 +121,73 @@ class PredictionId:
         self.id_master = id_master
 
 class FilePembandingAsuransi:
-    def __init__(self,nama_asuransi,match_percentage,status_finish,file_location,file_location_result,created_at):
-        self.nama_asuransi = nama_asuransi
-        self.match_percentage = match_percentage
-        self.status_finish = status_finish
-        self.file_location = file_location
-        self.file_location_result = file_location_result
-        self.created_at = created_at
+    def __init__(self):
+        pass
+        # self.nama_asuransi = nama_asuransi
+        # self.match_percentage = match_percentage
+        # self.status_finish = status_finish
+        # self.file_location = file_location
+        # self.file_location_result = file_location_result
+        # self.created_at = created_at
 
     def set_provider_list(self,provider_data_list):
         self.provider_data_list = provider_data_list
 
     def get_provider_list(self):
         return self.provider_data_list
+
+    def set_nama_file_pembanding(self):
+        print("uploaded file "+self.uploaded_file.name)
+        # self.nama_file = pathlib.Path("media/"+self.uploaded_file.name)
+        self.nama_file = self.uploaded_file.name
+        self.set_lokasi_file_pembanding()
+
+    def set_lokasi_file_pembanding(self):
+        self.lokasi_file_pembanding = "media/"+self.uploaded_file.name
+
+
+    def set_extension_file_pembanding(self):
+        try:
+            self.file_extension = pathlib.Path("media/"+self.uploaded_file).suffix
+        except:
+            self.file_extension = pathlib.Path("media/" +self.uploaded_file.name).suffix
+    def set_nama_asuransi(self,nama_asuransi):
+        self.nama_asuransi = nama_asuransi
+
+    def set_uploaded_file(self,uploaded_file):
+        self.uploaded_file = uploaded_file
+
+
+    def get_lokasi_pembanding(self):
+        print("lokasi file "+self.lokasi_file_pembanding)
+        return self.lokasi_file_pembanding
+    def get_uploaded_file(self):
+        print("uploaded file "+self.uploaded_file.name)
+        return self.uploaded_file
+
+    def get_nama_asuransi(self):
+        return self.nama_asuransi
+
+    def get_extension_file_pembanding(self):
+        print("Ekstensi adalah "+self.file_extension)
+        return self.file_extension
+
+    def get_nama_file_pembanding(self):
+        return self.nama_file
+
+
+class FileSystem:
+    def __init__(self,filePembandingAsuransi):
+        self.file = filePembandingAsuransi
+        self.fst = FileSystemStorage()
+
+    def get_path(self):
+        return self.fst.path(self.file.get_nama_file_pembanding())
+
+
+    def save_file(self):
+        self.fst.save(self.file.get_uploaded_file().name,self.file.get_uploaded_file())
+        print("nama file "+self.file.get_nama_file_pembanding())
 
 
 

@@ -27,21 +27,21 @@ import django
 django.setup()
 from model import models
 from model.views import create_model
-from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih
+from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 from django.core.cache import cache
 # from .forms import UploadFileForm
 # Create your views here.
-df_dataset = cache.get('dataset')
-if df_dataset is None:
-    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
-    cache.set('dataset', df_dataset)
-
-new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
-df_dataset["course_titles"] = new_course_title[0]
-p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
-df_non_duplicate = p._return_df()
+# df_dataset = cache.get('dataset')
+# if df_dataset is None:
+#     df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+#     cache.set('dataset', df_dataset)
+#
+# new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
+# df_dataset["course_titles"] = new_course_title[0]
+# p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
+# df_non_duplicate = p._return_df()
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
@@ -851,54 +851,6 @@ def vectorize_text(text,tfidf_vec):
     return my_vec.toarray()
 
 
-def pool_process_tampungan(dfs):
-    # for df in df_list:
-    # dataframe Name and Age columns
-    pd.options.display.max_colwidth = None
-    provider_name_list = []
-    provider_name_predict_list = []
-    score_list = []
-    provider_object_list = []
-
-    df_result = pd.DataFrame()
-    if dfs is not None:
-        for index, row in tqdm(dfs.iterrows(), total=dfs.shape[0]):
-
-            provider_name_label = str(row['course_title']).strip().lower()
-            alamat = str(row['alamat']).strip().lower()
-            concat = provider_name_label + "#" + alamat
-            concat = concat.replace('&', '').replace('.', '')
-            sample1 = vectorize_text(concat, tfidf_vec)
-            y_preds = loaded_model.predict(sample1)
-            p = loaded_model.predict_proba(sample1)
-            ix = p.argmax(1).item()
-            nil = (f'{p[0, ix]:.2}')
-            # if(float(nil.strip("%")) < 1.0):
-            # y_preds = "-"
-            provider_name_list.append(provider_name_label)
-            provider_name_predict_list.append(y_preds)
-            score_list.append(nil)
-
-            val = (df_non_duplicate['course_titles'].eq(provider_name_label))
-            res = df_non_duplicate[val]
-            provider_object = ItemPembanding(provider_name_label, alamat, y_preds, nil, 0, 0, 0)
-
-            if not res.empty:
-                pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
-                val_master = (df_non_duplicate['subject'].eq(pred))
-                res_master = df_non_duplicate[val_master]
-
-                al = res_master["alamat"].head(1)
-                try:
-                    alamat_pred = al.values[0]
-                except:
-                    print("error")
-            elif res.empty:
-                alamat_pred = "-"
-
-            provider_object.set_alamat_prediction(alamat_pred)
-
-            provider_list.append(provider_object.__dict__)
 
 def pool_process_df(df):
     # for df in df_list:
@@ -1155,38 +1107,43 @@ def perbandingan_result(request):
     global uploaded_file
     global contexte
     if request.method == 'POST':
-        uploaded_file = None
-        file_extension = None
-        filename = None
-        fs = FileSystemStorage()
+        filePembandingAsuransi = FilePembandingAsuransi()
+        fileSystem = FileSystem(filePembandingAsuransi)
+
+        # GET INSURANCE NAME
+        filePembandingAsuransi.set_nama_asuransi(request.POST['insurance_option'])
+
         if not bool(request.FILES.get('perbandinganModel',False)) :
-            uploaded_file = request.POST['perbandinganModelFile']
-            file_extension = pathlib.Path("media/"+uploaded_file).suffix
-            file_content = pathlib.Path("media/"+uploaded_file)
-            filename = file_content
+            filePembandingAsuransi.set_uploaded_file(request.POST['perbandinganModelFile'])
+            filePembandingAsuransi.set_extension_file_pembanding()
+            filePembandingAsuransi.set_nama_file_pembanding()
 
         else:
-            uploaded_file = request.FILES['perbandinganModel']
-            file_extension = pathlib.Path("media/" + uploaded_file.name).suffix
-            filename = fs.save(uploaded_file.name, uploaded_file)
-        menu_insurance = request.POST['insurance_option']
+            filePembandingAsuransi.set_uploaded_file(request.FILES['perbandinganModel'])
+            filePembandingAsuransi.set_nama_file_pembanding()
+            filePembandingAsuransi.set_extension_file_pembanding()
+            fileSystem.save_file()
 
-        if file_extension != ".xlsx":
+
+        # JIKA FILE EKSTENSI TIDAK DIIZINKAN RETURN FALSE
+        if filePembandingAsuransi.get_extension_file_pembanding() != ".xlsx":
             return HttpResponse("Extension / Format tidak diizinkan")
-        uploaded_file_path = fs.path(filename)
 
-        # shutil.copyfile(uploaded_file.name, os.getcwd())
+        uploaded_file_path = fileSystem.get_path()
 
-        insurance_data = is_file_with_this_insurance_exists(menu_insurance)
+
+        insurance_data = is_file_with_this_insurance_exists(filePembandingAsuransi.get_nama_asuransi())
+
         global perbandingan_model
 
         if not insurance_data:
-            perbandingan_model = models.Perbandingan(nama_asuransi=menu_insurance, match_percentage=0,
+            perbandingan_model = models.Perbandingan(nama_asuransi=filePembandingAsuransi.get_nama_asuransi(), match_percentage=0,
                                                      status_finish="PROCESSING", file_location=uploaded_file_path)
         else:
             perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
 
-        dfe = pd.read_excel(uploaded_file)
+        dfe = pd.read_excel("media/bri_7Azj1ZO_NKr8slo.xlsx")
+        print(dfe)
         pembersih = Pembersih(dfe)
         df = pembersih._return_df()
         pool_handler(df,perbandingan_model)
