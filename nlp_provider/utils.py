@@ -137,7 +137,6 @@ class FilePembandingAsuransi:
         return self.provider_data_list
 
     def set_nama_file_pembanding(self):
-        print("uploaded file "+self.uploaded_file.name)
         # self.nama_file = pathlib.Path("media/"+self.uploaded_file.name)
         self.nama_file = self.uploaded_file.name
         self.set_lokasi_file_pembanding()
@@ -154,22 +153,20 @@ class FilePembandingAsuransi:
     def set_nama_asuransi(self,nama_asuransi):
         self.nama_asuransi = nama_asuransi
 
-    def set_uploaded_file(self,uploaded_file):
-        self.uploaded_file = uploaded_file
+    def set_uploaded_file(self,w):
+        self.uploaded_file = w
 
 
     def get_lokasi_pembanding(self):
         print("lokasi file "+self.lokasi_file_pembanding)
         return self.lokasi_file_pembanding
     def get_uploaded_file(self):
-        print("uploaded file "+self.uploaded_file.name)
         return self.uploaded_file
 
     def get_nama_asuransi(self):
         return self.nama_asuransi
 
     def get_extension_file_pembanding(self):
-        print("Ekstensi adalah "+self.file_extension)
         return self.file_extension
 
     def get_nama_file_pembanding(self):
@@ -187,7 +184,6 @@ class FileSystem:
 
     def save_file(self):
         self.fst.save(self.file.get_uploaded_file().name,self.file.get_uploaded_file())
-        print("nama file "+self.file.get_nama_file_pembanding())
 
 
 
