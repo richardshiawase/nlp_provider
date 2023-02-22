@@ -1115,11 +1115,14 @@ def perbandingan_result(request):
 
         if not bool(request.FILES.get('perbandinganModel',False)) :
             filePembandingAsuransi.set_uploaded_file(request.POST['perbandinganModelFile'])
+            print("ae")
             filePembandingAsuransi.set_extension_file_pembanding()
             filePembandingAsuransi.set_nama_file_pembanding()
 
         else:
             filePembandingAsuransi.set_uploaded_file(request.FILES['perbandinganModel'])
+            print("ae2")
+            print(request.FILES['perbandinganModel'])
             filePembandingAsuransi.set_nama_file_pembanding()
             filePembandingAsuransi.set_extension_file_pembanding()
             fileSystem.save_file()
@@ -1142,20 +1145,21 @@ def perbandingan_result(request):
         else:
             perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
 
-        dfe = pd.read_excel("media/bri_7Azj1ZO_NKr8slo.xlsx")
+
+        dfe = pd.read_excel(filePembandingAsuransi.get_uploaded_file())
         print(dfe)
-        pembersih = Pembersih(dfe)
-        df = pembersih._return_df()
-        pool_handler(df,perbandingan_model)
+        # pembersih = Pembersih(dfe)
+        # df = pembersih._return_df()
+        # pool_handler(df,perbandingan_model)
+        #
+        #
+        # dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
+        # prediction_list = []
+        #
+        # create_result_file(dfs,prediction_list)
+        # provider_list = create_result_file_final(dfs,prediction_list)
+        # print(perbandingan_model.file_location_result)
+        # contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model.file_location_result}
+        # return render(request, 'matching/perbandingan.html', context=contexte)
 
-
-        dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
-        prediction_list = []
-
-        create_result_file(dfs,prediction_list)
-        provider_list = create_result_file_final(dfs,prediction_list)
-        print(perbandingan_model.file_location_result)
-        contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model.file_location_result}
-        return render(request, 'matching/perbandingan.html', context=contexte)
-
-    return render(request, 'matching/perbandingan.html',context=contexte)
+    # return render(request, 'matching/perbandingan.html',context=contexte)
