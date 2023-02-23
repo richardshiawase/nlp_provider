@@ -114,71 +114,71 @@
 
 
 
-         var table =     $('#albumse').DataTable({
+<!--         var table =     $('#albumse').DataTable({-->
 
-              ajax: {
-              url: "{% url 'perbandingan_rev' %}",
-              type: 'GET',
-              dataSrc: "",
-          },
-
-
-          columns: [
-                  {   data: "nama_provider" },
-                  {   data: "alamat" },
-                  {   data: "alamat_prediction"},
-                  {   data: "label_name" },
-                  {   data: "proba_score" },
-                  {   data: "selected" },
-                  {   data: "count_label_name" },
-
-              ],
+<!--              ajax: {-->
+<!--              url: "{% url 'perbandingan_rev' %}",-->
+<!--              type: 'GET',-->
+<!--              dataSrc: "",-->
+<!--          },-->
 
 
-          });
+<!--          columns: [-->
+<!--                  {   data: "nama_provider" },-->
+<!--                  {   data: "alamat" },-->
+<!--                  {   data: "alamat_prediction"},-->
+<!--                  {   data: "label_name" },-->
+<!--                  {   data: "proba_score" },-->
+<!--                  {   data: "selected" },-->
+<!--                  {   data: "count_label_name" },-->
+
+<!--              ],-->
 
 
-                  $("#check1").change(function () {
-                    if ($("#check1").is(":checked")) {
-                        table
-                        .columns( 3 )
-                        .search(1)
-                        .draw();
-                    }else{
-                        table
-                        .columns( 3 )
-                        .search(0)
-                        .draw();
-                    }
+<!--          });-->
 
-                    });
 
-                   $('#select_label').on('change', function() {
-                          if(this.value == "Compared"){
-                            table
-                            .columns( 5 )
-                            .search(1)
-                            .draw();
-                          }
+<!--                  $("#check1").change(function () {-->
+<!--                    if ($("#check1").is(":checked")) {-->
+<!--                        table-->
+<!--                        .columns( 3 )-->
+<!--                        .search(1)-->
+<!--                        .draw();-->
+<!--                    }else{-->
+<!--                        table-->
+<!--                        .columns( 3 )-->
+<!--                        .search(0)-->
+<!--                        .draw();-->
+<!--                    }-->
 
-                          if (this.value == "Not Compared"){
-                          table
-                            .columns( 5 )
-                            .search(0)
-                            .draw();
-                          }
+<!--                    });-->
 
-                          if(this.value === "Mix"){
-                            console.log("Mixe");
-                            table
-                            .columns( 5 )
-                            .search("")
-                            .draw();
+<!--                   $('#select_label').on('change', function() {-->
+<!--                          if(this.value == "Compared"){-->
+<!--                            table-->
+<!--                            .columns( 5 )-->
+<!--                            .search(1)-->
+<!--                            .draw();-->
+<!--                          }-->
 
-                            }
+<!--                          if (this.value == "Not Compared"){-->
+<!--                          table-->
+<!--                            .columns( 5 )-->
+<!--                            .search(0)-->
+<!--                            .draw();-->
+<!--                          }-->
 
-                    });
-    table.column(1).visible(true);
+<!--                          if(this.value === "Mix"){-->
+<!--                            console.log("Mixe");-->
+<!--                            table-->
+<!--                            .columns( 5 )-->
+<!--                            .search("")-->
+<!--                            .draw();-->
+
+<!--                            }-->
+
+<!--                    });-->
+<!--    table.column(1).visible(true);-->
 
     });
 

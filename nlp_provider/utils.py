@@ -1,6 +1,11 @@
 import pathlib
+from multiprocessing import Pool
 
+import pandas as pd
 from django.core.files.storage import FileSystemStorage
+from tqdm import tqdm
+
+from model.models import Perbandingan
 
 
 class ItemPembanding:
@@ -123,12 +128,6 @@ class PredictionId:
 class FilePembandingAsuransi:
     def __init__(self):
         pass
-        # self.nama_asuransi = nama_asuransi
-        # self.match_percentage = match_percentage
-        # self.status_finish = status_finish
-        # self.file_location = file_location
-        # self.file_location_result = file_location_result
-        # self.created_at = created_at
 
     def set_provider_list(self,provider_data_list):
         self.provider_data_list = provider_data_list
@@ -156,6 +155,12 @@ class FilePembandingAsuransi:
     def set_uploaded_file(self,w):
         self.uploaded_file = w
 
+    def set_perbandingan_model(self,perbandingan_model):
+        self.perbandingan_model = perbandingan_model
+
+
+    def get_perbandingan_model(self):
+        return self.perbandingan_model
 
     def get_lokasi_pembanding(self):
         print("lokasi file "+self.lokasi_file_pembanding)
@@ -183,9 +188,38 @@ class FileSystem:
 
 
     def save_file(self):
-        self.fst.save(self.file.get_uploaded_file().name,self.file.get_uploaded_file())
+        uploaded_file_name = self.file.get_nama_file_pembanding()
+        uploaded_file = self.file.get_uploaded_file()
+        if self.allowed_extension() is True:
+            self.saved_file = self.fst.save(uploaded_file_name,uploaded_file)
+            self.is_the_insurance_ever_compared()
+            return True
+        else:
+            return False
+
+    def get_saved_file(self):
+        return "media/"+self.saved_file
+
+    def allowed_extension(self):
+        extension = self.file.get_extension_file_pembanding()
+        allowed = True if extension == ".xlsx" else False
+        return allowed
 
 
+    def save_perbandingan_to_dashboard(self):
+        pass
+
+    def is_the_insurance_ever_compared(self):
+        nama_asuransi = self.file.get_nama_asuransi()
+        mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').values()
+        if not mydata:
+            perbandingan_model = models.Perbandingan(nama_asuransi=nama_asuransi,
+                                                     match_percentage=0,
+                                                     status_finish="PROCESSING", file_location=self.get_path())
+        else:
+            perbandingan_model = Perbandingan.objects.get(pk=mydata[0]["id"])
+
+        self.file.set_perbandingan_model(perbandingan_model)
 
 class Pembersih:
     def __init__(self,df):
@@ -206,7 +240,152 @@ class Pembersih:
         return self.df
 
     def _return_df(self):
-        print(self.df4)
         return self.df4
+
+
+class DFHandler:
+    def __init__(self,file_system):
+        self.file_system = file_system
+        self.df = pd.read_excel(self.file_system.get_saved_file())
+        self.pembersih = Pembersih(self.df)
+
+
+    def set_dataframe(self,dataframe):
+        self.df = dataframe
+
+    def get_data_frame(self):
+        df = self.pembersih._return_df()
+        print(df)
+        return df
+
+    def cacah_dataframe(self,df):
+        split_row_each = 800
+        start_index = 0
+        iteration_count = int(df.shape[0] / split_row_each)
+        sisa = df.shape[0] % split_row_each
+        sisa_row = iteration_count * split_row_each + sisa
+        df_list = []
+        for x in range(iteration_count):
+            end_index = start_index + split_row_each
+            df_new = df.iloc[start_index:end_index]
+            start_index = end_index
+            # df_list.append([df_new,lr])
+            df_list.append(df_new)
+        aw = lambda x, y: y if x > 0 else 0
+        df_last = df.iloc[start_index:aw(sisa, sisa_row)]
+        df_list.append(df_last)
+
+        return df_list
+
+    def set_df_dataset(self,df):
+        self.df_dataset = df
+
+    def pool_process_df(self,df):
+        # for df in df_list:
+        # dataframe Name and Age columns
+        pd.options.display.max_colwidth = None
+        provider_name_list = []
+        provider_name_predict_list = []
+        score_list = []
+        provider_object_list = []
+        df_non_duplicate = self.df_dataset
+
+        df_result = pd.DataFrame()
+        # for row in tqdm(df.itertuples(), total=df.shape[0]):
+        #     new_string = row.nama
+        #     alamat = row.alamat
+        #     ri = row.RI
+        #     rj = row.RJ
+        #
+        #     # replace with df_nama_alamat
+        #     nama_alamat = row.nama_alamat
+        #
+        #     provider_name = new_string
+        #
+        #     # course_title = apotik  klinik kimia farma  cilegon#jl. s.a. tirtayasa no 12
+        #
+        #     # val = (df_non_duplicate['course_title'].str.lower().str.strip().eq(nama_alamat))
+        #     val = (df_non_duplicate['course_title'].eq(nama_alamat))
+        #
+        #     res = df_non_duplicate[val]
+        #
+        #     provider_name_list.append(provider_name)
+        #     # load the model from disk
+        #     sample1 = vectorize_text(nama_alamat, tfidf_vec1)
+        #     y_preds = loaded_model1.predict(sample1)
+        #     p = loaded_model1.predict_proba(sample1)
+        #     ix = p.argmax(1).item()
+        #     nil = (f'{p[0, ix]:.2}')
+        #
+        #     provider_name_predict_list.append(y_preds)
+        #     score_list.append(nil)
+        #     provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0, ri, rj)
+        #
+        #     if not res.empty:
+        #         pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+        #         val_master = (df_non_duplicate['subject'].eq(pred))
+        #         res_master = df_non_duplicate[val_master]
+        #         al = res_master["alamat"].head(1)
+        #         try:
+        #             alamat_pred = al.values[0]
+        #             data_append = {
+        #                 "Provider Name": provider_name,
+        #                 "Alamat": alamat,
+        #                 "Prediction": y_preds,
+        #                 "Alamat Prediction": alamat_pred,
+        #                 "Score": nil,
+        #                 "Compared": 1,
+        #                 "Clean": new_string,
+        #                 "ri": ri,
+        #                 "rj": rj
+        #             }
+        #             provider_object.set_alamat_prediction(alamat_pred)
+        #             df1 = pd.DataFrame(data_append)
+        #         except:
+        #             print("error")
+        #
+        #
+        #     elif res.empty:
+        #
+        #         data_append = {
+        #             "Provider Name": provider_name,
+        #             "Alamat": alamat,
+        #             "Prediction": y_preds,
+        #             "Alamat Prediction": "-",
+        #             "Score": nil,
+        #             "Compared": 0,
+        #             "Clean": new_string,
+        #             "ri": ri,
+        #             "rj": rj
+        #         }
+        #         provider_object.set_alamat_prediction("-")
+        #         df1 = pd.DataFrame(data_append)
+        #     provider_object_list.append(provider_object)
+        #     df_result = df_result.append(df1, ignore_index=True)
+        #     # Provider_Perbandingan_data = models.Provider_Perbandingan(nama_asuransi=perbandingan_model.nama_asuransi,
+        #     #                                                           perbandingan_id=1,
+        #     #                                                           name=provider_name_label, address="-", selected=0)
+        #     # Provider_Perbandingan_data.save()
+
+        return df_result
+
+    def pool_handler(self):
+        df = self.get_data_frame()
+        df_nama = df['Nama Provider']
+        df_alamat = df['Alamat']
+        df_ri = df['RI']
+        df_rj = df['RJ']
+        df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
+        df_lengkap = pd.DataFrame(
+            {'nama': df_nama, 'alamat': df_alamat, 'RI': df_ri, 'RJ': df_rj, 'nama_alamat': df_nama_alamat})
+
+        # # # Split dataframe to many
+        df_list = self.cacah_dataframe(df_lengkap)
+
+        # # # Using multiprocess with pool as many as dataframe list
+        p = Pool(len(df_list))
+        # # # Use Pool Multiprocessing
+        x = p.map(self.pool_process_df, df_list)
+
 
 
