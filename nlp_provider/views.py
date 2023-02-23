@@ -7,6 +7,7 @@ import shutil
 from collections import defaultdict
 from functools import reduce
 from multiprocessing import Process, Pool
+from time import sleep
 
 import numpy as np
 import requests
@@ -18,30 +19,35 @@ from django.shortcuts import render
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
+import pandas as pde
 from requests import Response
 from django.http import JsonResponse
 from sklearn import metrics
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import precision_score, f1_score, accuracy_score
-import django
-django.setup()
+
 from model import models
 from model.views import create_model
-from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem
+from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem, \
+    DFHandler
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 from django.core.cache import cache
+import django
+django.setup()
 # from .forms import UploadFileForm
 # Create your views here.
-# df_dataset = cache.get('dataset')
-# if df_dataset is None:
-#     df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
-#     cache.set('dataset', df_dataset)
-#
-# new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
-# df_dataset["course_titles"] = new_course_title[0]
-# p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
-# df_non_duplicate = p._return_df()
+df_dataset = cache.get('dataset')
+if df_dataset is None:
+    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+    cache.set('dataset', df_dataset)
+
+new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
+df_dataset["course_titles"] = new_course_title[0]
+p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
+df_non_duplicate = p._return_df()
+
+
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
@@ -123,10 +129,10 @@ def perbandingan_rev(request):
         file_location = "media"+request.POST["file_location"]
 
 
-    try:
-        dfs = pd.read_excel(file_location)
-    except:
-        print("dataframe not founds")
+    # try:
+    #     dfs = pd.read_excel(file_location)
+    # except:
+    #     print("dataframe not founds")
     provider_list = []
     if dfs is not None:
         for index, row in dfs.iterrows():
@@ -173,16 +179,11 @@ def perbandingan(request):
         print(file_location)
         loop_delete(file_location)
 
-
-    # elif request.method == "GET":
-        # file_location="media/demo.xlsx"
-    # else:
-    #     file_location = "-"
-    try:
-        dfs = pd.read_excel(file_location)
-
-    except Exception as e:
-        print("dataframe not founde "+ str(e))
+    # try:
+    #     dfs = pd.read_excel(file_location)
+    #
+    # except Exception as e:
+    #     print("dataframe not founde "+ str(e))
     provider_list = []
     if dfs is not None:
         for index, row in dfs.iterrows():
@@ -200,7 +201,7 @@ def perbandingan(request):
 
             provider_list.append(provider_object)
 
-
+    file_location = "-"
     context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":file_location}
 
 
@@ -1106,6 +1107,8 @@ def update_perbandingan_excel():
 def perbandingan_result(request):
     global uploaded_file
     global contexte
+    global perbandingan_model
+
     if request.method == 'POST':
         filePembandingAsuransi = FilePembandingAsuransi()
         fileSystem = FileSystem(filePembandingAsuransi)
@@ -1115,51 +1118,33 @@ def perbandingan_result(request):
 
         if not bool(request.FILES.get('perbandinganModel',False)) :
             filePembandingAsuransi.set_uploaded_file(request.POST['perbandinganModelFile'])
-            print("ae")
             filePembandingAsuransi.set_extension_file_pembanding()
             filePembandingAsuransi.set_nama_file_pembanding()
 
         else:
             filePembandingAsuransi.set_uploaded_file(request.FILES['perbandinganModel'])
-            print("ae2")
-            print(request.FILES['perbandinganModel'])
             filePembandingAsuransi.set_nama_file_pembanding()
             filePembandingAsuransi.set_extension_file_pembanding()
-            fileSystem.save_file()
+            if fileSystem.save_file() is not True:
+                return HttpResponse("Extension / Format tidak diizinkan")
 
 
-        # JIKA FILE EKSTENSI TIDAK DIIZINKAN RETURN FALSE
-        if filePembandingAsuransi.get_extension_file_pembanding() != ".xlsx":
-            return HttpResponse("Extension / Format tidak diizinkan")
+        perbandingan_model  = filePembandingAsuransi.get_perbandingan_model()
 
-        uploaded_file_path = fileSystem.get_path()
+        df_handler = DFHandler(fileSystem)
+        df_handler.set_df_dataset(df_non_duplicate)
+        df_handler.pool_handler()
 
-
-        insurance_data = is_file_with_this_insurance_exists(filePembandingAsuransi.get_nama_asuransi())
-
-        global perbandingan_model
-
-        if not insurance_data:
-            perbandingan_model = models.Perbandingan(nama_asuransi=filePembandingAsuransi.get_nama_asuransi(), match_percentage=0,
-                                                     status_finish="PROCESSING", file_location=uploaded_file_path)
-        else:
-            perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
-
-
-        dfe = pd.read_excel(filePembandingAsuransi.get_uploaded_file())
-        print(dfe)
-        # pembersih = Pembersih(dfe)
-        # df = pembersih._return_df()
         # pool_handler(df,perbandingan_model)
-        #
-        #
-        # dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
-        # prediction_list = []
-        #
-        # create_result_file(dfs,prediction_list)
-        # provider_list = create_result_file_final(dfs,prediction_list)
-        # print(perbandingan_model.file_location_result)
-        # contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model.file_location_result}
-        # return render(request, 'matching/perbandingan.html', context=contexte)
 
-    # return render(request, 'matching/perbandingan.html',context=contexte)
+
+    #     dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
+    #     prediction_list = []
+    #
+    #     create_result_file(dfs,prediction_list)
+    #     provider_list = create_result_file_final(dfs,prediction_list)
+    #     print(perbandingan_model.file_location_result)
+    #     contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model.file_location_result}
+    #     return render(request, 'matching/perbandingan.html', context=contexte)
+    contexte = {"list":[]}
+    return render(request, 'matching/perbandingan.html',context=contexte)
