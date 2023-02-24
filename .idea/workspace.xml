@@ -5,6 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ec4b836-b3a2-487c-8ac7-00cf0b5546fa" name="Changes" comment="er">
+      <change afterPath="$PROJECT_DIR$/class/DFHandler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/ExcelBacaTulis.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/FilePembandingAsuransi.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/FileSystem.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/ItemPembanding.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/MasterData.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/Pembersih.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/Prediction.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/class/PredictionId.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
@@ -18,8 +27,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="HTML File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
