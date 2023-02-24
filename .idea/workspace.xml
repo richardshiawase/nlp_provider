@@ -5,19 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ec4b836-b3a2-487c-8ac7-00cf0b5546fa" name="Changes" comment="er">
-      <change afterPath="$PROJECT_DIR$/class/DFHandler.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/ExcelBacaTulis.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/FilePembandingAsuransi.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/FileSystem.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/ItemPembanding.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/MasterData.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/Pembersih.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/Prediction.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/class/PredictionId.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/classM/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/DFHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/DFHandler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/ExcelBacaTulis.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/ExcelBacaTulis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/FilePembandingAsuransi.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/FilePembandingAsuransi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/FileSystem.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/FileSystem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/ItemPembanding.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/ItemPembanding.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/MasterData.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/MasterData.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/Pembersih.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/Pembersih.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/Prediction.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/Prediction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/class/PredictionId.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/PredictionId.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/matching/perbandingan.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/matching/perbandingan.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,6 +68,9 @@
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\matching" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\master" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\User\PycharmProjects\nlp_provider\classM" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
