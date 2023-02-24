@@ -4,8 +4,12 @@ from multiprocessing import Pool
 import pandas as pd
 from tqdm import tqdm
 
-import ExcelBacaTulis,Pembersih,ItemPembanding
 import warnings
+
+from classM.ExcelBacaTulis import ExcelBacaTulis
+from classM.ItemPembanding import ItemPembanding
+from classM.Pembersih import Pembersih
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 class DFHandler:
     def __init__(self):
@@ -15,6 +19,7 @@ class DFHandler:
         self.loaded_model1 = pickle.load(open(filename, 'rb'))
         self.ex = ExcelBacaTulis()
         self.provider_list = []
+        self.df = None
 
     def set_file_system(self,fs):
         self.file_system = fs
@@ -24,7 +29,8 @@ class DFHandler:
         self.pembersih = Pembersih(self.df)
 
     def set_dataframe(self,dataframe):
-        self.df = dataframe
+        if dataframe is not None:
+            self.df = dataframe
 
     def get_data_frame(self):
         df = self.pembersih._return_df()
@@ -174,6 +180,7 @@ class DFHandler:
 
 
     def add_to_provider_list(self):
+        self.provider_list.clear()
         if self.df is not None:
             for index, row in self.df.iterrows():
                 provider_name = row['Provider Name']
@@ -192,10 +199,10 @@ class DFHandler:
         return self.provider_list
 
     def get_provider_list_json_response(self):
-        provider_list = []
+        ls = []
         for obj in self.provider_list:
-            provider_list.append(obj.__dict__)
-        return provider_list
+            ls.append(obj.__dict__)
+        return ls
     # def search(self):
     #     for index_master, row_master in df_master.iterrows():
     #         id = row_master['ProviderId']

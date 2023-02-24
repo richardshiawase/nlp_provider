@@ -110,12 +110,11 @@
             var result = "{% url "result" %}";
             $.ajax(
                 {
-                    dataType: 'text',
+                    dataType: 'json',
                     method:"POST",
                     url: "{% url 'result' %}",
                     data:{
-                        "perbandinganModelFile": data.file_location,
-                        "insurance_option": data.nama_asuransi,
+                        "processed_file":JSON.stringify(data),
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
                     success: function( data )

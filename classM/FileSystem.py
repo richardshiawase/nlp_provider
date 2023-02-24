@@ -26,8 +26,10 @@ class FileSystem:
             return False
 
     def get_saved_file(self):
-        return "media/"+self.saved_file
-
+        try:
+            return "media/"+self.saved_file
+        except:
+            return self.get_file_loc_result()
     def allowed_extension(self):
         extension = self.file.get_extension_file_pembanding()
         allowed = True if extension == ".xlsx" else False
@@ -54,7 +56,7 @@ class FileSystem:
         else:
             perbandingan_model = Perbandingan.objects.get(pk=mydata[0]["id"])
 
-        self.file.set_perbandingan_model(perbandingan_model)
+        # self.file.set_perbandingan_model(perbandingan_model)
 
     def save_perbandingan_model(self):
         # # # Save Perbandingan Model
