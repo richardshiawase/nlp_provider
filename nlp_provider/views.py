@@ -30,8 +30,8 @@ from sklearn.metrics import precision_score, f1_score, accuracy_score
 
 from model import models
 from model.views import create_model
-# from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem, \
-#     DFHandler, ExcelBacaTulis
+from classM import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem, \
+    DFHandler, ExcelBacaTulis
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 from django.core.cache import cache
