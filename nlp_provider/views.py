@@ -22,19 +22,20 @@ import pandas as pd
 import pandas as pde
 from requests import Response
 from django.http import JsonResponse
+import django
+django.setup()
 from sklearn import metrics
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import precision_score, f1_score, accuracy_score
 
 from model import models
 from model.views import create_model
-from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem, \
-    DFHandler
+# from .utils import ItemPembanding, Prediction, MasterData, PredictionId, Pembersih, FilePembandingAsuransi, FileSystem, \
+#     DFHandler, ExcelBacaTulis
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 from django.core.cache import cache
-import django
-django.setup()
+
 # from .forms import UploadFileForm
 # Create your views here.
 df_dataset = cache.get('dataset')
@@ -46,7 +47,7 @@ new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, ex
 df_dataset["course_titles"] = new_course_title[0]
 p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
 df_non_duplicate = p._return_df()
-
+df_handler = DFHandler()
 
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
@@ -120,55 +121,48 @@ def perbandingan_rev(request):
     global provider_liste
     global file_location
     provider_liste = []
-    response = requests.get('https://asateknologi.id/api/insuranceall')
-    response = response.json()
-    dfs = None
-    prediction_dict = {}
-    prediction_dict = defaultdict(lambda:0,prediction_dict)
+    # dfs = None
+    # prediction_dict = {}
+    # prediction_dict = defaultdict(lambda:0,prediction_dict)
     if request.method == "POST":
         file_location = "media"+request.POST["file_location"]
 
+    # # # TAMPILKAN PROVIDER
+    # # # MASUKKAN DF KE LIST PROVIDER
+    df_handler.set_dataframe(dfs)
+    df_handler.add_to_provider_list()
+    provider_list_json_response = df_handler.get_provider_list_json_response()
 
-    # try:
-    #     dfs = pd.read_excel(file_location)
-    # except:
-    #     print("dataframe not founds")
-    provider_list = []
-    if dfs is not None:
-        for index, row in dfs.iterrows():
-            provider_name = row['Provider Name']
-            y_preds = row["Prediction"]
-            alamat = row['Alamat']
-            alamat_prediksi = row['Alamat Prediction']
-            nil = row["Score"]
-            compared = row["Compared"]
-            # ri = row['RI']
-            # rj = row['RJ']
-            # city = row["City"]
-            # print(city)
-            prediction_dict[y_preds] += 1
 
-            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,0,0)
-            provider_object.set_selected(compared)
-            provider_object.set_alamat_prediction(alamat_prediksi)
-            provider_list.append(provider_object.__dict__)
+    # if dfs is not None:
+    #     for index, row in dfs.iterrows():
+    #         provider_name = row['Provider Name']
+    #         y_preds = row["Prediction"]
+    #         alamat = row['Alamat']
+    #         alamat_prediksi = row['Alamat Prediction']
+    #         nil = row["Score"]
+    #         compared = row["Compared"]
+    #         prediction_dict[y_preds] += 1
+    #         provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,0,0)
+    #         provider_object.set_selected(compared)
+    #         provider_object.set_alamat_prediction(alamat_prediksi)
+    #         provider_list.append(provider_object.__dict__)
 
 
     # MAP THE COUNT !
-    for provider_dict in provider_list:
-        for key, values in prediction_dict.items():
-            if(key == provider_dict["label_name"]):
-                provider_dict['count_label_name'] = values
+    # for provider_dict in provider_list:
+    #     for key, values in prediction_dict.items():
+    #         if(key == provider_dict["label_name"]):
+    #             provider_dict['count_label_name'] = values
 
 
-    return JsonResponse(provider_list, safe=False)
+    return JsonResponse(provider_list_json_response, safe=False)
 
 
 
 def perbandingan(request):
     global provider_liste
     global file_location
-    # file_location = "-"
     provider_liste = []
     response = requests.get('https://asateknologi.id/api/insuranceall')
     response = response.json()
@@ -178,33 +172,16 @@ def perbandingan(request):
         file_location = "media"+request.POST["file_location"]
         print(file_location)
         loop_delete(file_location)
+        df_handler.read_from_excel(file_location)
 
-    # try:
-    #     dfs = pd.read_excel(file_location)
-    #
-    # except Exception as e:
-    #     print("dataframe not founde "+ str(e))
-    provider_list = []
-    if dfs is not None:
-        for index, row in dfs.iterrows():
-            provider_name = row['Provider Name']
-            y_preds = row["Prediction"]
-            alamat = row["Alamat"]
-            alamat_prediction = row["Alamat Prediction"]
-            nil = row["Score"]
-            compared = row["Compared"]
-            # ri= row["RI"]
-            # rj = row["RJ"]
-            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,0,0)
-            provider_object.set_selected(compared)
-            provider_object.set_alamat_prediction(alamat_prediction)
+        # # # TAMPILKAN PROVIDER
+        # # # MASUKKAN DF KE LIST PROVIDER
+        df_handler.add_to_provider_list()
+        provider_list = df_handler.get_provider_list()
+        context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":file_location}
+        return render(request, 'matching/perbandingan.html', context=context)
 
-            provider_list.append(provider_object)
-
-    file_location = "-"
-    context = {"list_insurance":response.get("val"),"list":provider_list,"link_result":file_location}
-
-
+    context = {}
     return render(request, 'matching/perbandingan.html',context=context)
 
 
@@ -317,6 +294,7 @@ def upload_master(request):
     except:
         print("dataframe not found")
     provider_list = []
+    # # # MASUKKAN DF KE LIST
     if dfs is not None:
         for index, row in dfs.iterrows():
             provider_name = row['Provider Name']
@@ -674,33 +652,36 @@ def read_link_result_and_delete_provider_name(nama_provider):
 
 def loop_delete(link_result):
     print("loop data2 ",link_result)
-    df = pd.read_excel("Master_Add.xlsx")
     global dfs
     global deo
     global deoq
     global dw
     deo=None
     deoq=None
+
+
+    file_master = "Master_Add.xlsx"
+    df_handler.read_from_excel(file_master)
+    df = df_handler.get_data_frame()
+
+
     dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
-    dw = pd.read_excel(dat[0]["file_location"])
-    print(dat[0]["file_location"])
-    dfs = pd.read_excel(link_result)
+    file_location = dat[0]["file_location"]
+
+    df_handler.read_from_excel(file_location)
+    dw = df_handler.get_data_frame()
+
+    df_handler.read_from_excel(link_result)
+    dfs = df_handler.get_data_frame()
+
     for index, row in tqdm(df.iterrows(),total=df.shape[0]):
-        # nama_provider = row['Provider Name']
         nama_provider = row['provider_name']
         read_link_result_and_delete_provider_name2(nama_provider,link_result)
 
 
 
     dfs.to_excel(link_result, sheet_name='Sheet1', index=False)
-    # dw.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
 
-    # if(deo is not None and deoq is not None):
-        # deo.to_excel(link_result, sheet_name='Sheet1', index=False)
-        # deoq.to_excel(dat[0]["file_location"], sheet_name='Sheet1', index=False)
-        # deoq.to_excel("tay.xlsx", sheet_name='Sheet1', index=False)
-        # deo.to_excel("onkar.xlsx", sheet_name='Sheet1', index=False)
-        # dfs.to_excel("to.xlsx",sheet_name='Sheet1',index=False)
 
 
 
@@ -1118,32 +1099,34 @@ def perbandingan_result(request):
 
         if not bool(request.FILES.get('perbandinganModel',False)) :
             filePembandingAsuransi.set_uploaded_file(request.POST['perbandinganModelFile'])
-            filePembandingAsuransi.set_extension_file_pembanding()
-            filePembandingAsuransi.set_nama_file_pembanding()
-
         else:
             filePembandingAsuransi.set_uploaded_file(request.FILES['perbandinganModel'])
-            filePembandingAsuransi.set_nama_file_pembanding()
-            filePembandingAsuransi.set_extension_file_pembanding()
             if fileSystem.save_file() is not True:
                 return HttpResponse("Extension / Format tidak diizinkan")
 
 
-        perbandingan_model  = filePembandingAsuransi.get_perbandingan_model()
+        perbandingan_model=filePembandingAsuransi.get_perbandingan_model()
 
-        df_handler = DFHandler(fileSystem)
+        df_handler = DFHandler()
+        df_handler.set_file_system(fileSystem)
+        file_excel = fileSystem.get_saved_file()
+        df_handler.read_from_excel(file_excel)
         df_handler.set_df_dataset(df_non_duplicate)
         df_handler.pool_handler()
+        df_handler.create_result_file()
 
-        # pool_handler(df,perbandingan_model)
 
 
-    #     dfs = pd.read_excel("media/"+perbandingan_model.file_location_result)
-    #     prediction_list = []
-    #
-    #     create_result_file(dfs,prediction_list)
-    #     provider_list = create_result_file_final(dfs,prediction_list)
-    #     print(perbandingan_model.file_location_result)
+        file_loc_result = fileSystem.get_file_loc_result()
+        df_handler.read_from_excel(file_loc_result)
+        df_handler.get_data_frame()
+        df_handler.create_result_id_file()
+
+        # prediction_list = []
+
+        # create_result_file(dfs,prediction_list)
+        # provider_list = create_result_file_final(dfs,prediction_list)
+        # print(perbandingan_model.file_location_result)
     #     contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model.file_location_result}
     #     return render(request, 'matching/perbandingan.html', context=contexte)
     contexte = {"list":[]}
