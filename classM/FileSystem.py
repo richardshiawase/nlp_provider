@@ -46,20 +46,39 @@ class FileSystem:
     def save_perbandingan_to_dashboard(self):
         pass
 
+    def get_lokasi_file_pembanding(self):
+        return self.file.get_lokasi_pembanding()
+
+    def set_perbandingan_model(self,mydata):
+        self.file.set_perbandingan_model(mydata)
+        self.file.set_lokasi_file_pembanding()
+        self.file.set_nama_asuransi_dari_model()
+
+    def get_perbandingan_from_nama_asuransi(self,nama_asuransi):
+        mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').first()
+        if not mydata:
+            return False
+        return mydata
+
     def is_the_insurance_ever_compared(self):
         nama_asuransi = self.file.get_nama_asuransi()
         mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').values()
+
         if not mydata:
+            print("ATAS")
             perbandingan_model = models.Perbandingan(nama_asuransi=nama_asuransi,
                                                      match_percentage=0,
                                                      status_finish="PROCESSING", file_location=self.get_path())
-        else:
-            perbandingan_model = Perbandingan.objects.get(pk=mydata[0]["id"])
 
-        # self.file.set_perbandingan_model(perbandingan_model)
+        else:
+            print("BAWAH")
+            perbandingan_model = Perbandingan.objects.filter(pk=mydata[0]["id"]).values()
+
+        self.file.set_perbandingan_model(perbandingan_model)
 
     def save_perbandingan_model(self):
         # # # Save Perbandingan Model
         perbandingan_model = self.get_perbandingan_model()
-        perbandingan_model.file_location_result = "/" + perbandingan_model.nama_asuransi + "_result.xlsx"
+        nama_asuransi = self.get_nama_asuransi()
+        perbandingan_model.file_location_result = "/" + nama_asuransi + "_result.xlsx"
         perbandingan_model.save()

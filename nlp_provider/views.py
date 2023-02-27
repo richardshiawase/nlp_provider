@@ -47,15 +47,15 @@ from django.core.cache import cache
 
 # from .forms import UploadFileForm
 # Create your views here.
-# df_dataset = cache.get('dataset')
-# if df_dataset is None:
-#     df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
-#     cache.set('dataset', df_dataset)
-#
-# new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
-# df_dataset["course_titles"] = new_course_title[0]
-# p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
-# df_non_duplicate = p._return_df()
+df_dataset = cache.get('dataset')
+if df_dataset is None:
+    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+    cache.set('dataset', df_dataset)
+
+new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
+df_dataset["course_titles"] = new_course_title[0]
+p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
+df_non_duplicate = p._return_df()
 df_handler = DFHandler()
 
 filename = 'tfidf_vec.pickle'
@@ -1070,30 +1070,28 @@ def perbandingan_result(request):
 
         # # # REQUEST DARI PROSES FILE
         if not bool(request.FILES.get('perbandinganModel', False)):
-            pembanding_model_object = json.loads(request.POST['processed_file'])
-            filePembandingAsuransi.set_perbandingan_model(pembanding_model_object)
-            file_excel = pembanding_model_object["file_location"]
+            pembanding_model_return = json.loads(request.POST['processed_file'])
+            nama_asuransi = pembanding_model_return["nama_asuransi"]
+            perbandingan_model_obj = fileSystem.get_perbandingan_from_nama_asuransi(nama_asuransi)
+            fileSystem.set_perbandingan_model(perbandingan_model_obj)
+            file_excel = fileSystem.get_lokasi_file_pembanding()
 
         # # # REQUEST DARI UPLOAD FILE
         else:
-            filePembandingAsuransi.set_uploaded_file(request.FILES['perbandinganModel'])
-            filePembandingAsuransi.set_nama_asuransi(request.)
+            nama_asuransi = request.POST['insurance_option']
+            perbandingan_model = request.FILES['perbandinganModel']
+            filePembandingAsuransi.set_uploaded_file(perbandingan_model)
+            filePembandingAsuransi.set_nama_asuransi(nama_asuransi)
             if fileSystem.save_file() is not True:
                 return HttpResponse("Extension / Format tidak diizinkan")
-            file_excel = fileSystem.get_saved_file()
 
-        perbandingan_model = fileSystem.get_perbandingan_model()
-        print(perbandingan_model)
-        # df_handler = DFHandler()
-        # df_handler.set_file_system(fileSystem)
-        # df_handler.read_from_excel(file_excel)
-        # df_handler.set_df_dataset(df_non_duplicate)
-        # df_handler.pool_handler()
-        # df_handler.create_result_file()
-        #
+        df_handler.set_df_dataset(df_non_duplicate)
+        df_handler.proses_perbandingan_df(fileSystem)
+        df_handler.create_result_file()
+
         # file_loc_result = fileSystem.get_file_loc_result()
         # df_handler.read_from_excel(file_loc_result)
-        # df_handler.get_data_frame()
+        # print(df_handler.get_data_frame())
         # df_handler.create_result_id_file()
 
         # prediction_list = []

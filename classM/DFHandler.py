@@ -34,7 +34,6 @@ class DFHandler:
 
     def get_data_frame(self):
         df = self.pembersih._return_df()
-        print(df)
         return df
 
     def cacah_dataframe(self,df):
@@ -172,6 +171,11 @@ class DFHandler:
         # # # Use Pool Multiprocessing
         self.concatenated_dataframe = p.map(self.pool_process_df, df_list)
 
+    def proses_perbandingan_df(self,fileSystem):
+        self.set_file_system(fileSystem)
+        file_excel = self.file_system.get_lokasi_file_pembanding()
+        self.read_from_excel(file_excel)
+        self.pool_handler()
 
     def create_result_file(self):
         nama_asuransi = self.file_system.get_nama_asuransi()
@@ -242,7 +246,7 @@ class DFHandler:
             {'id': id_list, 'Master Name': provider_name_list, 'Prediction': provider_name_predict_list,
              'Score': score_list})
 
-        self.ex.write_to_excel(nama_asuransi,"_result_id.xlsx",df)
+        self.ex.write_to_excel(nama_asuransi,"_result_id.xlsx",dfs)
 
         return
 
