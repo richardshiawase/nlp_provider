@@ -14,10 +14,9 @@ class FilePembandingAsuransi:
     def set_nama_file_pembanding(self):
         # self.nama_file = pathlib.Path("media/"+self.uploaded_file.name)
         self.nama_file = self.uploaded_file.name
-        self.set_lokasi_file_pembanding()
 
     def set_lokasi_file_pembanding(self):
-        self.lokasi_file_pembanding = "media/"+self.uploaded_file.name
+        self.lokasi_file_pembanding = self.perbandingan_model.file_location
 
 
     def set_extension_file_pembanding(self):
@@ -26,7 +25,11 @@ class FilePembandingAsuransi:
         except:
             self.file_extension = pathlib.Path("media/" +self.uploaded_file.name).suffix
     def set_nama_asuransi(self,nama_asuransi):
+        print("nama asuransi "+nama_asuransi)
         self.nama_asuransi = nama_asuransi
+
+    def set_nama_asuransi_dari_model(self):
+        self.nama_asuransi = self.get_perbandingan_model().nama_asuransi
 
     def set_uploaded_file(self,w):
         self.uploaded_file = w
@@ -60,3 +63,6 @@ class FilePembandingAsuransi:
 
     def get_nama_file_pembanding(self):
         return self.nama_file
+
+    def create_hasil_perbandingan_file(self):
+        pass

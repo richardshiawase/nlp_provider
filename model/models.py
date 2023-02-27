@@ -21,9 +21,6 @@ class Perbandingan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-    def __str__(self):
-        return f"{self.nama_asuransi} dengan persentase match {self.match_percentage} dengan status selesai {self.status_finish} lokasi perbandingan {self.file_location} dan lokasi result {self.file_location_result}"
-
 
 class Provider_Perbandingan(models.Model):
     nama_asuransi = models.CharField(max_length=500)
