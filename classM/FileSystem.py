@@ -60,6 +60,8 @@ class FileSystem:
             return False
         return mydata
 
+
+
     def is_the_insurance_ever_compared(self):
         nama_asuransi = self.file.get_nama_asuransi()
         mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').values()

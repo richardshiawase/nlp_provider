@@ -22,6 +22,25 @@ class Perbandingan(models.Model):
 
 
 
+
+    def say_hello(self):
+        print("Hello Guys")
+
+    @staticmethod
+    def get_model_from_filter(nama_asuransi):
+        mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').first()
+        if not mydata:
+            return False
+        return mydata
+
+    def get_nama_asuransi_model(self):
+        return self.nama_asuransi
+
+    def get_lokasi_excel_pembanding(self):
+        return self.file_location
+
+
+
 class Provider_Perbandingan(models.Model):
     nama_asuransi = models.CharField(max_length=500)
     perbandingan_id = models.CharField(max_length=2)
