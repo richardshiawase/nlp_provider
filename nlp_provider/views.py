@@ -25,6 +25,7 @@ from classM.ItemPembanding import ItemPembanding
 from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
 from classM.PredictionId import PredictionId
+from classM.Column import  Column
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
@@ -1064,30 +1065,57 @@ def perbandingan_result(request):
     global perbandingan_model
     file_excel = None
 
+    df_handler.set_df_dataset(df_non_duplicate)
+
     if request.method == 'POST':
         filePembandingAsuransi = FilePembandingAsuransi()
         fileSystem = FileSystem(filePembandingAsuransi)
-
+        perbandingan_model_obj = None
         # # # REQUEST DARI PROSES FILE
         if not bool(request.FILES.get('perbandinganModel', False)):
             pembanding_model_return = json.loads(request.POST['processed_file'])
             nama_asuransi = pembanding_model_return["nama_asuransi"]
-            perbandingan_model_obj = fileSystem.get_perbandingan_from_nama_asuransi(nama_asuransi)
-            fileSystem.set_perbandingan_model(perbandingan_model_obj)
-            file_excel = fileSystem.get_lokasi_file_pembanding()
+            perbandingan_model_obj = Perbandingan.get_model_from_filter(nama_asuransi)
 
         # # # REQUEST DARI UPLOAD FILE
-        else:
-            nama_asuransi = request.POST['insurance_option']
-            perbandingan_model = request.FILES['perbandinganModel']
-            filePembandingAsuransi.set_uploaded_file(perbandingan_model)
-            filePembandingAsuransi.set_nama_asuransi(nama_asuransi)
-            if fileSystem.save_file() is not True:
-                return HttpResponse("Extension / Format tidak diizinkan")
+        # else:
+        #     nama_asuransi = request.POST['insurance_option']
+        #     perbandingan_model = request.FILES['perbandinganModel']
+        #     filePembandingAsuransi.set_uploaded_file(perbandingan_model)
+        #     filePembandingAsuransi.set_nama_asuransi(nama_asuransi)
+        #     if fileSystem.save_file() is not True:
+        #         return HttpResponse("Extension / Format tidak diizinkan")
 
-        df_handler.set_df_dataset(df_non_duplicate)
-        df_handler.proses_perbandingan_df(fileSystem)
+
+
+        # read excel by lokasi excel pembanding
+        lokasi_excel = perbandingan_model_obj.get_lokasi_excel_pembanding()
+
+        # get the df
+        df = pd.read_excel(lokasi_excel)
+
+        # specify the column to be looped
+        df_nama = df['Nama Provider']
+        df_alamat = df['Alamat']
+        df_ri = df['RI']
+        df_rj = df['RJ']
+        df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
+
+        # concate all df
+        result_dataframe = pd.DataFrame(
+            {'nama': df_nama, 'alamat': df_alamat, 'RI': df_ri, 'RJ': df_rj, 'nama_alamat': df_nama_alamat}
+        )
+
+        # loop the df with specified column
+        df_handler.pool_handler(result_dataframe)
+
+
+
+        # create result file
         df_handler.create_result_file()
+
+
+        # filePembandingAsuransi.create_result_excel()
 
         # file_loc_result = fileSystem.get_file_loc_result()
         # df_handler.read_from_excel(file_loc_result)

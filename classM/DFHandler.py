@@ -153,18 +153,10 @@ class DFHandler:
         return df_result
 
 
-    def pool_handler(self):
-        df = self.get_data_frame()
-        df_nama = df['Nama Provider']
-        df_alamat = df['Alamat']
-        df_ri = df['RI']
-        df_rj = df['RJ']
-        df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
-        df_lengkap = pd.DataFrame(
-            {'nama': df_nama, 'alamat': df_alamat, 'RI': df_ri, 'RJ': df_rj, 'nama_alamat': df_nama_alamat})
+    def pool_handler(self,dataframe):
 
         # # # Split dataframe to many
-        df_list = self.cacah_dataframe(df_lengkap)
+        df_list = self.cacah_dataframe(dataframe)
 
         # # # Using multiprocess with pool as many as dataframe list
         p = Pool(len(df_list))
@@ -173,9 +165,10 @@ class DFHandler:
 
     def proses_perbandingan_df(self,fileSystem):
         self.set_file_system(fileSystem)
+        # GET EXCEL PEMBANDING LOKASI
         file_excel = self.file_system.get_lokasi_file_pembanding()
+        # READ FROM EXCEL
         self.read_from_excel(file_excel)
-        self.pool_handler()
 
     def create_result_file(self):
         nama_asuransi = self.file_system.get_nama_asuransi()
