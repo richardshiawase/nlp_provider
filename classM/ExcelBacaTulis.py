@@ -9,14 +9,14 @@ class ExcelBacaTulis:
         return self.df
 
     def write_to_excel(self,nama,prefix_subject_name,dataframe):
+        print("Write to Excel")
         # # # Declare write
         writer = pd.ExcelWriter('media/' + nama + prefix_subject_name + ".xlsx",
                                 engine='xlsxwriter')
-        # # # Concat list of dataframe
-        full_dfw = pd.concat(list(dataframe), ignore_index=True)
+
 
         # # # Convert the dataframe to an XlsxWriter Excel object.
-        full_dfw.to_excel(writer, sheet_name='Sheet1', index=False)
+        dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
 
         # # # Close the Pandas Excel writer and output the Excel file.
         writer.close()
