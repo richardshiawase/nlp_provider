@@ -6,9 +6,8 @@ class Pembersih:
         self._kecilkan_tulisan()
     def _kecilkan_tulisan(self):
         self.df4 = self.df3.applymap(str.lower)
-
     def _hilangkan_tanda_baca(self):
-        self.df3 = self.df2.replace(to_replace=['\.','\&'],value='',inplace=False,regex=True)
+        self.df3 = self.df2.replace(to_replace=['\.','\&',","],value='',inplace=False,regex=True)
 
     def _rubah_dataframe_astype_str(self):
         self.df2 = self.df1.astype(str)

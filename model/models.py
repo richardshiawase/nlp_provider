@@ -21,11 +21,6 @@ class Perbandingan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-
-
-    def say_hello(self):
-        print("Hello Guys")
-
     @staticmethod
     def get_model_from_filter(nama_asuransi):
         mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').first()
@@ -36,8 +31,26 @@ class Perbandingan(models.Model):
     def get_nama_asuransi_model(self):
         return self.nama_asuransi
 
+    def set_nama_asuransi_model(self,nama_asuransi):
+        self.nama_asuransi = nama_asuransi
+
+    def get_file_location_result(self):
+        return "media"+self.file_location_result
+
     def get_lokasi_excel_pembanding(self):
+        print("Get Excel Pembanding")
         return self.file_location
+
+    def set_file_location(self,file_location):
+        self.file_location = file_location
+
+    def save_perbandingan_model(self):
+        # # # Save Perbandingan Model
+        nama_asuransi = self.get_nama_asuransi_model()
+        self.nama_asuransi = nama_asuransi
+        self.match_percentage = 0.00
+        self.file_location_result = "/" + nama_asuransi + "_result.xlsx"
+        self.save()
 
 
 

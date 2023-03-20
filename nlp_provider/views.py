@@ -19,13 +19,12 @@ from django.shortcuts import render
 import warnings
 
 from classM.DFHandler import DFHandler
-from classM.FilePembandingAsuransi import FilePembandingAsuransi
-from classM.FileSystem import FileSystem
 from classM.ItemPembanding import ItemPembanding
 from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
+from classM.PerbandinganResult import PerbandinganResult
 from classM.PredictionId import PredictionId
-from classM.Column import  Column
+from classM.ColumnToRead import ColumnToRead
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
@@ -70,6 +69,8 @@ def index(request):
 
     pembanding_all = models.Perbandingan.objects.all()
     for pembanding in pembanding_all:
+        print(pembanding.file_location.split("media"))
+
         pembanding.file_location = pembanding.file_location.split("media")[1]
         list_pembanding.append(pembanding)
 
@@ -124,8 +125,7 @@ def perbandingan_rev(request):
     global file_location
     provider_liste = []
     dfs = None
-    # prediction_dict = {}
-    # prediction_dict = defaultdict(lambda:0,prediction_dict)
+
     if request.method == "POST":
         file_location = "media" + request.POST["file_location"]
 
@@ -135,25 +135,6 @@ def perbandingan_rev(request):
     df_handler.add_to_provider_list()
     provider_list_json_response = df_handler.get_provider_list_json_response()
 
-    # if dfs is not None:
-    #     for index, row in dfs.iterrows():
-    #         provider_name = row['Provider Name']
-    #         y_preds = row["Prediction"]
-    #         alamat = row['Alamat']
-    #         alamat_prediksi = row['Alamat Prediction']
-    #         nil = row["Score"]
-    #         compared = row["Compared"]
-    #         prediction_dict[y_preds] += 1
-    #         provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0,0,0)
-    #         provider_object.set_selected(compared)
-    #         provider_object.set_alamat_prediction(alamat_prediksi)
-    #         provider_list.append(provider_object.__dict__)
-
-    # MAP THE COUNT !
-    # for provider_dict in provider_list:
-    #     for key, values in prediction_dict.items():
-    #         if(key == provider_dict["label_name"]):
-    #             provider_dict['count_label_name'] = values
 
     return JsonResponse(provider_list_json_response, safe=False)
 
@@ -164,13 +145,12 @@ def perbandingan(request):
     provider_liste = []
     response = requests.get('https://asateknologi.id/api/insuranceall')
     response = response.json()
-    dfs = None
 
     if request.method == "POST":
         file_location = "media" + request.POST["file_location"]
         print(file_location)
         loop_delete(file_location)
-        df_handler.read_from_excel(file_location)
+        df_handler.convert_to_dataframe_from_excel(file_location)
 
         # # # TAMPILKAN PROVIDER
         # # # MASUKKAN DF KE LIST PROVIDER
@@ -588,7 +568,7 @@ def temporer_store(request):
 def read_link_result_and_delete_provider_name2(nama_provider, link_result):
     global dfs
 
-    val = (dfs['Provider Name'].str.lower().eq(nama_provider.lower()))
+    val = (dfs['Nama'].str.lower().eq(nama_provider.lower()))
     rese = dfs[val]
 
     # if not rese.empty:
@@ -602,7 +582,7 @@ def read_link_result_and_delete_provider_name2(nama_provider, link_result):
         try:
             deo = dfs.drop(rese.index.item(), inplace=True)
 
-            val = (dw['Nama Provider'].str.lower().eq(nama_provider.lower()))
+            val = (dw['Nama'].str.lower().eq(nama_provider.lower()))
             reseq = dw[val]
             if not reseq.empty:
                 deoq = dw.drop(reseq.index.item(), inplace=True)
@@ -646,16 +626,16 @@ def loop_delete(link_result):
     deoq = None
 
     file_master = "Master_Add.xlsx"
-    df_handler.read_from_excel(file_master)
+    df_handler.convert_to_dataframe_from_excel(file_master)
     df = df_handler.get_data_frame()
 
     dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
     file_location = dat[0]["file_location"]
 
-    df_handler.read_from_excel(file_location)
+    df_handler.convert_to_dataframe_from_excel(file_location)
     dw = df_handler.get_data_frame()
 
-    df_handler.read_from_excel(link_result)
+    df_handler.convert_to_dataframe_from_excel(link_result)
     dfs = df_handler.get_data_frame()
 
     for index, row in tqdm(df.iterrows(), total=df.shape[0]):
@@ -968,93 +948,6 @@ def is_file_with_this_insurance_exists(nama_asuransi):
     return mydata
 
 
-def create_result_file(dfs, prediction_list):
-    df_master = pd.read_excel("master_provider.xlsx")
-    id_list = []
-    provider_name_list = []
-    provider_name_predict_list = []
-    score_list = []
-
-    writerez = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result_id.xlsx", engine='xlsxwriter')
-    for index_master, row_master in df_master.iterrows():
-        id = row_master['ProviderId']
-        provider_name_master = str(row_master['PROVIDER_NAME'])
-        # provider_name_find = "['" + provider_name_master + "']"
-
-        # FIND PREDICTION'S FILE PEMBANDING == NAMA MASTER
-        # DENGAN ASUMSI PREDICTION DI FILE PEMBANDING SUDAH AKURAT
-        val = (dfs['Prediction'].str.lower().eq(provider_name_master.lower()))
-
-        res = dfs[val]
-        # print(res.empty)
-        if not res.empty:
-            value = res["Prediction"].head(1)
-            score = res["Score"].head(1)
-            id_list.append(id)
-            provider_name_list.append(provider_name_master)
-            provider_name_predict_list.append(value.values[0])
-            score_list.append(score.values[0])
-            prediction_id_object = PredictionId(value.values[0], id)
-            prediction_list.append(prediction_id_object)
-    df = pd.DataFrame(
-        {'id': id_list, 'Master Name': provider_name_list, 'Prediction': provider_name_predict_list,
-         'Score': score_list})
-    # # Convert the dataframe to an XlsxWriter Excel object.
-    df.to_excel(writerez, sheet_name='Sheet1', index=False)
-    # # Close the Pandas Excel writer and output the Excel file.
-    writerez.close()
-    return
-
-
-def create_result_file_final(dfs, prediction_list):
-    writere = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result_final.xlsx", engine='xlsxwriter')
-
-    provider_list = []
-    provider_name_list_final = []
-    id_list_final = []
-    provider_name_predict_list_final = []
-    score_list_final = []
-    ri_list = []
-    rj_list = []
-    for index, row in dfs.iterrows():
-        provider_name = row['Provider Name']
-        y_preds = row["Prediction"]
-        nil = row["Score"]
-        alamat = row["Alamat"]
-        ri = row["ri"]
-        rj = row["rj"]
-        alamat_pred = row["Alamat Prediction"]
-        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0, ri, rj)
-        provider_object.set_id_master("-")
-        provider_object.set_alamat_prediction(alamat_pred)
-
-        for preds in prediction_list:
-            # COMPARE FILE PEMBANDING  dengan PREDICTION VALUE DENGAN ASUMSI PEMBANDING UDAH BENER
-            if preds.prediction == provider_object.get_label_name():
-                provider_object.set_id_master(preds.id_master)
-
-        provider_name_list_final.append(provider_object.get_nama_provider())
-        provider_name_predict_list_final.append(provider_object.get_label_name())
-        score_list_final.append(provider_object.get_proba_score())
-        id_list_final.append(provider_object.get_id_master())
-        ri_list.append(provider_object.get_ri())
-        rj_list.append(provider_object.get_rj())
-
-        provider_list.append(provider_object)
-
-    df = pd.DataFrame(
-        {'id_master': id_list_final, 'Provider Name': provider_name_list_final,
-         'Prediction': provider_name_predict_list_final,
-         'Score': score_list_final,
-         'ri': ri_list,
-         'rj': rj_list})
-    # # Convert the dataframe to an XlsxWriter Excel object.
-    df.to_excel(writere, sheet_name='Sheet1', index=False)
-    # # Close the Pandas Excel writer and output the Excel file.
-    writere.close()
-    return provider_list
-
-
 def update_perbandingan_excel():
     pass
 
@@ -1063,71 +956,53 @@ def perbandingan_result(request):
     global uploaded_file
     global contexte
     global perbandingan_model
-    file_excel = None
 
     df_handler.set_df_dataset(df_non_duplicate)
 
+    # init Result File Object
+    file_result = PerbandinganResult()
+
     if request.method == 'POST':
-        filePembandingAsuransi = FilePembandingAsuransi()
-        fileSystem = FileSystem(filePembandingAsuransi)
-        perbandingan_model_obj = None
+
         # # # REQUEST DARI PROSES FILE
         if not bool(request.FILES.get('perbandinganModel', False)):
             pembanding_model_return = json.loads(request.POST['processed_file'])
             nama_asuransi = pembanding_model_return["nama_asuransi"]
-            perbandingan_model_obj = Perbandingan.get_model_from_filter(nama_asuransi)
+            pembanding_obj = Perbandingan.get_model_from_filter(nama_asuransi)
 
         # # # REQUEST DARI UPLOAD FILE
-        # else:
-        #     nama_asuransi = request.POST['insurance_option']
-        #     perbandingan_model = request.FILES['perbandinganModel']
-        #     filePembandingAsuransi.set_uploaded_file(perbandingan_model)
-        #     filePembandingAsuransi.set_nama_asuransi(nama_asuransi)
-        #     if fileSystem.save_file() is not True:
-        #         return HttpResponse("Extension / Format tidak diizinkan")
+        else:
+            # # init file storage object
+            file_storage = FileSystemStorage()
+
+            # # init Perbandingan object
+            pembanding_obj = Perbandingan()
+
+            # # get nama asuransi and file request
+            nama_asuransi = request.POST['insurance_option']
+            file = request.FILES['perbandinganModel']
+
+            # save the file to /media/
+            c = file_storage.save(file.name,file)
+
+            # get file url
+            file_url = file_storage.path(c)
+
+            # set file location and nama_asuransi to Perbandingan object
+            pembanding_obj.set_file_location(file_url)
+            pembanding_obj.set_nama_asuransi_model(nama_asuransi)
+
+
+        # insert pembanding ke DFHandler
+        df_handler.set_perbandingan_model(pembanding_obj)
+
+
+        # create file result with compared master
+        file_result.create_file_result_with_id_master(df_handler)
 
 
 
-        # read excel by lokasi excel pembanding
-        lokasi_excel = perbandingan_model_obj.get_lokasi_excel_pembanding()
-
-        # get the df
-        df = pd.read_excel(lokasi_excel)
-
-        # specify the column to be looped
-        df_nama = df['Nama Provider']
-        df_alamat = df['Alamat']
-        df_ri = df['RI']
-        df_rj = df['RJ']
-        df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
-
-        # concate all df
-        result_dataframe = pd.DataFrame(
-            {'nama': df_nama, 'alamat': df_alamat, 'RI': df_ri, 'RJ': df_rj, 'nama_alamat': df_nama_alamat}
-        )
-
-        # loop the df with specified column
-        df_handler.pool_handler(result_dataframe)
-
-
-
-        # create result file
-        df_handler.create_result_file()
-
-
-        # filePembandingAsuransi.create_result_excel()
-
-        # file_loc_result = fileSystem.get_file_loc_result()
-        # df_handler.read_from_excel(file_loc_result)
-        # print(df_handler.get_data_frame())
-        # df_handler.create_result_id_file()
-
-        # prediction_list = []
-
-        # create_result_file(dfs,prediction_list)
-        # provider_list = create_result_file_final(dfs,prediction_list)
-        # print(perbandingan_model.file_location_result)
-    #     contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model.file_location_result}
-    #     return render(request, 'matching/perbandingan.html', context=contexte)
+        # contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model_obj.file_location_result}
+        # return render(request, 'matching/perbandingan.html', context=contexte)
     contexte = {"list": []}
     return render(request, 'matching/perbandingan.html', context=contexte)

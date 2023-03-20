@@ -14,7 +14,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression, SGDClassifier, SGDRegressor
 import django
 
-from classM import Pembersih
+from classM.Pembersih import Pembersih
 django.setup()
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
