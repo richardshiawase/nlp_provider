@@ -5,20 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ec4b836-b3a2-487c-8ac7-00cf0b5546fa" name="Changes" comment="er">
-      <change afterPath="$PROJECT_DIR$/classM/ColumnOutput.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classM/ColumnToRead.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classM/PerbandinganResult.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/classM/Rule.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/Column.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/classM/DFHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/DFHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/ExcelBacaTulis.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/ExcelBacaTulis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/FilePembandingAsuransi.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/FileSystem.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/MasterData.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/MasterData.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/Pembersih.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/Pembersih.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classM/ItemPembanding.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/ItemProvider.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classM/PerbandinganResult.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/PerbandinganResult.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/model/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -52,20 +43,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/User/PycharmProjects/nlp_provider/templates/matching&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "C:/Users/User/PycharmProjects/nlp_provider/templates/matching",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;HTML&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "Python",
+      "HTML"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\matching" />

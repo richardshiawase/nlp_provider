@@ -42,7 +42,7 @@ class PerbandinganResult():
 
         # # # convert mapped list to dataframe
         df = pd.DataFrame(mapped)
-        #
+
         # # get nama asuransi
         nama_asuransi = df_handler.perbandingan_model.get_nama_asuransi_model()
         #

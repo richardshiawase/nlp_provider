@@ -15,7 +15,7 @@ from tqdm import tqdm
 import warnings
 
 from classM.ExcelBacaTulis import ExcelBacaTulis
-from classM.ItemPembanding import ItemPembanding
+from classM.ItemProvider import ItemProvider
 from classM.Pembersih import Pembersih
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -253,7 +253,7 @@ class DFHandler:
                     nil = 0
                     compared = False
 
-                provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0, 0, 0)
+                provider_object = ItemProvider(provider_name, alamat, y_preds, nil, 0, 0, 0)
                 provider_object.set_selected(compared)
                 provider_object.set_alamat_prediction(alamat_prediction)
                 self.provider_list.append(provider_object)
