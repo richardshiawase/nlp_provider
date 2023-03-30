@@ -52,6 +52,12 @@ class Perbandingan(models.Model):
         self.file_location_result = "/" + nama_asuransi + "_result.xlsx"
         self.save()
 
+    def set_list_item_provider(self,list_item_provider):
+        self.list_item_provider = list_item_provider
+
+    def get_list_item_provider(self):
+        return self.list_item_provider
+
 
 
 class Provider_Perbandingan(models.Model):

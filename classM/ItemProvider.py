@@ -1,4 +1,4 @@
-class ItemPembanding:
+class ItemProvider:
     def __init__(self,nama_provider,alamat,label_name,proba_score,count_label,ri,rj):
         self.nama_provider = str(nama_provider).strip()
         self.alamat = str(alamat).strip()

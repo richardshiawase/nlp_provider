@@ -19,7 +19,7 @@ from django.shortcuts import render
 import warnings
 
 from classM.DFHandler import DFHandler
-from classM.ItemPembanding import ItemPembanding
+from classM.ItemProvider import ItemProvider
 from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
@@ -102,7 +102,7 @@ def kompilasi_data(request):
             alamat_prediksi = row['Alamat Prediction']
             ri = row['ri']
             rj = row['rj']
-            item_obj = ItemPembanding(row['Provider Name'], row['Alamat'], row["Prediction"], row["Score"], 0, ri, rj)
+            item_obj = ItemProvider(row['Provider Name'], row['Alamat'], row["Prediction"], row["Score"], 0, ri, rj)
             item_obj.set_nama_asuransi(pembanding.nama_asuransi)
             item_obj.set_selected(str(row['Compared']))
             item_obj.set_alamat_prediction(alamat_prediksi)
@@ -210,7 +210,7 @@ def tampungan_rev(request):
 
             val = (df_non_duplicate['course_titles'].eq(provider_name_label))
             res = df_non_duplicate[val]
-            provider_object = ItemPembanding(provider_name_label, alamat, y_preds, nil, 0, 0, 0)
+            provider_object = ItemProvider(provider_name_label, alamat, y_preds, nil, 0, 0, 0)
 
             if not res.empty:
                 pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
@@ -276,7 +276,7 @@ def upload_master(request):
             nil = row["Score"]
             ri = row["RI"]
             rj = row["RJ"]
-            provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0, ri, rj)
+            provider_object = ItemProvider(provider_name, alamat, y_preds, nil, 0, ri, rj)
             provider_object.set_alamat_prediction(alamat_prediction)
             provider_list.append(provider_object)
     page = request.GET.get('page', 1)
@@ -833,7 +833,7 @@ def pool_process_df(df):
 
         provider_name_predict_list.append(y_preds)
         score_list.append(nil)
-        provider_object = ItemPembanding(provider_name, alamat, y_preds, nil, 0, ri, rj)
+        provider_object = ItemProvider(provider_name, alamat, y_preds, nil, 0, ri, rj)
 
         if not res.empty:
             pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
@@ -963,7 +963,6 @@ def perbandingan_result(request):
     file_result = PerbandinganResult()
 
     if request.method == 'POST':
-
         # # # REQUEST DARI PROSES FILE
         if not bool(request.FILES.get('perbandinganModel', False)):
             pembanding_model_return = json.loads(request.POST['processed_file'])
