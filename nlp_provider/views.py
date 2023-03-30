@@ -41,7 +41,7 @@ from sklearn.metrics import precision_score, f1_score, accuracy_score
 from model import models
 from model.views import create_model
 
-from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
+from model.models import Provider_Model, Provider
 from tqdm import tqdm
 from django.core.cache import cache
 
@@ -67,7 +67,7 @@ loaded_model1 = pickle.load(open(filename, 'rb'))
 def index(request):
     list_pembanding = []
 
-    pembanding_all = models.Perbandingan.objects.all()
+    pembanding_all = models.Provider.objects.all()
     for pembanding in pembanding_all:
         print(pembanding.file_location.split("media"))
 
@@ -79,7 +79,7 @@ def index(request):
 
 
 def kompilasi(request):
-    pembanding = models.Perbandingan.objects.all()
+    pembanding = models.Provider.objects.all()
     list_pembandinge = pembanding
     list_pembanding = []
     for pembanding in list_pembandinge:
@@ -92,7 +92,7 @@ def kompilasi(request):
 
 
 def kompilasi_data(request):
-    pembanding_all = models.Perbandingan.objects.all()
+    pembanding_all = models.Provider.objects.all()
     provider_list = []
     for pembanding in pembanding_all:
         pembanding.file_location = pembanding.file_location.split("media")[1]
@@ -113,7 +113,7 @@ def kompilasi_data(request):
 
 
 def newe(request):
-    data = list(models.Perbandingan.objects.values())
+    data = list(models.Provider.objects.values())
     if request.method == "GET":
         return JsonResponse(data, safe=False)
 
@@ -607,7 +607,7 @@ def read_link_result_and_delete_provider_name(nama_provider):
         print("hapus " + nama_provider, rese)
         deo = dfs.drop(rese.index.item())
         deo.to_excel(link_result, sheet_name='Sheet1', index=False)
-        dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
+        dat = Provider.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
         dw = pd.read_excel(dat[0]["file_location"])
         val = (dw['Nama Provider'].eq(nama_provider.upper()))
         reseq = dw[val]
@@ -629,7 +629,7 @@ def loop_delete(link_result):
     df_handler.convert_to_dataframe_from_excel(file_master)
     df = df_handler.get_data_frame()
 
-    dat = Perbandingan.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
+    dat = Provider.objects.filter(file_location_result__contains=link_result.split("/")[1]).values()
     file_location = dat[0]["file_location"]
 
     df_handler.convert_to_dataframe_from_excel(file_location)
@@ -720,7 +720,7 @@ def add_to_dataset(request):
         df.to_excel("dataset_excel_copy.xlsx", index=False)
         # create_model(df)
 
-        pembanding = models.Perbandingan.objects.all()
+        pembanding = models.Provider.objects.all()
         list_pembandinge = pembanding
         list_pembanding = []
         for pembanding in list_pembandinge:
@@ -944,7 +944,7 @@ def cacah_dataframe(df):
 
 
 def is_file_with_this_insurance_exists(nama_asuransi):
-    mydata = Perbandingan.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').values()
+    mydata = Provider.objects.filter(nama_asuransi__contains=nama_asuransi).order_by('created_at').values()
     return mydata
 
 
@@ -967,7 +967,7 @@ def perbandingan_result(request):
         if not bool(request.FILES.get('perbandinganModel', False)):
             pembanding_model_return = json.loads(request.POST['processed_file'])
             nama_asuransi = pembanding_model_return["nama_asuransi"]
-            pembanding_obj = Perbandingan.get_model_from_filter(nama_asuransi)
+            pembanding_obj = Provider.get_model_from_filter(nama_asuransi)
 
         # # # REQUEST DARI UPLOAD FILE
         else:
@@ -975,7 +975,9 @@ def perbandingan_result(request):
             file_storage = FileSystemStorage()
 
             # # init Perbandingan object
-            pembanding_obj = Perbandingan()
+            pembanding_obj = Provider()
+
+
 
             # # get nama asuransi and file request
             nama_asuransi = request.POST['insurance_option']

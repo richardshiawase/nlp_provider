@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from model import models
 
-from model.models import Perbandingan
+from model.models import Provider
 
 
 
