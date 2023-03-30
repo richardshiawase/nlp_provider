@@ -195,6 +195,7 @@ class DFHandler:
 
         for x in header:
             try:
+
                 mapped[x] = dataframe[x]
             except:
                 print("Tidak ditemukan header " + str(x))

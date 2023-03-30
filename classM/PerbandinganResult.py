@@ -2,6 +2,7 @@ import pandas as pd
 
 from classM.ColumnOutput import ColumnOutput
 from classM.ExcelBacaTulis import ExcelBacaTulis
+from django.db import connection
 
 
 class PerbandinganResult():
@@ -15,6 +16,7 @@ class PerbandinganResult():
         print("Map Dataframe To Column Output")
         result_column = self.column_output.get_column_to_output()
         mappeds = {}
+        print(dataframe.head(1))
         for x in result_column:
             try:
                 mappeds[x] = dataframe[x]
@@ -53,7 +55,10 @@ class PerbandinganResult():
         df_handler.perbandingan_model.save_perbandingan_model()
 
     def create_file_result_with_id_master(self, df_handler):
-
+        cursor = connection.cursor()
+        cursor.execute('''SELECT * from jouga_user''')
+        row = cursor.fetchone()
+        print(row)
         self.create_file(df_handler)
 
         lokasi_excel = "master_provider.xlsx"
