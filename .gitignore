@@ -3,3 +3,4 @@
 /tfidf_vec.pickle
 *.xlsx
 /settings.py
+*.sql
