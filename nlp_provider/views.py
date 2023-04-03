@@ -27,7 +27,7 @@ import django
 django.setup()
 from model import models
 from model.views import create_model
-from .utils import ItemPembanding, Prediction, MasterData, PredictionId
+from .utils import ItemPembanding, Prediction, MasterData, PredictionId,Pembersih
 from model.models import Provider_Model, Perbandingan, Provider_Perbandingan
 from tqdm import tqdm
 from django.core.cache import cache
@@ -40,8 +40,8 @@ if df_dataset is None:
 
 new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
 df_dataset["course_titles"] = new_course_title[0]
-df_non_duplicate = df_dataset.drop_duplicates(['course_title'], keep='first')
-
+p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
+df_non_duplicate = p._return_df()
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
@@ -622,35 +622,36 @@ def temporer_store(request):
 
 def read_link_result_and_delete_provider_name2(nama_provider,link_result):
     global dfs
+    if isinstance(nama_provider,str):
+        val = (dfs['Provider Name'].str.lower().eq(nama_provider.lower()))
 
-    val = (dfs['Provider Name'].str.lower().eq(nama_provider.lower()))
-    rese = dfs[val]
+        rese = dfs[val]
 
-    # if not rese.empty:
-    #     print(rese.index.item())
-    # print(dfs)
-    global deo
-    global deoq
-    if not rese.empty:
-        #
+        # if not rese.empty:
+        #     print(rese.index.item())
+        # print(dfs)
+        global deo
+        global deoq
+        if not rese.empty:
+            #
 
-        try:
-            deo = dfs.drop(rese.index.item(),inplace=True)
+            try:
+                deo = dfs.drop(rese.index.item(),inplace=True)
 
-            val = (dw['Nama Provider'].str.lower().eq(nama_provider.lower()))
-            reseq = dw[val]
-            if not reseq.empty:
-                deoq = dw.drop(reseq.index.item(),inplace=True)
-                # deoq = dw
-                # if (nama_provider == "klinik takenoko sudirman"):
-                #     vae = deoq['Nama Provider'].str.strip().str.lower().eq("klinik takenoko sudirman")
-                #     print(deoq[vae])
-        except Exception as e:
-            for x in rese.index.tolist():
-                deo = dfs.drop(x, inplace=True)
+                val = (dw['Nama Provider'].str.lower().eq(nama_provider.lower()))
+                reseq = dw[val]
+                if not reseq.empty:
+                    deoq = dw.drop(reseq.index.item(),inplace=True)
+                    # deoq = dw
+                    # if (nama_provider == "klinik takenoko sudirman"):
+                    #     vae = deoq['Nama Provider'].str.strip().str.lower().eq("klinik takenoko sudirman")
+                    #     print(deoq[vae])
+            except Exception as e:
+                for x in rese.index.tolist():
+                    deo = dfs.drop(x, inplace=True)
 
 
-            pass
+                pass
 
 def read_link_result_and_delete_provider_name(nama_provider):
     dfs = pd.read_excel(link_result)
@@ -761,7 +762,7 @@ def add_to_dataset(request):
             alamat = provider_name.split("#")[1]
 
             provider_name = provider_name.split("#")[0]
-            for x in range(200):
+            for x in range(10):
                 try:
                     row = pd.Series({'course_title': provider_name+"#"+alamat, 'subject': label_name}, name=3)
                     df = df.append(row,ignore_index=True)
@@ -924,7 +925,7 @@ def pool_process_df(df):
 
         # course_title = apotik  klinik kimia farma  cilegon#jl. s.a. tirtayasa no 12
 
-        val = (df_non_duplicate['course_title'].str.lower().str.strip().eq(nama_alamat))
+        val = (df_non_duplicate['course_title'].eq(nama_alamat))
         res = df_non_duplicate[val]
 
 
@@ -961,8 +962,8 @@ def pool_process_df(df):
                 }
                 provider_object.set_alamat_prediction(alamat_pred)
                 df1 = pd.DataFrame(data_append)
-            except:
-                print("error")
+            except Exception as e:
+                print("error "+str(e)+" "+provider_name)
 
 
         elif res.empty:
@@ -994,8 +995,10 @@ def pool_process_df(df):
 def pool_handler(df,perbandingan_model):
     print("pool handler")
 
-    df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
-    df_alamat = df['Alamat'].str.lower().str.strip()
+    # df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
+    df_nama = df['Nama Provider']
+    # df_alamat = df['Alamat'].str.lower().str.strip()
+    df_alamat = df['Alamat']
     df_ri = df['RI']
     df_rj = df['RJ']
     df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
@@ -1182,7 +1185,9 @@ def perbandingan_result(request):
         else:
             perbandingan_model = Perbandingan.objects.get(pk=insurance_data[0]["id"])
 
-        df = pd.read_excel(uploaded_file)
+        dfe = pd.read_excel(uploaded_file)
+        pembersih = Pembersih(dfe)
+        df = pembersih._return_df()
         pool_handler(df,perbandingan_model)
 
 

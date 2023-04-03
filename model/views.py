@@ -16,7 +16,7 @@ import django
 django.setup()
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+from nlp_provider.utils import Pembersih
 import model.models
 from . import views, models
 from sklearn.model_selection import train_test_split
@@ -438,98 +438,16 @@ def process_partially(df):
     print(pred)
     print("Finish Creating Model")
 
-def create_model_bc(df):
-    print("Create Model")
-    lr_model = LogisticRegression(solver='liblinear')
-    df['clean_course_title'] = df['course_title'].astype(str)
-    # df['clean_course_title'] = df['clean_course_title'].apply(lambda x: ' '.join([ps.stem(word) for word in x.split() if word not in set(all_stopwords)]))
-    df['clean_course_title'] = df['clean_course_title'].fillna('').astype(str).replace('', np.nan, regex=False)
-    new_string = df['clean_course_title'].str.replace('.', '')
-    new_string = new_string.str.lower()
-    new_string = new_string.str.replace('&', '')
-    # new_string = new_string.str.replace('-','')
-    df['clean_course_title'] = new_string
-    # regex = re.compile('[^a-zA-Z]')
-    # df['clean_course_title'] = regex.sub('',df['clean_course_title'])
-
-    # print(df[['clean_course_title','course_title']])
-    #
-    print("Improt Tfidf")
-    Xfeatures = df['clean_course_title']
-    ylabels = df['subject']
-    tfidf_vec = TfidfVectorizer()
-    X = tfidf_vec.fit_transform(Xfeatures.values.astype('U'))
-
-    print("Split Dataset")
-    # # Split our dataset
-    x_train, x_test, y_train, y_test = train_test_split(X, ylabels, test_size=0.3, random_state=42)
-    #
-    #
-    # # Build Model
-    print("Fit Model")
-    lr_model.fit(x_train, y_train)
-    #
-    print(lr_model.score(x_test, y_test))
-
-    print("Open Pickle")
-    pickle.dump(tfidf_vec, open('tfidf_vec.pickle', 'wb'))
-
-    # # save the model to disk
-    print("Save model to disk")
-    filename = 'finalized_model.sav'
-    pickle.dump(lr_model, open(filename, 'wb'))
-
-    print("Save Model")
-    model_create = models.Provider_Model(model_name=filename, accuracy_score=str(lr_model.score(x_test, y_test)),
-                                         model_location='drive C')
-    model_create.save()
-
-    # load the model from disk
-    print("Load Model")
-    loaded_model = pickle.load(open(filename, 'rb'))
-    result = loaded_model.score(x_test, y_test)
-    print(result)
-    from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
-
-    y_pred = lr_model.predict(x_test)
-
-    # Confusion Matrix : true pos,false pos,etc
-    # print(confusion_matrix(y_pred,y_test))
-    # print(df['subject'].unique())
-    # print(classification_report(y_pred,y_test))
-    # plot_confusion_matrix(lr_model,x_test,y_test)
-
-    ### Making A Single Prediction
-    ex = "RS. CIPUTRA CITRA GARDEN CITY"
-
-    def vectorize_text(text):
-        my_vec = tfidf_vec.transform([text])
-        return my_vec.toarray()
-
-    vectorize_text(ex)
-    df.to_excel('wew.xlsx')
-    sample1 = vectorize_text(ex)
-    pred = lr_model.predict(sample1)
-
-    print(pred)
-    print("Finish Creating Model")
 
 
-def create_model(df):
+def create_model(dfc):
     print("Create Model")
     # lr_model = LogisticRegression(solver='sag',warm_start=True)
-    lr_model = SGDClassifier(loss='modified_huber',learning_rate='constant',n_jobs=-1,random_state=0,eta0=0.1)
-    df['clean_course_title'] = df['course_title'].astype(str)
-    # df['clean_course_title'] = df['clean_course_title'].apply(lambda x: ' '.join([ps.stem(word) for word in x.split() if word not in set(all_stopwords)]))
-    df['clean_course_title'] = df['clean_course_title'].fillna('').astype(str).replace('', np.nan, regex=False)
-    new_string = df['clean_course_title'].str.replace('.', '')
-    new_string = new_string.str.lower()
-    new_string = new_string.str.replace('&', '')
-    # new_string = new_string.str.replace('-','')
-    df['clean_course_title'] = new_string
-    print(new_string)
-
-
+    lr_model = SGDClassifier(loss='modified_huber', learning_rate='constant', n_jobs=-1, random_state=0, eta0=0.1)
+    pembersih = Pembersih(dfc)
+    df = pembersih._return_df()
+    df['clean_course_title'] = df['course_title']
+    new_string = df['clean_course_title']
     print("Improt Tfidf")
     Xfeatures = df['clean_course_title']
     ylabels = df['subject']

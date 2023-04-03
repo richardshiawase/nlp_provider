@@ -9,15 +9,15 @@ class ItemPembanding:
         self.rj = str(rj).strip()
 
     def get_ri(self):
-        if(self.ri == "Y"):
+        if(self.ri == "Y" or self.ri == "y"):
             return "1"
-        elif self.ri == "N":
+        elif self.ri == "N" or self.ri == "n":
             return "0"
 
     def get_rj(self):
-        if (self.rj == "Y"):
+        if (self.rj == "Y" or self.rj == "y"):
             return "1"
-        elif self.rj == "N":
+        elif self.rj == "N" or self.rj == "n":
             return "0"
 
 
@@ -129,3 +129,25 @@ class FilePembandingAsuransi:
 
     def get_provider_list(self):
         return self.provider_data_list
+
+
+class Pembersih:
+    def __init__(self,df):
+        self.df1 = df
+        self._rubah_dataframe_astype_str()
+        self._hilangkan_tanda_baca()
+        self._kecilkan_tulisan()
+    def _kecilkan_tulisan(self):
+        self.df4 = self.df3.applymap(str.lower)
+
+    def _hilangkan_tanda_baca(self):
+        self.df3 = self.df2.replace(to_replace=['\.','\&'],value='',inplace=False,regex=True)
+
+    def _rubah_dataframe_astype_str(self):
+        self.df2 = self.df1.astype(str)
+
+    def _return_astype_str(self):
+        return self.df
+
+    def _return_df(self):
+        return self.df4
