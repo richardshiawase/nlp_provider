@@ -579,11 +579,12 @@ def create_model(dfc):
         return my_vec.toarray()
 
     vectorize_text(ex)
-    df.to_excel('wew.xlsx')
     sample1 = vectorize_text(ex)
     pred = lr_model.predict(sample1)
     #
     print(pred)
+    df.to_excel('wew.xlsx')
+
     print("Finish Creating Model")
 
 

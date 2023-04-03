@@ -19,7 +19,7 @@ from django.shortcuts import render
 import warnings
 
 from classM.DFHandler import DFHandler
-from classM.ItemProvider import ItemProvider
+from model.models import ItemProvider
 from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
@@ -69,8 +69,6 @@ def index(request):
 
     pembanding_all = models.Provider.objects.all()
     for pembanding in pembanding_all:
-        print(pembanding.file_location.split("media"))
-
         pembanding.file_location = pembanding.file_location.split("media")[1]
         list_pembanding.append(pembanding)
 
@@ -148,7 +146,6 @@ def perbandingan(request):
 
     if request.method == "POST":
         file_location = "media" + request.POST["file_location"]
-        print(file_location)
         loop_delete(file_location)
         df_handler.convert_to_dataframe_from_excel(file_location)
 
@@ -795,132 +792,8 @@ def vectorize_text(text, tfidf_vec):
     return my_vec.toarray()
 
 
-def pool_process_df(df):
-    # for df in df_list:
-    # dataframe Name and Age columns
-    pd.options.display.max_colwidth = None
-    provider_name_list = []
-    provider_name_predict_list = []
-    score_list = []
-    provider_object_list = []
-
-    df_result = pd.DataFrame()
-    for row in tqdm(df.itertuples(), total=df.shape[0]):
-        new_string = row.nama
-        alamat = row.alamat
-        ri = row.RI
-        rj = row.RJ
-
-        # replace with df_nama_alamat
-        nama_alamat = row.nama_alamat
-
-        provider_name = new_string
-
-        # course_title = apotik  klinik kimia farma  cilegon#jl. s.a. tirtayasa no 12
-
-        # val = (df_non_duplicate['course_title'].str.lower().str.strip().eq(nama_alamat))
-        val = (df_non_duplicate['course_title'].eq(nama_alamat))
-
-        res = df_non_duplicate[val]
-
-        provider_name_list.append(provider_name)
-        # load the model from disk
-        sample1 = vectorize_text(nama_alamat, tfidf_vec1)
-        y_preds = loaded_model1.predict(sample1)
-        p = loaded_model1.predict_proba(sample1)
-        ix = p.argmax(1).item()
-        nil = (f'{p[0, ix]:.2}')
-
-        provider_name_predict_list.append(y_preds)
-        score_list.append(nil)
-        provider_object = ItemProvider(provider_name, alamat, y_preds, nil, 0, ri, rj)
-
-        if not res.empty:
-            pred = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
-            val_master = (df_non_duplicate['subject'].eq(pred))
-            res_master = df_non_duplicate[val_master]
-            al = res_master["alamat"].head(1)
-            try:
-                alamat_pred = al.values[0]
-                data_append = {
-                    "Provider Name": provider_name,
-                    "Alamat": alamat,
-                    "Prediction": y_preds,
-                    "Alamat Prediction": alamat_pred,
-                    "Score": nil,
-                    "Compared": 1,
-                    "Clean": new_string,
-                    "ri": ri,
-                    "rj": rj
-                }
-                provider_object.set_alamat_prediction(alamat_pred)
-                df1 = pd.DataFrame(data_append)
-            except:
-                print("error")
 
 
-        elif res.empty:
-
-            data_append = {
-                "Provider Name": provider_name,
-                "Alamat": alamat,
-                "Prediction": y_preds,
-                "Alamat Prediction": "-",
-                "Score": nil,
-                "Compared": 0,
-                "Clean": new_string,
-                "ri": ri,
-                "rj": rj
-            }
-            provider_object.set_alamat_prediction("-")
-            df1 = pd.DataFrame(data_append)
-        provider_object_list.append(provider_object)
-        df_result = df_result.append(df1, ignore_index=True)
-        # Provider_Perbandingan_data = models.Provider_Perbandingan(nama_asuransi=perbandingan_model.nama_asuransi,
-        #                                                           perbandingan_id=1,
-        #                                                           name=provider_name_label, address="-", selected=0)
-        # Provider_Perbandingan_data.save()
-
-    return df_result
-
-
-def pool_handler(df, perbandingan_model):
-    print("pool handler")
-
-    # df_nama = df['Nama Provider'].str.replace('.','').str.replace('&','').str.replace('-','').str.lower().str.strip()
-    df_nama = df['Nama Provider']
-    # df_alamat = df['Alamat'].str.lower().str.strip()
-    df_alamat = df['Alamat']
-    df_ri = df['RI']
-    df_rj = df['RJ']
-    df_nama_alamat = df_nama.map(str) + '#' + df_alamat.map(str)
-    df_lengkap = pd.DataFrame(
-        {'nama': df_nama, 'alamat': df_alamat, 'RI': df_ri, 'RJ': df_rj, 'nama_alamat': df_nama_alamat})
-
-    # # # Split dataframe to many
-    df_list = cacah_dataframe(df_lengkap)
-
-    # # # Using multiprocess with pool as many as dataframe list
-    p = Pool(len(df_list))
-    # # # Use Pool Multiprocessing
-    x = p.map(pool_process_df, df_list)
-
-    # # # Declare write
-    writer = pd.ExcelWriter('media/' + perbandingan_model.nama_asuransi + "_result" + ".xlsx",
-                            engine='xlsxwriter')
-
-    # # # Save Perbandingan Model
-    perbandingan_model.file_location_result = "/" + perbandingan_model.nama_asuransi + "_result.xlsx"
-    perbandingan_model.save()
-
-    # # # Concat list of dataframe
-    full_dfw = pd.concat(list(x), ignore_index=True)
-
-    # # # Convert the dataframe to an XlsxWriter Excel object.
-    full_dfw.to_excel(writer, sheet_name='Sheet1', index=False)
-
-    # # # Close the Pandas Excel writer and output the Excel file.
-    writer.close()
 
 
 def cacah_dataframe(df):
@@ -993,10 +866,8 @@ def perbandingan_result(request):
             pembanding_obj.set_file_location(file_url)
             pembanding_obj.set_nama_asuransi_model(nama_asuransi)
 
-
         # insert pembanding ke DFHandler
         df_handler.set_perbandingan_model(pembanding_obj)
-
 
         # create file result with compared master
         file_result.create_file_result_with_id_master(df_handler)

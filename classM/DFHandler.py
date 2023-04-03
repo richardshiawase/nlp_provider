@@ -5,17 +5,15 @@ import django
 
 from classM.ColumnToRead import ColumnToRead
 from classM.MasterData import MasterData
-from classM.PerbandinganResult import PerbandinganResult
-from classM.PredictionId import PredictionId
+
 
 django.setup()
 import pandas as pd
-from tqdm import tqdm
 
 import warnings
 
 from classM.ExcelBacaTulis import ExcelBacaTulis
-from classM.ItemProvider import ItemProvider
+from model.models import ItemProvider
 from classM.Pembersih import Pembersih
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -58,7 +56,7 @@ class DFHandler:
         return ts
 
     def cacah_dataframe(self, df):
-        print("Cacah Dataframe")
+        print("Cacah Dataframes")
         split_row_each = 800
         start_index = 0
         iteration_count = int(df.shape[0] / split_row_each)
@@ -69,7 +67,6 @@ class DFHandler:
             end_index = start_index + split_row_each
             df_new = df.iloc[start_index:end_index]
             start_index = end_index
-            # df_list.append([df_new,lr])
             df_list.append(df_new)
         aw = lambda x, y: y if x > 0 else 0
         df_last = df.iloc[start_index:aw(sisa, sisa_row)]
@@ -107,12 +104,10 @@ class DFHandler:
         df_dataset_non_duplicate = self.df_dataset
         alamat_prediction_list = []
         for key, value_list in process_dict.items():
+
             if (key == "nama_alamat"):
 
                 for value in value_list:
-                    # search the provider name among the course_title value
-                    # val = (df_non_duplicate['course_title'].eq(value))
-                    # res = df_non_duplicate[val]
                     try:
                         provider_name_list.append(value)
 
@@ -137,6 +132,7 @@ class DFHandler:
                             res_master = df_dataset_non_duplicate[val_master]
                             al = res_master["alamat"].head(1)
                             alamat_prediction_list.append(al.values[0])
+
                         except:
                             try:
                                 bool_find_in_dataset = (df_dataset_non_duplicate['subject'].str.contains(re.escape(y_preds)))
@@ -146,17 +142,26 @@ class DFHandler:
                             except Exception as e:
                                 print(str(e))
                                 alamat_prediction_list.append("-")
-                    except:
-                        print("err")
 
-        # print(process_dict["Nama"])
-        # print(process_dict["Alamat"])
+                        provider_object = ItemProvider()
+                        provider_object.set_id_asuransi(self.perbandingan_model.get_nama_asuransi_model())
+                        provider_object.set_provider_name(value)
+                        provider_object.set_alamat(al.values[0])
+                        provider_object.set_label_name(y_preds)
+                        provider_object.set_proba_score(nil)
+                        provider_object.set_count_label_name(0)
+                        provider_object.set_ri("-")
+                        provider_object.set_rj("-")
+                        provider_object.save()
+
+                    except Exception as e:
+                        print(str(e))
 
         process_dict["Prediction"] = pd.Series(provider_name_predict_list)
         process_dict["Score"] = pd.Series(score_list)
         process_dict["Alamat_Prediction"] = pd.Series(alamat_prediction_list)
         result_df = pd.DataFrame(process_dict)
-
+        self.perbandingan_model.set_list_item_provider(process_dict)
         return result_df
 
 
@@ -174,11 +179,11 @@ class DFHandler:
         # # # Use Pool Multiprocessing
         processed_list = p.map(self.pool_process_pure, df_list)
 
-        for list in processed_list:
+        for plist in processed_list:
             # add array values to this key
             # create array relative to key
             # if key == desired_key then append the key
-            for key, value in list.items():
+            for key, value in plist.items():
                 if key not in key_list:
                     key_list.append(key)
                     concatenated_dict[key] = value
@@ -192,7 +197,6 @@ class DFHandler:
         print("Mapping Content With Column")
         header = self.column.get_column_to_read_when_process()
         mapped = {}
-
         for x in header:
             try:
 
@@ -221,6 +225,7 @@ class DFHandler:
 
     def convert_dataframe_refer_to_specified_column(self, header=None, dataframe_pembanding=None):
         print("Process file excel")
+        print(list(dataframe_pembanding.columns))
         # set header if any
         if header is not None:
             self.column.set_column_to_read_when_process(header)
@@ -238,6 +243,7 @@ class DFHandler:
         self.perbandingan_model = perbandingan_model_obj
 
     def add_to_provider_list(self):
+        print("Add to provider list")
         self.provider_list.clear()
         if self.df is not None:
             for index, row in self.df.iterrows():
@@ -254,7 +260,7 @@ class DFHandler:
                     nil = 0
                     compared = False
 
-                provider_object = ItemProvider(provider_name, alamat, y_preds, nil, 0, 0, 0)
+                provider_object = ItemProvider("-",provider_name, alamat, y_preds, nil, 0, 0, 0)
                 provider_object.set_selected(compared)
                 provider_object.set_alamat_prediction(alamat_prediction)
                 self.provider_list.append(provider_object)

@@ -16,7 +16,6 @@ class PerbandinganResult():
         print("Map Dataframe To Column Output")
         result_column = self.column_output.get_column_to_output()
         mappeds = {}
-        print(dataframe.head(1))
         for x in result_column:
             try:
                 mappeds[x] = dataframe[x]
@@ -27,14 +26,18 @@ class PerbandinganResult():
         return mappeds
 
     def create_file(self,df_handler):
+
         # get lokasi excel
         lokasi_excel = df_handler.perbandingan_model.get_lokasi_excel_pembanding()
 
         # read excel by lokasi excel and get the dataframe
         dataframe_pembanding = df_handler.convert_to_dataframe_from_excel(lokasi_excel)
 
-        # create process excel and convert to dict
-        proccesed_dict = df_handler.convert_dataframe_refer_to_specified_column(None,dataframe_pembanding)
+        # header for initial process
+        header = ['Nama', 'Alamat', 'Alamat_Prediction', 'RI', 'RJ']
+
+       # create process excel and convert to dict
+        proccesed_dict = df_handler.convert_dataframe_refer_to_specified_column(header,dataframe_pembanding)
 
         # process result file
         processed_dataframe = df_handler.process_result_file_to_dataframe(proccesed_dict)
@@ -55,10 +58,6 @@ class PerbandinganResult():
         df_handler.perbandingan_model.save_perbandingan_model()
 
     def create_file_result_with_id_master(self, df_handler):
-        cursor = connection.cursor()
-        cursor.execute('''SELECT * from jouga_user''')
-        row = cursor.fetchone()
-        print(row)
         self.create_file(df_handler)
 
         lokasi_excel = "master_provider.xlsx"

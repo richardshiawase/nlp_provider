@@ -16,4 +16,8 @@ class Pembersih:
         return self.df
 
     def _return_df(self):
-        return self.df4
+        # strip column header
+        self.df5 = self.df4.rename(columns=lambda x: x.strip())
+        return self.df5
+
+
