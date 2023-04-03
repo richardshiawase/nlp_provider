@@ -14,5 +14,6 @@ class ColumnToRead():
         return self.header
 
     def set_column_to_read_when_process(self,list_column):
+        print("set column to read")
         self.header = list_column
 
