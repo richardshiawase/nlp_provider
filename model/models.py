@@ -5,14 +5,12 @@ class List_Processed_Provider(models.Model):
     id_provider = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
 class Provider_Model(models.Model):
     model_name = models.CharField(max_length=30)
     accuracy_score = models.DecimalField(max_digits=5,decimal_places=2)
     model_location = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-
 
 
 class ItemProvider(models.Model):
@@ -24,19 +22,16 @@ class ItemProvider(models.Model):
     count_label_name = models.CharField(max_length=2)
     ri = models.CharField(max_length=2)
     rj = models.CharField(max_length=2)
+    nama_alamat = models.CharField(max_length=500)
+    alamat_prediction = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
     def get_ri(self):
-        if(self.ri == "Y"):
-            return "1"
-        elif self.ri == "N":
-            return "0"
+        return self.ri
 
     def get_rj(self):
-        if (self.rj == "Y"):
-            return "1"
-        elif self.rj == "N":
-            return "0"
+        return self.rj
 
 
     def set_alamat_prediction(self,alamat_prediction):
@@ -47,13 +42,6 @@ class ItemProvider(models.Model):
 
     def set_mapped_times(self,times):
         self.mapped_times = times
-
-    def set_id_master(self,id):
-        self.id_master = id
-
-
-    def get_id_master(self):
-        return self.id_master
 
     def get_mapped_times(self):
         return self.mapped_times
@@ -84,7 +72,7 @@ class ItemProvider(models.Model):
         return self.label_name
 
     def get_proba_score(self):
-        return self.proba_score
+        return float(self.proba_score)
 
     def get_selected(self):
         return self.selected
@@ -101,6 +89,12 @@ class ItemProvider(models.Model):
     def set_alamat(self, param):
         self.alamat = param
 
+    def set_nama_alamat(self):
+        self.nama_alamat = self.get_nama_provider()+"#"+self.get_alamat()
+
+    def get_nama_alamat(self):
+        return self.nama_alamat
+
 
     def set_label_name(self, y_preds):
         self.label_name = y_preds
@@ -109,17 +103,39 @@ class ItemProvider(models.Model):
         self.proba_score = nil
 
     def set_ri(self, param):
-        self.ri = param
-        pass
+        if param.lower() == "y":
+            self.ri = 1
+        if param.lower() == "n":
+            self.ri = 0
+
 
     def set_rj(self, param):
-        self.rj = param
-        pass
+        if param.lower() == "y":
+            self.rj = 1
+        if param.lower() == "n":
+            self.rj = 0
+
 
     def set_id_asuransi(self, param):
         self.id_asuransi = param
+
+
+    def get_id_asuransi(self):
+        return self.id_asuransi
+
+    def set_rawat_inap_master(self, rawat_inap):
+        self.rawat_inap = rawat_inap
         pass
 
+    def set_rawat_jalan_master(self, rawat_jalan):
+        self.rawat_jalan = rawat_jalan
+        pass
+
+    def get_rawat_inap_master(self):
+        return self.rawat_inap
+
+    def get_rawat_jalan_master(self):
+        return self.rawat_jalan
 
 class Provider(models.Model):
     nama_asuransi = models.CharField(max_length=500)
@@ -144,6 +160,13 @@ class Provider(models.Model):
 
     def set_nama_asuransi_model(self,nama_asuransi):
         self.nama_asuransi = nama_asuransi
+
+
+    def set_id_asuransi_model(self,id_asuransi):
+        self.id_asuransi = id_asuransi
+
+    def get_id_asuransi_model(self):
+        return self.id_asuransi
 
     def get_file_location_result(self):
         return "media"+self.file_location_result

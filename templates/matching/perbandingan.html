@@ -21,7 +21,8 @@
             <div class="col-sm-3">
                 <select class="form-select" name="insurance_option">
                     {% for insurance in list_insurance %}
-                    <option value="{{insurance.nama_asuransi}}">{{ insurance.nama_asuransi }}</option>
+                    <option value="{{insurance.nama_asuransi}}#{{ insurance.id_asuransi }}">{{ insurance.nama_asuransi }}</option>
+
                     {% endfor %}
                 </select>
             </div>
