@@ -168,7 +168,7 @@ class PerbandinganResult():
         id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
         url = 'https://www.asateknologi.id/api/inshos'
         for index, row in dataframe_insert_new.iterrows():
-            myobj = {'hospitalId': row['IdMaster'], 'insuranceId': '9302020', 'outpatient': row['RJ'],
+            myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
                      'inpatient': row['RI']}
             try:
                 x = requests.post(url, json=myobj)
