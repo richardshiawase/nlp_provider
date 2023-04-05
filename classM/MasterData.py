@@ -48,3 +48,43 @@ class MasterData:
 
     def get_alamat_master(self):
         return self.alamat
+
+
+    def set_telepon_master(self,tel):
+        self.telepon = tel
+
+    def get_telepon_master(self):
+        return self.telepon
+
+
+    def set_category_1_master(self,cat):
+        self.category_1 = cat
+
+    def get_category_1_master(self):
+        return self.category_1
+
+    def set_category_2_master(self,cat):
+        self.category_2 = cat
+
+    def get_category_2_master(self):
+        return self.category_2
+
+
+    def set_state_id_master(self,id):
+        self.state_id = id
+
+    def get_state_id_master(self):
+        return self.state_id
+
+    def set_city_id_master(self,id):
+        self.city_id = id
+
+    def get_city_id_master(self):
+        return self.city_id
+
+
+    def set_list_item_master_provider(self,list_item_provider):
+        self.list_item_master_provider = list_item_provider
+
+    def get_list_item_master_provider(self):
+        return self.list_item_master_provider
