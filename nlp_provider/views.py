@@ -129,12 +129,11 @@ def perbandingan_rev(request):
 
     # # # TAMPILKAN PROVIDER
     # # # MASUKKAN DF KE LIST PROVIDER
+
     df_handler.set_dataframe(dfs)
-    df_handler.add_to_provider_list()
-    provider_list_json_response = df_handler.get_provider_list_json_response()
+    df_handler.add_to_provider_list(file_location)
 
-
-    return JsonResponse(provider_list_json_response, safe=False)
+    return JsonResponse(df_handler.get_provider_list(), safe=False)
 
 
 def perbandingan(request):
@@ -151,10 +150,10 @@ def perbandingan(request):
 
         # # # TAMPILKAN PROVIDER
         # # # MASUKKAN DF KE LIST PROVIDER
-        df_handler.add_to_provider_list()
-        provider_list = df_handler.get_provider_list()
-        context = {"list_insurance": response.get("val"), "list": provider_list, "link_result": file_location}
-        return render(request, 'matching/perbandingan.html', context=context)
+        # df_handler.add_to_provider_list(file_location)
+        # provider_list = df_handler.get_provider_list()
+        # context = {"list_insurance": response.get("val"), "list": provider_list, "link_result": file_location}
+        # return render(request, 'matching/perbandingan.html', context=context)
 
     context = {"list_insurance": response.get("val"), "list": [], "link_result": "-"}
     return render(request, 'matching/perbandingan.html', context=context)
@@ -840,7 +839,7 @@ def perbandingan_result(request):
         if not bool(request.FILES.get('perbandinganModel', False)):
             pembanding_model_return = json.loads(request.POST['processed_file'])
             nama_asuransi = pembanding_model_return["nama_asuransi"]
-            pembanding_obj = Provider.get_model_from_filter(nama_asuransi)
+            provider = Provider.get_model_from_filter(nama_asuransi)
 
         # # # REQUEST DARI UPLOAD FILE
         else:
@@ -848,14 +847,14 @@ def perbandingan_result(request):
             file_storage = FileSystemStorage()
 
             # # init Perbandingan object
-            pembanding_obj = Provider()
-
-
+            provider = Provider()
 
             # # get nama asuransi and file request
-            nama_asuransi = request.POST['insurance_option']
+            data_asuransi = request.POST['insurance_option']
             file = request.FILES['perbandinganModel']
 
+            nama_asuransi = str(data_asuransi).split("#")[0]
+            id_asuransi   = str(data_asuransi).split("#")[1]
             # save the file to /media/
             c = file_storage.save(file.name,file)
 
@@ -863,16 +862,17 @@ def perbandingan_result(request):
             file_url = file_storage.path(c)
 
             # set file location and nama_asuransi to Perbandingan object
-            pembanding_obj.set_file_location(file_url)
-            pembanding_obj.set_nama_asuransi_model(nama_asuransi)
+            provider.set_file_location(file_url)
+            provider.set_nama_asuransi_model(nama_asuransi)
+            provider.set_id_asuransi_model(id_asuransi)
 
         # insert pembanding ke DFHandler
-        df_handler.set_perbandingan_model(pembanding_obj)
+        df_handler.set_perbandingan_model(provider)
 
         # create file result with compared master
         file_result.create_file_result_with_id_master(df_handler)
 
-
+        file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
 
         # contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model_obj.file_location_result}
         # return render(request, 'matching/perbandingan.html', context=contexte)
