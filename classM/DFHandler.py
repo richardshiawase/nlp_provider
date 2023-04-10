@@ -132,7 +132,7 @@ class DFHandler:
                     item_provider.set_proba_score(nil)
                     item_provider.set_count_label_name(0)
                     item_provider.set_alamat_prediction(al.values[0])
-                    # item_provider.save()
+                    item_provider.save()
                 except:
                     try:
                         bool_find_in_dataset = (
@@ -144,7 +144,7 @@ class DFHandler:
                         item_provider.set_proba_score(nil)
                         item_provider.set_count_label_name(0)
                         item_provider.set_alamat_prediction(al.values[0])
-                        # item_provider.save()
+                        item_provider.save()
 
                     except Exception as e:
                         self.error_value_write(item_provider,e)
@@ -350,14 +350,14 @@ class DFHandler:
 
         self.master_provider.set_list_item_master_provider(master_item_list)
 
-    def create_provider_item_list(self, dataframe_pembanding):
+    def create_provider_item_list(self, dataframe_pembanding,pk):
         # get specified column to read
         print("Create provider item list")
         provider_item_list = []
         for row in dataframe_pembanding.itertuples(index=True, name='Sheet1'):
             provider_object = ItemProvider()
             provider_object.set_id_asuransi(self.perbandingan_model.get_id_asuransi_model())
-
+            provider_object.set_id_model(pk)
             nama = row.Nama
             alamat = row.Alamat
             rawat_inap = row.RI

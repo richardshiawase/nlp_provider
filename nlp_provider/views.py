@@ -14,12 +14,13 @@ import requests
 from django.core import serializers
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.forms import model_to_dict
 from django.http import HttpResponse
 from django.shortcuts import render
 import warnings
 
 from classM.DFHandler import DFHandler
-from model.models import ItemProvider
+from model.models import ItemProvider, List_Processed_Provider
 from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
@@ -48,6 +49,8 @@ from django.core.cache import cache
 # from .forms import UploadFileForm
 # Create your views here.
 df_dataset = cache.get('dataset')
+list_provider_model_object = List_Processed_Provider()
+
 if df_dataset is None:
     df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
     cache.set('dataset', df_dataset)
@@ -67,7 +70,8 @@ loaded_model1 = pickle.load(open(filename, 'rb'))
 def index(request):
     list_pembanding = []
 
-    pembanding_all = models.Provider.objects.all()
+    pembanding_all = models.Provider.objects.raw("select * from model_provider where created_at in (select max(created_at) from model_provider group by nama_asuransi)")
+
     for pembanding in pembanding_all:
         pembanding.file_location = pembanding.file_location.split("media")[1]
         list_pembanding.append(pembanding)
@@ -111,48 +115,73 @@ def kompilasi_data(request):
 
 
 def newe(request):
-    data = list(models.Provider.objects.values())
+    list_providere = []
+
+
+    data_list = models.Provider.objects.raw("select * from model_provider where created_at in (select max(created_at) from model_provider group by nama_asuransi)")
+    provider_list = []
+    for data in data_list:
+        pk = data.pk
+        provider = Provider()
+        provider.set_nama_asuransi_model(data.nama_asuransi)
+        provider.set_file_location(data.file_location)
+
+        provider.set_id(pk)
+        provider.status_finish = data.status_finish
+        provider.match_percentage = data.match_percentage
+        provider.file_location_result = data.file_location_result
+
+        list_item_provider = []
+        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",[pk])
+
+        for item in dt:
+            item_provider = ItemProvider()
+            item_provider.set_provider_name(item.nama_provider)
+            item_provider.set_alamat_prediction(item.alamat_prediction)
+            item_provider.set_alamat(item.alamat)
+            item_provider.set_proba_score(item.proba_score)
+            item_provider.set_label_name(item.label_name)
+            item_provider.set_ri(item.ri)
+            item_provider.set_rj(item.rj)
+            item_provider.set_id_asuransi(item.id_asuransi)
+            item_provider.set_selected("-")
+            list_item_provider.append(item_provider)
+
+        provider.set_list_item_provider(list_item_provider)
+        provider_list.append(provider)
+
+    list_provider_model_object.set_provider_list(provider_list)
+
+    for item in list_provider_model_object.get_provider_list():
+        data = model_to_dict(item)
+        list_providere.append(data)
+
+
     if request.method == "GET":
-        return JsonResponse(data, safe=False)
+        return JsonResponse(list_providere, safe=False)
+
 
     return JsonResponse({'message': 'error'})
 
 
 def perbandingan_rev(request):
-    global provider_liste
-    global file_location
-    provider_liste = []
-    dfs = None
 
-    if request.method == "POST":
-        file_location = "media" + request.POST["file_location"]
+    id_provider = request.session.get('id_provider')
+    provider = list_provider_model_object.get_a_provider_from_id(id_provider)
 
-    # # # TAMPILKAN PROVIDER
-    # # # MASUKKAN DF KE LIST PROVIDER
-
-    df_handler.set_dataframe(dfs)
-    df_handler.add_to_provider_list(file_location)
-
-    return JsonResponse(df_handler.get_provider_list(), safe=False)
+    return JsonResponse(provider.get_list_item_provider_json(), safe=False)
 
 
 def perbandingan(request):
-    global provider_liste
-    global file_location
-    provider_liste = []
+
     response = requests.get('https://asateknologi.id/api/insuranceall')
     response = response.json()
 
     if request.method == "POST":
-        file_location = "media" + request.POST["file_location"]
-        loop_delete(file_location)
-        df_handler.convert_to_dataframe_from_excel(file_location)
-
-        # # # TAMPILKAN PROVIDER
-        # # # MASUKKAN DF KE LIST PROVIDER
-        # df_handler.add_to_provider_list(file_location)
-        # provider_list = df_handler.get_provider_list()
-        # context = {"list_insurance": response.get("val"), "list": provider_list, "link_result": file_location}
+        id_provider = request.POST["id_provider"]
+        request.session['id_provider'] = id_provider
+        # loop_delete(file_location)
+        # context = {"list_insurance": response.get("val"), "list": provider_choose, "link_result": "-"}
         # return render(request, 'matching/perbandingan.html', context=context)
 
     context = {"list_insurance": response.get("val"), "list": [], "link_result": "-"}
@@ -872,7 +901,7 @@ def perbandingan_result(request):
         # create file result with compared master
         file_result.create_file_result_with_id_master(df_handler)
 
-        file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
+        # file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
 
         # contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model_obj.file_location_result}
         # return render(request, 'matching/perbandingan.html', context=contexte)
