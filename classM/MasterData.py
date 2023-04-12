@@ -36,7 +36,7 @@ class MasterData:
         return self.id
 
     def get_nama_master(self):
-        return self.nama_provider
+        return self.nama_provider.strip()
 
 
     def set_varian(self,varian):

@@ -29,6 +29,9 @@ class PerbandinganResult():
         list_prediction_name = []
         list_alamat_prediction = []
         list_score = []
+        list_total_score = []
+        list_alamat_ratio = []
+        list_ratio = []
         list_ri = []
         list_rj = []
 
@@ -40,6 +43,9 @@ class PerbandinganResult():
             list_score.append(item.get_proba_score())
             list_ri.append(item.get_ri())
             list_rj.append(item.get_rj())
+            list_total_score.append(item.get_total_score())
+            list_alamat_ratio.append(item.get_alamat_ratio())
+            list_ratio.append(item.get_ratio())
 
         for x in result_column:
             try:
@@ -53,10 +59,17 @@ class PerbandinganResult():
                     mappeds[x] = list_alamat_prediction
                 if x == "Score":
                     mappeds[x] = list_score
+                if x == "Ratio":
+                    mappeds[x] = list_ratio
+                if x == "Alamat_Ratio":
+                    mappeds[x] = list_alamat_ratio
+                if x == "Total_Score":
+                    mappeds[x] = list_total_score
                 if x == "RI":
                     mappeds[x] = list_ri
                 if x == "RJ":
                     mappeds[x] = list_rj
+
 
             except Exception as e:
                 print("Tidak ditemukan output column " + x + " di dataframe " + str(e))
@@ -139,8 +152,12 @@ class PerbandinganResult():
         # header for initial process
         header = ['Nama', 'Alamat', 'Alamat_Prediction', 'RI', 'RJ']
 
+        # # save perbandingan model
+        df_handler.perbandingan_model.save_perbandingan_model()
+
+        pk = df_handler.perbandingan_model.get_primary_key_provider()
         # oop item provider list
-        df_handler.create_provider_item_list(dataframe_pembanding)
+        df_handler.create_provider_item_list(dataframe_pembanding, pk)
 
         df_handler.comparing_item_provider_to_ml_and_save_item()
 
@@ -155,16 +172,20 @@ class PerbandinganResult():
         #
         # # write to excel
         self.ex.write_to_excel(nama_asuransi, "_result", df)
-        #
-        # # save perbandingan model
-        df_handler.perbandingan_model.save_perbandingan_model()
+
+    def delete_provider_item_hospital_insurances_with_id_insurances(self, df_handler):
+        id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
+        url = 'https://www.asateknologi.id/api/inshos-del'
+        myobj = {'id_insurance': id_asuransi}
+        try:
+            x = requests.post(url, json=myobj)
+        except Exception as e:
+            print(str(e))
 
     def insert_into_end_point_andika_assistant_item_provider(self, df_handler):
         link = self.get_link_result_with_id_master()
-        # dataframe_insert = df_handler.convert_to_dataframe_from_excel(link)
         dataframe_insert = pd.read_excel(link)
-        print(dataframe_insert.loc[dataframe_insert['Score'] > 0.40])
-        dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Score'] > 0.40]
+        dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Validity'] == True]
         id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
         url = 'https://www.asateknologi.id/api/inshos'
         count = 0
@@ -199,4 +220,5 @@ class PerbandinganResult():
         # #
         self.set_link_result_with_id_master(
             "media/" + df_handler.perbandingan_model.get_nama_asuransi_model() + "_result_final.xlsx")
+
         pass

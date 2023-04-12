@@ -3,6 +3,7 @@ import re
 from multiprocessing import Pool
 import django
 from django.forms import model_to_dict
+from fuzzywuzzy import fuzz
 
 from classM.ColumnToRead import ColumnToRead
 from classM.MasterData import MasterData
@@ -93,15 +94,15 @@ class DFHandler:
 
         return process_dict
 
-
-    def error_value_write(self,item_provider,e):
+    def error_value_write(self, item_provider, e):
         item_provider.set_label_name("-")
         item_provider.set_proba_score(0)
         item_provider.set_count_label_name(0)
         item_provider.set_alamat_prediction("-")
 
         # item_provider.save()
-        print("Error read the file "+item_provider.get_nama_provider() +" "+ str(e))
+        print("Error read the file " + item_provider.get_nama_provider() + " " + str(e))
+
     def comparing_item_provider_to_ml_and_save_item(self):
         print("Process result file to dataframe")
         pd.options.display.max_colwidth = None
@@ -120,8 +121,9 @@ class DFHandler:
                 # calculate proba
                 p = self.loaded_model1.predict_proba(sample1)
                 ix = p.argmax(1).item()
-                nil = (f'{p[0, ix]:.2}')
-
+                nil = float("{:.2f}".format(p[0, ix]))
+                score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
+                # print(item_provider.get_nama_provider(),y_preds,total_score,score,nil)
                 # add proba to list
                 # jika prediksi sama dengan dataset maka ambil alamat dari dataset
                 val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
@@ -130,30 +132,42 @@ class DFHandler:
                     al = res_master["alamat"].head(1)
                     item_provider.set_label_name(y_preds)
                     item_provider.set_proba_score(nil)
+                    item_provider.set_ratio(score)
+
+                    alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
+                    total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
+                    item_provider.set_total_score(total_score)
+
+                    item_provider.set_alamat_ratio(alamat_ratio)
                     item_provider.set_count_label_name(0)
                     item_provider.set_alamat_prediction(al.values[0])
-                    # item_provider.save()
+                    item_provider.save()
                 except:
                     try:
                         bool_find_in_dataset = (
                             df_dataset_non_duplicate['subject'].str.contains(re.escape(y_preds)))
                         res_master = df_dataset_non_duplicate[bool_find_in_dataset]
                         al = res_master["alamat"].head(0)
+                        item_provider.set_ratio(score)
+                        alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
+
+                        total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
+
+                        item_provider.set_alamat_ratio(0)
+                        item_provider.set_total_score(total_score)
 
                         item_provider.set_label_name(y_preds)
                         item_provider.set_proba_score(nil)
                         item_provider.set_count_label_name(0)
                         item_provider.set_alamat_prediction(al.values[0])
-                        # item_provider.save()
+                        item_provider.save()
 
                     except Exception as e:
-                        self.error_value_write(item_provider,e)
+                        self.error_value_write(item_provider, e)
 
 
             except Exception as e:
-                self.error_value_write(item_provider,e)
-
-
+                self.error_value_write(item_provider, e)
 
     def pool_handler(self, dataframe):
         concatenated_dict = {}
@@ -214,8 +228,6 @@ class DFHandler:
         if header is not None:
             self.column.set_column_to_read_when_process(header)
 
-
-
         # mapping the column and content
         # data = self.create_dataframe_with_favourable_column(dataframe_pembanding)
 
@@ -228,7 +240,7 @@ class DFHandler:
     def set_perbandingan_model(self, perbandingan_model_obj):
         self.perbandingan_model = perbandingan_model_obj
 
-    def add_to_provider_list(self,file_location):
+    def add_to_provider_list(self, file_location):
         print("Add to provider list")
         self.convert_to_dataframe_from_excel(file_location)
         self.provider_list.clear()
@@ -277,11 +289,18 @@ class DFHandler:
         list_item_provider_score = []
         list_item_provider_ri = []
         list_item_provider_rj = []
+        list_item_ratio = []
+        list_item_total_score = []
+        list_item_alamat_ratio = []
+        list_item_validity = []
+        list_item_status = []
 
         df_result_2 = self.perbandingan_model.get_list_item_provider()
 
-
         for item in df_result_2:
+            item.set_processed(False)
+            item.set_validity(False)
+            master_data = MasterData()
             for master_obj in self.master_provider.get_list_item_master_provider():
                 if item.get_label_name() == master_obj.get_nama_master():
                     id_master_list.append(master_obj.get_id_master())
@@ -292,16 +311,80 @@ class DFHandler:
                     list_item_provider_ri.append(item.get_ri())
                     list_item_provider_rj.append(item.get_rj())
                     list_item_provider_score.append(item.get_proba_score())
+                    list_item_ratio.append(item.get_ratio())
+                    list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                    list_item_total_score.append(item.get_total_score())
+                    item.set_processed(True)
+
+                    if item.get_total_score() >= 55:
+                        item.set_validity(True)
+                    else:
+                        item.set_validity(False)
+
+                    item.set_status("Master")
+
+                    list_item_status.append(item.get_status())
+                    list_item_validity.append(item.is_valid())
+
                     break
-            if item.get_label_name() not in provider_name_master_list:
-                provider_name_master_list.append("-")
-                id_master_list.append("-")
-                alamat_master_list.append("-")
+
+            item.set_total_score(0)
+            item.set_ratio(0)
+            item.set_alamat_ratio(0)
+            for master_obj in self.master_provider.get_list_item_master_provider():
+                if item.is_processed() is False:
+                    ratio_nama = fuzz.ratio(item.get_label_name(), master_obj.get_nama_master().strip())
+                    ratio_alamat = fuzz.ratio(item.get_alamat(), master_obj.get_alamat_master().strip())
+                    nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
+                    total_ratio_extension = float("{:.2f}".format(nilai))
+                    item.set_status("Ratio")
+
+                    if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
+                        item.set_ratio(ratio_nama)
+                        item.set_alamat_ratio(ratio_alamat)
+                        item.set_total_score(total_ratio_extension)
+                        master_data.set_id_master(master_obj.get_id_master())
+                        master_data.set_nama_master(master_obj.get_nama_master())
+                        master_data.set_alamat_master(master_obj.get_alamat_master())
+
+            if item.get_total_score() >= 55 and item.is_processed() is False:
+
+                id_master_list.append(master_data.get_id_master())
+                provider_name_master_list.append(master_data.get_nama_master())
+                alamat_master_list.append(master_data.get_alamat_master())
                 list_item_provider_nama.append(item.get_nama_provider())
                 list_item_provider_alamat.append(item.get_alamat())
-                list_item_provider_ri.append("-")
-                list_item_provider_rj.append("-")
-                list_item_provider_score.append(0)
+                list_item_provider_ri.append(item.get_ri())
+                list_item_provider_rj.append(item.get_rj())
+                list_item_provider_score.append(item.get_proba_score())
+                list_item_ratio.append(item.get_ratio())
+                list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                list_item_total_score.append(item.get_total_score())
+                item.set_validity(True)
+                list_item_status.append(item.get_status())
+
+                list_item_validity.append(item.is_valid())
+
+            elif item.get_total_score() < 55 and item.is_processed() is False:
+                id_master_list.append(master_data.get_id_master())
+                provider_name_master_list.append(master_data.get_nama_master())
+                alamat_master_list.append(master_data.get_alamat_master())
+                list_item_provider_nama.append(item.get_nama_provider())
+                list_item_provider_alamat.append(item.get_alamat())
+                list_item_provider_ri.append(item.get_ri())
+                list_item_provider_rj.append(item.get_rj())
+                list_item_provider_score.append(item.get_proba_score())
+                list_item_ratio.append(ratio_nama)
+                list_item_alamat_ratio.append(ratio_alamat)
+
+                list_item_total_score.append(item.get_total_score())
+                item.set_validity(False)
+                list_item_status.append(item.get_status())
+
+                list_item_validity.append(item.is_valid())
+
 
 
         dict_result = {
@@ -311,8 +394,13 @@ class DFHandler:
             'Nama': pd.Series(list_item_provider_nama),
             'Alamat': pd.Series(list_item_provider_alamat),
             'Score': pd.Series(list_item_provider_score),
+            'Ratio': pd.Series(list_item_ratio),
+            'Alamat_Ratio': pd.Series(list_item_alamat_ratio),
+            'Total_Score': pd.Series(list_item_total_score),
             'RI': pd.Series(list_item_provider_ri),
-            'RJ': pd.Series(list_item_provider_rj)
+            'RJ': pd.Series(list_item_provider_rj),
+            'Validity': pd.Series(list_item_validity),
+            'Status': pd.Series(list_item_status)
         }
         result_df = pd.DataFrame(dict_result)
         return result_df
@@ -322,7 +410,6 @@ class DFHandler:
         print("Create provider item list")
         master_item_list = []
         for row in dataframe_pembanding.itertuples(index=True, name='Sheet1'):
-
             master_data = MasterData()
 
             master_provider_id = row.ProviderId
@@ -334,8 +421,6 @@ class DFHandler:
             master_alamat = row.ADDRESS
             master_tel = row.TEL_NO
 
-
-
             master_data.set_id_master(master_provider_id)
             master_data.set_nama_master(master_nama_provider)
             master_data.set_alamat_master(master_alamat)
@@ -345,19 +430,18 @@ class DFHandler:
             master_data.set_category_2_master(master_category_2)
             master_data.set_telepon_master(master_tel)
 
-
             master_item_list.append(master_data)
 
         self.master_provider.set_list_item_master_provider(master_item_list)
 
-    def create_provider_item_list(self, dataframe_pembanding):
+    def create_provider_item_list(self, dataframe_pembanding, pk):
         # get specified column to read
         print("Create provider item list")
         provider_item_list = []
         for row in dataframe_pembanding.itertuples(index=True, name='Sheet1'):
             provider_object = ItemProvider()
             provider_object.set_id_asuransi(self.perbandingan_model.get_id_asuransi_model())
-
+            provider_object.set_id_model(pk)
             nama = row.Nama
             alamat = row.Alamat
             rawat_inap = row.RI
@@ -375,4 +459,3 @@ class DFHandler:
             provider_item_list.append(provider_object)
 
         self.perbandingan_model.set_list_item_provider(provider_item_list)
-

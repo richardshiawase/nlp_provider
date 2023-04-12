@@ -7,6 +7,7 @@
     <list default="true" id="76b52848-dea9-4845-959f-e0ce64648f12" name="Changes" comment="er">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classM/PerbandinganResult.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/PerbandinganResult.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
