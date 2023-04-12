@@ -190,7 +190,6 @@ class PerbandinganResult():
 
     def insert_into_end_point_andika_assistant_item_provider(self, df_handler):
         link = self.get_link_result_with_id_master()
-        # dataframe_insert = df_handler.convert_to_dataframe_from_excel(link)
         dataframe_insert = pd.read_excel(link)
         dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Score'] > 0.40]
         id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
