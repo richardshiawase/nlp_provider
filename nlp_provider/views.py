@@ -873,8 +873,8 @@ def perbandingan_result(request):
         # create file result with compared master
         file_result.create_file_result_with_id_master(df_handler)
 
-        file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
         file_result.delete_provider_item_hospital_insurances_with_id_insurances(df_handler)
+        file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
 
     contexte = {"list": []}
     return render(request, 'matching/perbandingan.html', context=contexte)

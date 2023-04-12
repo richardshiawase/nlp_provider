@@ -35,7 +35,6 @@ class PerbandinganResult():
         list_ri = []
         list_rj = []
 
-
         for item in provider_item_list:
             list_nama.append(item.get_nama_provider())
             list_alamat.append(item.get_alamat())
@@ -47,7 +46,6 @@ class PerbandinganResult():
             list_total_score.append(item.get_total_score())
             list_alamat_ratio.append(item.get_alamat_ratio())
             list_ratio.append(item.get_ratio())
-
 
         for x in result_column:
             try:
@@ -159,7 +157,7 @@ class PerbandinganResult():
 
         pk = df_handler.perbandingan_model.get_primary_key_provider()
         # oop item provider list
-        df_handler.create_provider_item_list(dataframe_pembanding,pk)
+        df_handler.create_provider_item_list(dataframe_pembanding, pk)
 
         df_handler.comparing_item_provider_to_ml_and_save_item()
 
@@ -175,11 +173,7 @@ class PerbandinganResult():
         # # write to excel
         self.ex.write_to_excel(nama_asuransi, "_result", df)
 
-
-
-
-
-    def delete_provider_item_hospital_insurances_with_id_insurances(self,df_handler):
+    def delete_provider_item_hospital_insurances_with_id_insurances(self, df_handler):
         id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
         url = 'https://www.asateknologi.id/api/inshos-del'
         myobj = {'id_insurance': id_asuransi}
@@ -191,7 +185,7 @@ class PerbandinganResult():
     def insert_into_end_point_andika_assistant_item_provider(self, df_handler):
         link = self.get_link_result_with_id_master()
         dataframe_insert = pd.read_excel(link)
-        dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Score'] > 0.40]
+        dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Validity'] == True]
         id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
         url = 'https://www.asateknologi.id/api/inshos'
         for index, row in dataframe_insert_new.iterrows():
@@ -224,6 +218,5 @@ class PerbandinganResult():
         # #
         self.set_link_result_with_id_master(
             "media/" + df_handler.perbandingan_model.get_nama_asuransi_model() + "_result_final.xlsx")
-
 
         pass
