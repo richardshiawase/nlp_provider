@@ -1,6 +1,6 @@
 class ColumnOutput():
     def __init__(self):
-        self.header = ['Nama', 'Alamat', 'Prediction', 'Alamat_Prediction', 'Score', 'Compared', 'Clean', 'RI', 'RJ']
+        self.header = ['Nama', 'Alamat', 'Prediction', 'Alamat_Prediction', 'Score','Ratio','Alamat_Ratio','Total_Score', 'Compared', 'Clean', 'RI', 'RJ','Validity']
 
         pass
 

@@ -20,6 +20,7 @@ from django.shortcuts import render
 import warnings
 
 from classM.DFHandler import DFHandler
+from classM.Dataset import Dataset
 from model.models import ItemProvider, List_Processed_Provider
 from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
@@ -48,17 +49,19 @@ from django.core.cache import cache
 
 # from .forms import UploadFileForm
 # Create your views here.
-df_dataset = cache.get('dataset')
+
+dataset = Dataset(pd)
+print(dataset.get_bulk_dataset()['course_title'])
 list_provider_model_object = List_Processed_Provider()
+provider_dict_item = {}
 
-if df_dataset is None:
-    df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
-    cache.set('dataset', df_dataset)
 
-new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
-df_dataset["course_titles"] = new_course_title[0]
-p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
-df_non_duplicate = p._return_df()
+
+# new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
+# df_dataset["course_titles"] = new_course_title[0]
+# p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
+
+df_non_duplicate = dataset.get_dataframe_after_cleaned_no_duplicate()
 df_handler = DFHandler()
 
 filename = 'tfidf_vec.pickle'
@@ -68,15 +71,7 @@ loaded_model1 = pickle.load(open(filename, 'rb'))
 
 
 def index(request):
-    list_pembanding = []
-
-    pembanding_all = models.Provider.objects.raw("select * from model_provider where created_at in (select max(created_at) from model_provider group by nama_asuransi)")
-
-    for pembanding in pembanding_all:
-        pembanding.file_location = pembanding.file_location.split("media")[1]
-        list_pembanding.append(pembanding)
-
-    context = {"list_pembanding": list_pembanding}
+    context = {"list_pembanding": []}
     return render(request, 'home.html', context)
 
 
@@ -87,8 +82,6 @@ def kompilasi(request):
     for pembanding in list_pembandinge:
         pembanding.file_location = pembanding.file_location.split("media")[1]
         list_pembanding.append(pembanding)
-
-    context = {"list_pembanding": list_pembanding}
 
     return render(request, 'kompilasi.html')
 
@@ -117,8 +110,8 @@ def kompilasi_data(request):
 def newe(request):
     list_providere = []
 
-
-    data_list = models.Provider.objects.raw("select * from model_provider where created_at in (select max(created_at) from model_provider group by nama_asuransi)")
+    data_list = models.Provider.objects.raw(
+        "select * from model_provider where created_at in (select max(created_at) from model_provider group by nama_asuransi)")
     provider_list = []
     for data in data_list:
         pk = data.pk
@@ -132,10 +125,12 @@ def newe(request):
         provider.file_location_result = data.file_location_result
 
         list_item_provider = []
-        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",[pk])
+        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s", [pk])
 
         for item in dt:
+            item._state.adding = False
             item_provider = ItemProvider()
+            item_provider.set_id(item.pk)
             item_provider.set_provider_name(item.nama_provider)
             item_provider.set_alamat_prediction(item.alamat_prediction)
             item_provider.set_alamat(item.alamat)
@@ -156,16 +151,13 @@ def newe(request):
         data = model_to_dict(item)
         list_providere.append(data)
 
-
     if request.method == "GET":
         return JsonResponse(list_providere, safe=False)
-
 
     return JsonResponse({'message': 'error'})
 
 
 def perbandingan_rev(request):
-
     id_provider = request.session.get('id_provider')
     provider = list_provider_model_object.get_a_provider_from_id(id_provider)
 
@@ -173,7 +165,6 @@ def perbandingan_rev(request):
 
 
 def perbandingan(request):
-
     response = requests.get('https://asateknologi.id/api/insuranceall')
     response = response.json()
 
@@ -181,8 +172,6 @@ def perbandingan(request):
         id_provider = request.POST["id_provider"]
         request.session['id_provider'] = id_provider
         # loop_delete(file_location)
-        # context = {"list_insurance": response.get("val"), "list": provider_choose, "link_result": "-"}
-        # return render(request, 'matching/perbandingan.html', context=context)
 
     context = {"list_insurance": response.get("val"), "list": [], "link_result": "-"}
     return render(request, 'matching/perbandingan.html', context=context)
@@ -569,22 +558,18 @@ def master_varian_list_read(request):
 
 
 def temporer_store(request):
-    global link_result
     if request.method == "POST":
-        global name
 
-        post_ide = request.POST["post_idew"]
-        alamat = request.POST["alamat"]
-        name = post_ide + "#" + alamat
-        link_result = request.POST["link_result"]
-        context = {"provider_name": post_ide, "link_result": link_result}
+        id = request.POST['id']
+        if id is not None and id != '':
+            item = ItemProvider.objects.get(pk=id)
 
-        if name in provider_liste:
-            provider_liste.remove(name)
-        else:
-            provider_liste.append(name)
-    else:
-        context = {"provider_name": provider_liste, "link_result": link_result}
+            if id in provider_dict_item:
+                del provider_dict_item[id]
+            else:
+                provider_dict_item[id] = item
+
+    context = {"provider_name": provider_dict_item, "link_result": "-"}
 
     # return HttpResponse(context)
     return render(request, 'matching/temporer.html', context=context)
@@ -714,28 +699,30 @@ def update_temporer_store(request):
 def add_to_dataset(request):
     if request.method == "POST":
         # OPEN DATASET FILE
-        df = cache.get('dataset')
-        if df is None:
-            df = pd.read_excel("dataset_excel_copy.xlsx")
-            cache.set('dataset', df)
+        df = dataset.get_bulk_dataset()
 
         df_basket = pd.read_excel("basket_provider.xlsx")
 
         # SEARCH PROVIDER IN DATASET
-        for label_name, provider_name in list(
-                zip(request.POST.getlist('nama_label'), request.POST.getlist('nama_provider'))):
+        for label_name, key_provider in list(
+                zip(request.POST.getlist('nama_label'), request.POST.getlist('value_provider'))):
             label_name = label_name.split("#")[0]
-            alamat = provider_name.split("#")[1]
 
-            provider_name = provider_name.split("#")[0]
-            for x in range(200):
+            item_provider = ItemProvider.objects.get(pk=key_provider)
+
+
+            for x in range(10):
                 try:
-                    row = pd.Series({'course_title': provider_name + "#" + alamat, 'subject': label_name}, name=3)
+                    row = pd.Series({'course_title': item_provider.get_nama_alamat(), 'alamat':item_provider.get_alamat(), 'subject': label_name}, name=3)
                     df = df.append(row, ignore_index=True)
+                    cache.delete('dataset')
                 except:
                     break
+
+
+
             try:
-                rowe = pd.Series({'course_title': provider_name, 'alamat': alamat}, name=3)
+                rowe = pd.Series({'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat()}, name=3)
                 df_basket = df_basket.append(rowe, ignore_index=True)
             except:
                 break
@@ -745,14 +732,7 @@ def add_to_dataset(request):
         df.to_excel("dataset_excel_copy.xlsx", index=False)
         # create_model(df)
 
-        pembanding = models.Provider.objects.all()
-        list_pembandinge = pembanding
-        list_pembanding = []
-        for pembanding in list_pembandinge:
-            pembanding.file_location = pembanding.file_location.split("media")[1]
-            list_pembanding.append(pembanding)
-
-        context = {"list_pembanding": list_pembanding}
+        context = {"list_pembanding": []}
 
         return render(request, 'home.html', context)
 
@@ -760,27 +740,23 @@ def add_to_dataset(request):
 
 
 def process_temporer_store(request):
-    global link_result
-    if request.method == "POST":
-        link_result = request.POST["link_result"]
 
-    dfs = cache.get('dataset')
-    if dfs is None:
-        dfs = pd.read_excel("dataset_excel_copy.xlsx")
-        cache.set('dataset', dfs)
 
-    # dfa = dfs.drop_duplicates(subset='subject')
-    dfz = dfs.dropna(subset="alamat")
-    dfa = dfz.drop_duplicates(subset='subject')
+    # dfs = cache.get('dataset')
+    # if dfs is None:
+    #     dfs = pd.read_excel("dataset_excel_copy.xlsx")
+    #     cache.set('dataset', dfs)
+    #
+    # dfz = dfs.dropna(subset="alamat")
+    # dfa = dfz.drop_duplicates(subset='subject')
     label_list = []
+    dfa = dataset.get_dataframe_after_cleaned_no_duplicate()
     for index, row in dfa.iterrows():
-        provider_name = row['course_title']
         alamat = str(row['alamat'])
         label = row["subject"]
         if label + "#" + alamat not in label_list:
             label_list.append(label + "#" + alamat)
-    print(link_result)
-    context = {"label_list": label_list, "list": provider_liste, "link_result": link_result}
+    context = {"label_list": label_list, "list": provider_dict_item, "link_result": "-"}
     # return HttpResponse("Process Temporer")
     return render(request, 'matching/proses_temporer.html', context=context)
 
@@ -818,10 +794,6 @@ def vectorize_text(text, tfidf_vec):
     # text = "Klinik Ananda"
     my_vec = tfidf_vec.transform([text])
     return my_vec.toarray()
-
-
-
-
 
 
 def cacah_dataframe(df):
@@ -883,9 +855,9 @@ def perbandingan_result(request):
             file = request.FILES['perbandinganModel']
 
             nama_asuransi = str(data_asuransi).split("#")[0]
-            id_asuransi   = str(data_asuransi).split("#")[1]
+            id_asuransi = str(data_asuransi).split("#")[1]
             # save the file to /media/
-            c = file_storage.save(file.name,file)
+            c = file_storage.save(file.name, file)
 
             # get file url
             file_url = file_storage.path(c)
@@ -903,7 +875,5 @@ def perbandingan_result(request):
 
         # file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
 
-        # contexte = {"list":provider_list,"link_result":"media/"+perbandingan_model_obj.file_location_result}
-        # return render(request, 'matching/perbandingan.html', context=contexte)
     contexte = {"list": []}
     return render(request, 'matching/perbandingan.html', context=contexte)

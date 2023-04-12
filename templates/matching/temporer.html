@@ -19,18 +19,19 @@
                 <thead>
                 <tr>
                     {% csrf_token %}
-
-                    <th width="60%">Provider Name</th>
+                    <th width="10%">Id</th>
+                    <th width="50%">Provider Name</th>
                     <th width="20%">Action</th>
 
                 </tr>
                 </thead>
                 <tbody>
-                {% for provider in provider_name %}
+                {% for key,value in provider_name.items %}
                 <tr id="row">
-                    <td>{{ provider }}</td>
+                    <td>{{ key }}</td>
+                    <td>{{ value.get_nama_alamat }}</td>
                     <td>
-                        <button type="button" class="btn btn-danger delete" id="delete_btn" value="{{ provider }}">Delete
+                        <button type="button" class="btn btn-danger delete" id="delete_btn" value="{{ key }}">Delete
                         </button>
                     </td>
 
@@ -82,14 +83,11 @@
                     type:"POST",
                     url: "/process-temporer/",
                     data:{
-<!--                        "post_idew": text,-->
-                        "link_result":$("#id_link_result").val(),
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
                     success: function( data )
                     {
                             window.close();
-<!--                        console.log("adalah");-->
                          window.open(proses_url, "_blank");
                     }
              })
@@ -101,18 +99,15 @@
            e.preventDefault();
 
             console.log("delete");
-            var text = $(this).attr("value");
-<!--            var classes = $('#row_'+nilai).remove();-->
-<!--            console.log(classes);-->
-
+            var id = $(this).attr("value");
+            console.log(id);
              $.ajax(
                 {
                     dataType: 'text',
                     type:"POST",
                     url: "/update-temporer/",
                     data:{
-                        "post_idew": text.split("#")[0],
-                        "alamat":text.split("#")[1],
+                        "id": id,
                         "link_result":"-",
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },

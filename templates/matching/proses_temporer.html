@@ -16,15 +16,18 @@
         <form action="{% url 'add_to_dataset' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
-            {% for provider in list %}
+            {% for key,value in list.items %}
             <div id="baris_main_{{forloop.counter}}" class="row">
                 <div class="row mt-1 ms-2">
 
                 </select>
                     <div class="col-sm-5">
 
+                         <input class="form-control" type="hidden" name="value_provider" id="value_provider_{{forloop.counter}}"
+                               value="{{ key }}" readonly="readonly">
+
                         <input class="form-control" type="text" name="nama_provider" id="select_provider_{{forloop.counter}}"
-                               value="{{ provider }}" readonly="readonly">
+                               value="{{ value.get_nama_alamat }}" readonly="readonly">
                     </div>
                     <div class="col-sm-5">
                         <select class=" select_picker form-control" name="nama_label" id="select_label_{{forloop.counter}}" data-live-search="true">
@@ -94,12 +97,13 @@
 
     })
 
-     $('.delete_btn_class_main').click(function(){
-            var nilai = $(this).attr("value");
-            var classes = $('#baris_main_'+nilai).remove();
-            console.log(nilai);
-            console.log(row_index);
-     });
+<!--     $('.delete_btn_class_main').click(function(){-->
+<!--            var nilai = $(this).attr("value");-->
+<!--            var classes = $('#baris_main_'+nilai).remove();-->
+<!--            console.log(nilai);-->
+<!--            console.log(row_index);-->
+<!--            console.log("Test");-->
+<!--     });-->
 
      $('.add_master_btn_class_main').click(function(){
             var nilai = $(this).attr("value");

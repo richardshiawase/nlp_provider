@@ -29,8 +29,12 @@ class PerbandinganResult():
         list_prediction_name = []
         list_alamat_prediction = []
         list_score = []
+        list_total_score = []
+        list_alamat_ratio = []
+        list_ratio = []
         list_ri = []
         list_rj = []
+
 
         for item in provider_item_list:
             list_nama.append(item.get_nama_provider())
@@ -40,6 +44,10 @@ class PerbandinganResult():
             list_score.append(item.get_proba_score())
             list_ri.append(item.get_ri())
             list_rj.append(item.get_rj())
+            list_total_score.append(item.get_total_score())
+            list_alamat_ratio.append(item.get_alamat_ratio())
+            list_ratio.append(item.get_ratio())
+
 
         for x in result_column:
             try:
@@ -53,10 +61,17 @@ class PerbandinganResult():
                     mappeds[x] = list_alamat_prediction
                 if x == "Score":
                     mappeds[x] = list_score
+                if x == "Ratio":
+                    mappeds[x] = list_ratio
+                if x == "Alamat_Ratio":
+                    mappeds[x] = list_alamat_ratio
+                if x == "Total_Score":
+                    mappeds[x] = list_total_score
                 if x == "RI":
                     mappeds[x] = list_ri
                 if x == "RJ":
                     mappeds[x] = list_rj
+
 
             except Exception as e:
                 print("Tidak ditemukan output column " + x + " di dataframe " + str(e))
