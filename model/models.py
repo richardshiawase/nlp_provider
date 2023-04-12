@@ -20,15 +20,13 @@ class List_Processed_Provider(models.Model):
         for data in self.get_provider_list():
             if data.get_primary_key_provider() == str(id_provider):
                 return data
-            else:
-                print("not found")
+
 
 class Provider_Model(models.Model):
     model_name = models.CharField(max_length=30)
     accuracy_score = models.DecimalField(max_digits=5, decimal_places=2)
     model_location = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
-
 
 class ItemProvider(models.Model):
     id_model = models.CharField(max_length=500)
@@ -37,6 +35,9 @@ class ItemProvider(models.Model):
     alamat = models.CharField(max_length=500)
     label_name = models.CharField(max_length=300)
     proba_score = models.CharField(max_length=10)
+    ratio = models.CharField(max_length=10)
+    alamat_ratio = models.CharField(max_length=10)
+    total_score = models.CharField(max_length=10)
     count_label_name = models.CharField(max_length=2)
     ri = models.CharField(max_length=2)
     rj = models.CharField(max_length=2)
@@ -44,6 +45,41 @@ class ItemProvider(models.Model):
     alamat_prediction = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def set_status(self,status):
+        self.status = status
+
+    def get_status(self):
+        return self.status
+
+    def set_processed(self, found):
+        self.found = found
+
+    def is_processed(self):
+        return self.found
+
+    def set_alamat_ratio(self,alamat_ratio):
+        self.alamat_ratio = alamat_ratio
+
+    def get_alamat_ratio(self):
+        return self.alamat_ratio
+
+    def set_ratio(self,ratio):
+        self.ratio = ratio
+
+    def get_ratio(self):
+        return self.ratio
+
+    def set_total_score(self,total_score):
+        self.total_score = total_score
+
+    def get_total_score(self):
+        return self.total_score
+
+    def set_id(self,pk):
+        self.id = pk
+
+    def get_id(self):
+        return self.id
 
     def set_id_model(self,id_model):
         self.id_model = id_model
@@ -91,7 +127,7 @@ class ItemProvider(models.Model):
         return self.alamat
 
     def get_label_name(self):
-        return self.label_name
+        return self.label_name.strip()
 
     def get_proba_score(self):
         return float(self.proba_score)
@@ -141,19 +177,13 @@ class ItemProvider(models.Model):
     def get_id_asuransi(self):
         return self.id_asuransi
 
-    def set_rawat_inap_master(self, rawat_inap):
-        self.rawat_inap = rawat_inap
-        pass
+    def set_validity(self,valid):
+        self.validity = valid
 
-    def set_rawat_jalan_master(self, rawat_jalan):
-        self.rawat_jalan = rawat_jalan
-        pass
+    def is_valid(self):
+        return self.validity
 
-    def get_rawat_inap_master(self):
-        return self.rawat_inap
 
-    def get_rawat_jalan_master(self):
-        return self.rawat_jalan
 
 
 class Provider(models.Model):
@@ -220,6 +250,13 @@ class Provider(models.Model):
     def get_list_item_provider_json(self):
         ls = []
         for item_provider in self.get_list_item_provider():
-            ls.append(model_to_dict(item_provider))
+            del item_provider._state
+            ls.append(item_provider.__dict__)
         return ls
 
+class Dataset(models.Model):
+    course_title = models.CharField(max_length=500)
+    alamat = models.CharField(max_length=500)
+    subject = models.CharField(max_length=500)
+    master_address = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)

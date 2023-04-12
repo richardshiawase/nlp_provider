@@ -45,14 +45,14 @@
             <table id="albumse" class="table table-striped table-bordered" style="width:100%">
                 <thead>
                 <tr>
+                    <th data-data="rank">Id</th>
                     <th data-data="rank">Provider Name</th>
                     <th data-data="rank">Alamat</th>
                     <th data-data="rank">Alamat Prediction</th>
-
                     <th data-data="rank">Label</th>
                     <th data-data="rank">Score</th>
-                    <th data-data="rank">Status</th>
-                    <th data-data="rank">Count</th>
+                    <th data-data="rank">Selected</th>
+
 
                 </tr>
                 </thead>
@@ -88,7 +88,6 @@
             e.preventDefault();
 
             var data = table.row($(this)).data();
-            console.log(data);
 
 
              $.ajax(
@@ -97,9 +96,7 @@
                     type:"POST",
                     url: "/temporer-store/",
                     data:{
-                        "post_idew": data.nama_provider,
-                        "alamat": data.alamat,
-                        "link_result": $("#id_link_result").val(),
+                        "id":data.id,
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
                     success: function( data )
@@ -125,13 +122,13 @@
 
 
           columns: [
+                  {   data:  "id"},
                   {   data: "nama_provider" },
                   {   data: "alamat" },
                   {   data: "alamat_prediction"},
                   {   data: "label_name" },
                   {   data: "proba_score" },
-                  {   data: "selected" },
-                  {   data: "count_label_name" },
+                  {   data: "selected" }
 
               ],
 
@@ -157,14 +154,14 @@
                    $('#select_label').on('change', function() {
                           if(this.value == "Compared"){
                             table
-                            .columns( 5 )
+                            .columns( 4 )
                             .search(1)
                             .draw();
                           }
 
                           if (this.value == "Not Compared"){
                           table
-                            .columns( 5 )
+                            .columns( 4 )
                             .search(0)
                             .draw();
                           }
@@ -172,7 +169,7 @@
                           if(this.value === "Mix"){
                             console.log("Mixe");
                             table
-                            .columns( 5 )
+                            .columns( 4 )
                             .search("")
                             .draw();
 
