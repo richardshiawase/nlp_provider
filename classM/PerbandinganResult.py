@@ -141,40 +141,9 @@ class PerbandinganResult():
 
         return mappeds
 
-    def create_file(self, df_handler):
-
-        # get lokasi excel
-        lokasi_excel = df_handler.perbandingan_model.get_lokasi_excel_pembanding()
-
-        # read excel by lokasi excel and get the dataframe
-        dataframe_pembanding = df_handler.convert_to_dataframe_from_excel(lokasi_excel)
-
-        # header for initial process
-        header = ['Nama', 'Alamat', 'Alamat_Prediction', 'RI', 'RJ']
-
-        # # save perbandingan model
-        df_handler.perbandingan_model.save_perbandingan_model()
-
-        pk = df_handler.perbandingan_model.get_primary_key_provider()
-        # oop item provider list
-        df_handler.create_provider_item_list(dataframe_pembanding, pk)
-
-        df_handler.comparing_item_provider_to_ml_and_save_item()
-
-        # # # map processed dataframe column to output desired column
-        mapped = self.map_list_item_provider_to_column_output(df_handler.perbandingan_model.get_list_item_provider())
-
-        # # # convert mapped list to dataframe
-        df = pd.DataFrame(mapped)
-
-        # # get nama asuransi
-        nama_asuransi = df_handler.perbandingan_model.get_nama_asuransi_model()
-        #
-        # # write to excel
-        self.ex.write_to_excel(nama_asuransi, "_result", df)
 
     def delete_provider_item_hospital_insurances_with_id_insurances(self, df_handler):
-        id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
+        id_asuransi = df_handler.perbandingan_model.get_id_asuransi()
         url = 'https://www.asateknologi.id/api/inshos-del'
         myobj = {'id_insurance': id_asuransi}
         try:
@@ -186,7 +155,7 @@ class PerbandinganResult():
         link = self.get_link_result_with_id_master()
         dataframe_insert = pd.read_excel(link)
         dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Validity'] == True]
-        id_asuransi = df_handler.perbandingan_model.get_id_asuransi_model()
+        id_asuransi = df_handler.perbandingan_model.get_id_asuransi()
         url = 'https://www.asateknologi.id/api/inshos'
         for index, row in dataframe_insert_new.iterrows():
             myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
@@ -199,7 +168,7 @@ class PerbandinganResult():
         pass
 
     def create_file_result_with_id_master(self, df_handler):
-        self.create_file(df_handler)
+        # self.create_file(df_handler)
 
         lokasi_excel = "master_provider.xlsx"
         #
