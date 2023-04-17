@@ -1,90 +1,50 @@
+import pandas as pd
+
+from classM.ItemMaster import ItemMaster
+from classM.Pembersih import Pembersih
+
+
 class MasterData:
-    def __init__(self,id=None,nama_provider=None,alamat=None,category_1=None,category_2=None,phone=None,
-                 state_id=None,city_id=None):
-        self.id = str(id)
-        self.state_id = str(state_id)
-        self.city_id = str(city_id)
-        self.category_1 = str(category_1)
-        self.category_2 = str(category_2)
-        self.nama_provider = str(nama_provider).replace("_x000D_","")
-        self.alamat = str(alamat).replace("_x000D_","")
-        self.phone = str(phone)
-        self.match_name = False
-        self.match_address = False
+    def __init__(self,lokasi_excel):
+        self.lokasi_excel = lokasi_excel
+        df = pd.read_excel(lokasi_excel)
+        # clean the dataframe
+        pembersih = Pembersih(df)
 
-    def set_alamat_master(self,alamat):
-        self.alamat = alamat
+        self.dataframe_master = pembersih._return_df()
+        self.list_item_master_provider = []
+        self.set_list_item_master_provider()
 
+    def get_master_excel_location(self):
+        return self.lokasi_excel
 
-    def set_match_address_true(self):
-        self.match_address = True
+    def set_list_item_master_provider(self):
+        print("Create provider item list")
 
-    def get_match_address_boolean(self):
-        return self.match_address
-    def set_match_name_true(self):
-        self.match_name = True
+        for row in self.dataframe_master.itertuples(index=True, name='Sheet1'):
 
-    def get_match_name_boolean(self):
-        return self.match_name
-    def set_id_master(self,id):
-        self.id = id
+            master_provider_id = row.ProviderId
+            master_state_id = row.stateId
+            master_city_id = row.cityId
+            master_category_1 = row.Category_1
+            master_category_2 = row.Category_2
+            master_nama_provider = row.PROVIDER_NAME
+            master_alamat = row.ADDRESS
+            master_tel = row.TEL_NO
 
-    def set_nama_master(self,nama_provider):
-        self.nama_provider = str(nama_provider).replace("_x000D_","")
+            itemMaster = ItemMaster(master_provider_id,
+                                    master_state_id,
+                                    master_city_id,
+                                    master_category_1,
+                                    master_category_2,
+                                    master_nama_provider,
+                                    master_alamat,
+                                    master_tel)
+            self.list_item_master_provider.append(itemMaster)
 
-    def get_id_master(self):
-        return self.id
-
-    def get_nama_master(self):
-        return self.nama_provider.strip()
-
-
-    def set_varian(self,varian):
-        self.varian = varian
-
-
-    def get_varian(self):
-        return self.varian
-
-    def get_alamat_master(self):
-        return self.alamat
-
-
-    def set_telepon_master(self,tel):
-        self.telepon = tel
-
-    def get_telepon_master(self):
-        return self.telepon
-
-
-    def set_category_1_master(self,cat):
-        self.category_1 = cat
-
-    def get_category_1_master(self):
-        return self.category_1
-
-    def set_category_2_master(self,cat):
-        self.category_2 = cat
-
-    def get_category_2_master(self):
-        return self.category_2
-
-
-    def set_state_id_master(self,id):
-        self.state_id = id
-
-    def get_state_id_master(self):
-        return self.state_id
-
-    def set_city_id_master(self,id):
-        self.city_id = id
-
-    def get_city_id_master(self):
-        return self.city_id
-
-
-    def set_list_item_master_provider(self,list_item_provider):
-        self.list_item_master_provider = list_item_provider
 
     def get_list_item_master_provider(self):
         return self.list_item_master_provider
+
+    def get_dataframe(self):
+        return self.dataframe_master
