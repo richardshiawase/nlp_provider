@@ -5,10 +5,20 @@ class ItemMaster:
         self.cityId = cityId
         self.category_1 = category_1
         self.category_2 = category_2
-        self.provider_name = str(provider_name).replace("_x000D_", "")
+        self.provider_name = str(provider_name).replace("_x000D_", "").replace("'","").replace("'","")
         self.address = str(address).replace("_x000D_", "")
         self.tel_no = tel_no
 
+
+
+    def get_category_1_master(self):
+        return self.category_1
+
+    def get_category_2_master(self):
+        return self.category_2
+
+    def get_city_id_master(self):
+        return self.cityId
 
     def set_alamat_master(self, alamat):
         self.address = alamat
@@ -29,7 +39,7 @@ class ItemMaster:
         self.provider_id = id
 
     def set_nama_master(self, nama_provider):
-        self.nama_provider = str(nama_provider).replace("_x000D_", "")
+        self.provider_name = str(nama_provider).replace("_x000D_", "")
 
     def get_id_master(self):
         return self.provider_id

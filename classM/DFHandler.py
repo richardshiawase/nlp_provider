@@ -6,7 +6,6 @@ from django.forms import model_to_dict
 from fuzzywuzzy import fuzz
 
 from classM.ColumnToRead import ColumnToRead
-from classM.MasterData import MasterData
 
 import pandas as pd
 
@@ -30,7 +29,7 @@ class DFHandler:
         self.provider_list = []
         self.df = None
         self.column = ColumnToRead()
-        self.master_provider = MasterData()
+        # self.master_provider = MasterData()
 
     def convert_to_dataframe_from_excel(self, excel):
         self.df = self.ex.baca_excel(excel)
@@ -224,7 +223,7 @@ class DFHandler:
         for item in self.perbandingan_model.get_list_item_provider():
             item.set_processed(False)
             item.set_validity(False)
-            master_data = MasterData()
+            # master_data = MasterData()
             for master_obj in self.master_provider.get_list_item_master_provider():
                 if item.get_label_name() == master_obj.get_nama_master():
                     id_master_list.append(master_obj.get_id_master())
