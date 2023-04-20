@@ -5,9 +5,10 @@ from classM.Pembersih import Pembersih
 
 
 class MasterData:
-    def __init__(self,lokasi_excel):
-        self.lokasi_excel = lokasi_excel
-        df = pd.read_excel(lokasi_excel)
+    def __init__(self):
+        self.lokasi_excel = "master_provider.xlsx"
+        df = pd.read_excel(self.lokasi_excel)
+
         # clean the dataframe
         pembersih = Pembersih(df)
 
@@ -17,6 +18,9 @@ class MasterData:
 
     def get_master_excel_location(self):
         return self.lokasi_excel
+
+    def add_to_list_master_provider(self,item):
+        self.list_item_master_provider.append(item)
 
     def set_list_item_master_provider(self):
         print("Create provider item list")

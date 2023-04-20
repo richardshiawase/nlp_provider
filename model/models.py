@@ -68,26 +68,31 @@ class ItemProvider(models.Model):
     nama_alamat = models.CharField(max_length=500)
     alamat_prediction = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
+    golden_record = models.CharField(max_length=2)
 
+    def set_golden_record(self, bool):
+        self.golden_record = bool
 
-    def set_id_master(self,id_master):
+    def get_golden_record_status(self):
+        return self.golden_record
+
+    def set_id_master(self, id_master):
         self.id_master = id_master
 
     def get_id_master(self):
         return self.id_master
 
-    def set_nama_master_provider(self,nama_master_provider):
+    def set_nama_master_provider(self, nama_master_provider):
         self.nama_master_provider = nama_master_provider
 
     def get_nama_master_provider(self):
         return self.nama_master_provider
 
-    def set_alamat_master_provider(self,alamat_master):
+    def set_alamat_master_provider(self, alamat_master):
         self.alamat_master_provider = alamat_master
 
     def get_alamat_master_provider(self):
         return self.alamat_master_provider
-
 
     def set_status(self, status):
         self.status = status
@@ -117,7 +122,12 @@ class ItemProvider(models.Model):
         self.total_score = total_score
 
     def get_total_score(self):
-        return self.total_score
+        total_score = 0
+        try:
+            total_score = float(self.total_score)
+        except Exception as e:
+            print(str(e))
+        return float(total_score)
 
     def set_id(self, pk):
         self.id = pk
@@ -227,6 +237,12 @@ class ItemProvider(models.Model):
     def is_valid(self):
         return self.validity
 
+    def set_saved_in_golden_record(self,bool):
+        self.saved_in_golden_record = bool
+
+    def get_saved_in_golden_record(self):
+        return self.saved_in_golden_record
+
 
 class FinalResult(models.Model):
     file_final_location_result = models.CharField(max_length=1000)
@@ -235,18 +251,18 @@ class FinalResult(models.Model):
     def set_file_final_location_result(self, nama_file):
         self.file_final_location_result = "media/" + nama_file
 
+    def set_final_result_dataframe(self, dataframe):
+        self.final_result_dataframe = dataframe
+
+    def get_final_result_dataframe(self):
+        return self.final_result_dataframe
+
 
 class MasterMatchProcess(models.Model):
     id_file_result = models.CharField(max_length=500)
     id_master_match_file_result = models.CharField(max_length=500)
     match_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def set_df_handler(self, df_handler):
-        self.df_handler = df_handler
-
-    def get_dfhandler(self):
-        return self.df_handler
 
     def create_file_final_result_master_match(self):
         self.file_final_result_master = FinalResult()
@@ -265,8 +281,7 @@ class MasterMatchProcess(models.Model):
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
 
-        lokasi_excel = "master_provider.xlsx"
-        master_data = MasterData(lokasi_excel)
+        master_data = MasterData()
 
         # # # # # combine the result with id
         print("\n\nCreate Result File With ID")
@@ -288,6 +303,7 @@ class MasterMatchProcess(models.Model):
         for item in provider.get_list_item_provider():
             item.set_processed(False)
             item.set_validity(False)
+
             for item_master in master_data.get_list_item_master_provider():
                 if item.get_label_name() == item_master.get_nama_master():
                     id_master_list.append(item_master.get_id_master())
@@ -304,7 +320,6 @@ class MasterMatchProcess(models.Model):
 
                     list_item_total_score.append(item.get_total_score())
                     item.set_processed(True)
-
                     if item.get_total_score() >= 55:
                         item.set_validity(True)
                     else:
@@ -317,9 +332,10 @@ class MasterMatchProcess(models.Model):
 
                     break
 
-            item.set_total_score(0)
-            item.set_ratio(0)
-            item.set_alamat_ratio(0)
+            if item.is_processed() is False:
+                item.set_total_score(0)
+                item.set_ratio(0)
+                item.set_alamat_ratio(0)
             for item_master in master_data.get_list_item_master_provider():
                 if item.is_processed() is False:
                     ratio_nama = fuzz.ratio(item.get_label_name(), item_master.get_nama_master().strip())
@@ -388,18 +404,22 @@ class MasterMatchProcess(models.Model):
             'Validity': pd.Series(list_item_validity),
             'Status': pd.Series(list_item_status)
         }
-        processed_dataframe = pd.DataFrame(dict_result)
+        self.processed_dataframe = pd.DataFrame(dict_result)
 
         nama_file = provider.get_nama_asuransi_model() + "_result_final.xlsx"
 
         writer = pd.ExcelWriter('media/' + nama_file, engine='xlsxwriter')
         # # # Convert the dataframe to an XlsxWriter Excel object.
-        processed_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+        self.processed_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
 
         writer.close()
 
         self.file_final_result_master.set_file_final_location_result(nama_file)
         self.file_final_result_master.save()
+        self.file_final_result_master.set_final_result_dataframe(self.processed_dataframe)
+
+    def get_final_result_dataframe(self):
+        return self.processed_dataframe
 
     def save_matching_information(self):
         self.id_file_result = self.file_result_match.pk
@@ -443,18 +463,23 @@ class MatchProcess(models.Model):
     status_finish = models.CharField(max_length=8)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def set_file_result(self,file_result):
+    def set_golden_record_instance(self, golden_record):
+        self.golden_record = golden_record
+
+    def get_golden_record_instance(self):
+        return self.golden_record
+
+    def set_file_result(self, file_result):
         self.file_result = file_result
 
     def get_file_result(self):
         return self.file_result
 
-    def set_status_finish(self,status_finish):
+    def set_status_finish(self, status_finish):
         self.status_finish = status_finish
 
     def get_status_finish(self):
         return self.status_finish
-
 
     def get_provider_list_json(self):
         ls = []
@@ -472,12 +497,12 @@ class MatchProcess(models.Model):
     def set_list_provider(self):
         self.list_provider = List_Processed_Provider()
         # self.list_provider.set_empty_provider_list()
+
     def get_list_provider(self):
         return self.list_provider
 
     def set_dataset(self):
         self.dataset = Dataset(pd)
-        print(self.dataset.get_bulk_dataset()['course_title'])
 
     def get_dataset(self):
         return self.dataset
@@ -575,34 +600,57 @@ class MatchProcess(models.Model):
     def process_matching(self):
         # get lokasi excel
         print("Match Process")
+        self.set_dataset()
         self.file_result = FileResult()
+
         self.processed_provider = self.list_provider.get_provider_list().pop()
         self.processed_provider.save_perbandingan_model()
-
 
         # Compare and save the Item !
         pd.options.display.max_colwidth = None
         df_dataset_non_duplicate = self.get_dataset().get_dataframe_after_cleaned_no_duplicate()
-
+        self.golden_record.set_golden_record_list_item()
+        golden_record_list_item = self.golden_record.get_golden_record_list_item()
+        print("Compare to golden record list item")
         for item_provider in self.processed_provider.get_list_item_provider():
             try:
-                # predict the text !
-                nama_alamat = item_provider.get_nama_alamat()
-                sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
-                y_preds = self.loaded_model1.predict(sample1)
+                for item_golden in golden_record_list_item:
 
-                # add prediction ke list
-                y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+                    if item_golden.get_nama_provider() == item_provider.get_nama_provider():
 
-                # calculate proba
-                p = self.loaded_model1.predict_proba(sample1)
-                ix = p.argmax(1).item()
-                nil = float("{:.2f}".format(p[0, ix]))
-                score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
+                        item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                        item_provider.set_label_name(item_golden.get_label_name())
+                        item_provider.set_proba_score(item_golden.get_proba_score())
+                        item_provider.set_ratio(item_golden.get_ratio())
 
-                # jika prediksi sama dengan dataset maka ambil alamat dari dataset
-                val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
-                try:
+                        item_provider.set_total_score(item_golden.get_total_score())
+
+                        item_provider.set_alamat_ratio(item_golden.get_alamat_ratio())
+                        item_provider.set_count_label_name(0)
+                        item_provider.set_alamat_prediction(item_golden.get_alamat_prediction())
+                        item_provider.set_golden_record(1)
+                        item_provider.set_saved_in_golden_record(True)
+                        break
+
+                if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is not True:
+                    item_provider.set_golden_record(0)
+
+                    nama_alamat = item_provider.get_nama_alamat()
+                    sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
+                    y_preds = self.loaded_model1.predict(sample1)
+
+                    # add prediction ke list
+                    y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+
+                    # calculate proba
+                    p = self.loaded_model1.predict_proba(sample1)
+                    ix = p.argmax(1).item()
+                    nil = float("{:.2f}".format(p[0, ix]))
+                    score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
+
+                    # jika prediksi sama dengan dataset maka ambil alamat dari dataset
+                    val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
+
                     res_master = df_dataset_non_duplicate[val_master]
                     al = res_master["alamat"].head(1)
 
@@ -618,36 +666,12 @@ class MatchProcess(models.Model):
                     item_provider.set_alamat_ratio(alamat_ratio)
                     item_provider.set_count_label_name(0)
                     item_provider.set_alamat_prediction(al.values[0])
+                    item_provider.set_golden_record(0)
                     item_provider.save()
-                except:
-
-                    try:
-                        bool_find_in_dataset = (
-                            df_dataset_non_duplicate['subject'].str.contains(re.escape(y_preds)))
-                        res_master = df_dataset_non_duplicate[bool_find_in_dataset]
-                        al = res_master["alamat"].head(0)
-                        alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
-
-                        total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
-                        item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
-                        item_provider.set_ratio(score)
-
-                        item_provider.set_alamat_ratio(alamat_ratio)
-                        item_provider.set_total_score(total_score)
-
-                        item_provider.set_label_name(y_preds)
-                        item_provider.set_proba_score(nil)
-                        item_provider.set_count_label_name(0)
-                        item_provider.set_alamat_prediction(al.values[0])
-                        # item_provider.save()
-
-                    except Exception as e:
-                        self.error_value_write(item_provider, e)
-
-
+                    item_provider.set_saved_in_golden_record(False)
             except Exception as e:
                 # self.error_value_write(item_provider, e)
-                print("tes")
+                print(str(e))
 
         # # # map processed dataframe column to output desired column
         mapped = self.map_list_item_provider_to_column_output(self.processed_provider.get_list_item_provider())
@@ -674,13 +698,11 @@ class MatchProcess(models.Model):
         self.file_result.save_file_result_information()
         self.save_matching_information()
 
-
     def save_matching_information(self):
         self.id_file_result = self.file_result.pk
         self.id_model = self.processed_provider.get_primary_key_provider()
         self.match_percentage = 1.00
         self.save()
-
 
     def set_id(self, pk):
         self.id = pk
@@ -707,6 +729,76 @@ class MatchProcess(models.Model):
         return self.created_at
 
 
+class GoldenRecordMatch(models.Model):
+    id_model = models.CharField(max_length=500)
+    id_finalresult = models.CharField(max_length=500)
+    total_golden_record = models.CharField(max_length=500)
+    nama_provider = models.CharField(max_length=500)
+    alamat = models.CharField(max_length=500)
+    total_ratio = models.CharField(max_length=500)
+    status = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def set_golden_record_list_item(self):
+
+        self.golden_record_list_item = ItemProvider.objects.raw("select * from model_itemprovider where golden_record = 1")
+
+    def get_golden_record_list_item(self):
+        print("golden record list item")
+        return self.golden_record_list_item
+
+    def set_master_match_process(self):
+        self.master_match_process = MasterMatchProcess()
+
+    def get_master_match_process(self):
+        return self.master_match_process
+
+    def set_final_result(self, finalresult):
+        self.final_result = finalresult
+
+    def set_file_result(self, fileresult):
+        self.file_result = fileresult
+        self.provider = self.file_result.get_processed_provider()
+
+    def get_final_result(self):
+        return self.final_result
+
+    def get_file_result(self):
+        return self.file_result
+
+    def set_processed_provider(self):
+        self.provider = self.file_result.get_processed_provider()
+
+    def process_golden_record(self):
+        self.list_item_provider = self.provider.get_list_item_provider()
+        df_final = self.final_result.get_final_result_dataframe()
+        df1 = df_final.loc[df_final['Validity'] == True]
+        # df2 = df1.loc[df1['Status'] == "Master"]
+        df_convert_to_int = df1.astype({'Total_Score':'float'})
+        df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master") | (df_convert_to_int['Total_Score'].ge(90) & df_convert_to_int['Status'].eq("Ratio"))]
+        # df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master")]
+
+        # df2 = df_convert_to_int[df_convert_to_int['Total_Score'] >= 90 | df_convert_to_int['Status'] == "Master"]
+        print(df2)
+        for row in df2.itertuples(index=True, name='Sheet1'):
+            for item_provider in self.list_item_provider:
+
+                if row.Nama == item_provider.get_nama_provider():
+                    if item_provider.get_saved_in_golden_record() is not True:
+                        # print(item_provider.get_nama_provider(),item_provider.get_saved_in_golden_record())
+                        item_provider.set_golden_record(1)
+
+                        item_provider.save()
+                        golden = GoldenRecordMatch()
+                        golden.id_model = self.provider.pk
+                        golden.id_finalresult = self.final_result.pk
+                        golden.nama_provider = item_provider.get_nama_provider()
+                        golden.alamat = item_provider.get_alamat()
+                        golden.status = item_provider.get_status()
+                        golden.total_ratio = item_provider.get_total_score()
+                        golden.save()
+
+        pass
 
 
 class Provider(models.Model):
@@ -721,13 +813,13 @@ class Provider(models.Model):
             return False
         return mydata
 
-    def set_status_matching(self,status):
+    def set_status_matching(self, status):
         self.status_matching = status
 
     def get_status_matching(self):
         return self.status_matching
 
-    def set_created_at(self,created_at):
+    def set_created_at(self, created_at):
         self.created_at = created_at
 
     def get_created_at(self):
@@ -785,6 +877,7 @@ class Provider(models.Model):
             provider_object.set_proba_score(0)
             provider_object.set_count_label_name(0)
             provider_object.set_nama_alamat()
+            provider_object.set_saved_in_golden_record(False)
 
             provider_item_list.append(provider_object)
 
@@ -811,4 +904,3 @@ class Provider(models.Model):
 
     def set_list_item_provider_json(self, list_item_provider):
         self.list_item_provider_json = list_item_provider
-

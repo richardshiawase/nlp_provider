@@ -8,14 +8,13 @@ class Dataset:
     def __init__(self,pd):
         self.df_dataset = cache.get('dataset')
         if self.df_dataset is None:
-            self.df_dataset = pd.read_excel("dataset_excel_copy.xlsx")
+            df = pd.read_excel("dataset_excel_copy.xlsx")
+            pembersih = Pembersih(df)
+            self.df_dataset = pembersih._return_df()
             cache.set('dataset', self.df_dataset)
 
         self.bulk_dataset_copy = self.df_dataset.copy()
         self.bulk_dataset_copy['course_title'] = self.bulk_dataset_copy['course_title'].str.lower()
-        # self.df_dataset_no_duplicate = self.bulk_dataset.drop_duplicates(['course_title'],keep='first')
-        # self.df_dataset['co'] = self.df_dataset.dropna()
-        # self.df_dataset['course_title'] = self.df_dataset.drop_duplicates(['course_title'],keep='first')
         self.pembersih = Pembersih((self.bulk_dataset_copy.drop_duplicates(['course_title'],keep='first')))
 
     def get_bulk_dataset(self):
