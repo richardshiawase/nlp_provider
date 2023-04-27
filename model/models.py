@@ -3,6 +3,7 @@ import re
 
 import django
 import pandas as pd
+import requests
 from django.db import models
 from django.db import connections
 from django.forms import model_to_dict
@@ -301,6 +302,35 @@ class MasterMatchProcess(models.Model):
 
     def get_file_result_match_processed(self):
         return self.file_result_match
+
+    def insert_into_end_point_andika_assistant_item_provider(self):
+        df_final = self.file_final_result_master.get_final_result_dataframe()
+        dataframe_insert_new = df_final.loc[df_final['Validity'] == True]
+        self.file_result = self.get_file_result_match_processed()
+        provider = self.file_result.get_processed_provider()
+        id_asuransi = provider.get_id_asuransi()
+
+        # url = 'https://www.asateknologi.id/api/inshos'
+        # for index, row in dataframe_insert_new.iterrows():
+        #     myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
+        #              'inpatient': row['RI']}
+        #     try:
+        #         x = requests.post(url, json=myobj)
+        #     except Exception as e:
+        #         print(str(e))
+        #
+        # pass
+
+    def delete_provider_item_hospital_insurances_with_id_insurances(self):
+        self.file_result = self.get_file_result_match_processed()
+        provider = self.file_result.get_processed_provider()
+        id_asuransi = provider.get_id_asuransi()
+        url = 'https://www.asateknologi.id/api/inshos-del'
+        myobj = {'id_insurance': id_asuransi}
+        try:
+            x = requests.post(url, json=myobj)
+        except Exception as e:
+            print(str(e))
 
     def process_master_matching(self):
         self.create_file_final_result_master_match()
@@ -714,7 +744,7 @@ class MatchProcess(models.Model):
                             item_provider.set_total_score(total_score)
                             item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
                             item_provider.set_label_name(item_master.get_nama_master())
-                            item_provider.set_proba_score(float(0))
+                            item_provider.set_proba_score(score)
                             item_provider.set_ratio(score)
                             item_provider.set_alamat_ratio(alamat_ratio)
                             item_provider.set_count_label_name(0)
@@ -836,14 +866,12 @@ class GoldenRecordMatch(models.Model):
         df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master") | (
                     df_convert_to_int['Total_Score'].ge(90) & df_convert_to_int['Status'].eq("Ratio"))]
         # df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master")]
-
         # df2 = df_convert_to_int[df_convert_to_int['Total_Score'] >= 90 | df_convert_to_int['Status'] == "Master"]
         for row in df2.itertuples(index=True, name='Sheet1'):
             for item_provider in self.list_item_provider:
 
                 if row.Nama == item_provider.get_nama_provider():
                     if item_provider.get_saved_in_golden_record() is not True:
-                        # print(item_provider.get_nama_provider(),item_provider.get_saved_in_golden_record())
                         item_provider.set_golden_record(1)
 
                         item_provider.save()

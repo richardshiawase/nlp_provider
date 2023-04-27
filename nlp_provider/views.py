@@ -863,8 +863,8 @@ def perbandingan_result(request):
         golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
-        # file_result.delete_provider_item_hospital_insurances_with_id_insurances(df_handler)
-        # file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
+        # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
     contexte = {"list": []}
     return render(request, 'matching/perbandingan.html', context=contexte)
