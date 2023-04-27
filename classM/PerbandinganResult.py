@@ -179,13 +179,13 @@ class PerbandinganResult():
         df_handler.create_master_provider_item_list(dataframe_pembanding)
         #
         # # # # # combine the result with id
-        processed_dataframe = df_handler.process_result_id_master_to_dataframe()
+        # processed_dataframe = df_handler.process_result_id_master_to_dataframe()
 
         # # # # # write to excel
-        self.ex.write_to_excel(df_handler.perbandingan_model.get_nama_asuransi_model(), "_result_final",
-                               processed_dataframe)
+        # self.ex.write_to_excel(df_handler.perbandingan_model.get_nama_asuransi_model(), "_result_final",
+        #                        processed_dataframe)
         # #
-        self.set_link_result_with_id_master(
-            "media/" + df_handler.perbandingan_model.get_nama_asuransi_model() + "_result_final.xlsx")
+        # self.set_link_result_with_id_master(
+        #     "media/" + df_handler.perbandingan_model.get_nama_asuransi_model() + "_result_final.xlsx")
 
         pass

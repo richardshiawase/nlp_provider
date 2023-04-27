@@ -23,8 +23,8 @@ import warnings
 from classM.DFHandler import DFHandler
 from classM.Dataset import Dataset
 from classM.ItemMaster import ItemMaster
-from model.models import ItemProvider, List_Processed_Provider, MatchProcess, MasterMatchProcess, GoldenRecordMatch
 from classM.MasterData import MasterData
+from model.models import ItemProvider, List_Processed_Provider, MatchProcess, MasterMatchProcess, GoldenRecordMatch
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
 from classM.PredictionId import PredictionId
@@ -62,6 +62,7 @@ match_process.start()
 match_process.set_list_provider()
 list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
+master_data = MasterData()
 
 # new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
 # df_dataset["course_titles"] = new_course_title[0]
@@ -849,9 +850,11 @@ def perbandingan_result(request):
 
         list_provider_model_object.add_provider(provider)
         start_time = time.time()
+        match_process.set_master_data(master_data)
         match_process.process_matching()
         match_process.create_file_result()
 
+        master_match_process.set_master_data(master_data)
         master_match_process.set_file_result_match_processed(match_process.get_file_result())
         master_match_process.process_master_matching()
         master_match_process.save_matching_information()

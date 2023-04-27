@@ -13,7 +13,6 @@ from classM.ColumnToRead import ColumnToRead
 from classM.DFHandler import DFHandler
 from classM.Dataset import Dataset
 from classM.ExcelBacaTulis import ExcelBacaTulis
-from classM.MasterData import MasterData
 from classM.Pembersih import Pembersih
 
 
@@ -70,6 +69,12 @@ class ItemProvider(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     golden_record = models.CharField(max_length=2)
 
+    def set_compared(self, bool):
+        self.compared = bool
+
+    def get_compared(self):
+        return self.compared
+
     def set_golden_record(self, bool):
         self.golden_record = bool
 
@@ -94,10 +99,15 @@ class ItemProvider(models.Model):
     def get_alamat_master_provider(self):
         return self.alamat_master_provider
 
-    def set_status(self, status):
-        self.status = status
+    def set_status_item_provider(self, status):
+        try:
+            if self.status != "Direct":
+                self.status = status
+        except:
+            self.status = status
 
-    def get_status(self):
+
+    def get_status_item_provider(self):
         return self.status
 
     def set_processed(self, found):
@@ -231,13 +241,23 @@ class ItemProvider(models.Model):
     def get_id_asuransi(self):
         return self.id_asuransi
 
-    def set_validity(self, valid):
-        self.validity = valid
+    def set_validity(self):
+        if self.get_status_item_provider() == "Master" or self.get_status_item_provider() == "Ratio" :
+            if self.get_total_score() >=60:
+                self.validity = True
+            else:
+                self.validity = False
+
+        else:
+            if self.get_total_score() >= 70:
+                self.validity = True
+            else:
+                self.validity = False
 
     def is_valid(self):
         return self.validity
 
-    def set_saved_in_golden_record(self,bool):
+    def set_saved_in_golden_record(self, bool):
         self.saved_in_golden_record = bool
 
     def get_saved_in_golden_record(self):
@@ -264,6 +284,12 @@ class MasterMatchProcess(models.Model):
     match_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def set_master_data(self, master_data):
+        self.master_data = master_data
+
+    def get_master_data(self):
+        return self.master_data
+
     def create_file_final_result_master_match(self):
         self.file_final_result_master = FinalResult()
 
@@ -280,8 +306,6 @@ class MasterMatchProcess(models.Model):
         self.create_file_final_result_master_match()
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
-
-        master_data = MasterData()
 
         # # # # # combine the result with id
         print("\n\nCreate Result File With ID")
@@ -302,9 +326,9 @@ class MasterMatchProcess(models.Model):
 
         for item in provider.get_list_item_provider():
             item.set_processed(False)
-            item.set_validity(False)
+            # item.set_validity()
 
-            for item_master in master_data.get_list_item_master_provider():
+            for item_master in self.master_data.get_list_item_master_provider():
                 if item.get_label_name() == item_master.get_nama_master():
                     id_master_list.append(item_master.get_id_master())
                     provider_name_master_list.append(item_master.get_nama_master())
@@ -320,14 +344,11 @@ class MasterMatchProcess(models.Model):
 
                     list_item_total_score.append(item.get_total_score())
                     item.set_processed(True)
-                    if item.get_total_score() >= 55:
-                        item.set_validity(True)
-                    else:
-                        item.set_validity(False)
 
-                    item.set_status("Master")
+                    item.set_status_item_provider("Master")
+                    item.set_validity()
 
-                    list_item_status.append(item.get_status())
+                    list_item_status.append(item.get_status_item_provider())
                     list_item_validity.append(item.is_valid())
 
                     break
@@ -336,13 +357,13 @@ class MasterMatchProcess(models.Model):
                 item.set_total_score(0)
                 item.set_ratio(0)
                 item.set_alamat_ratio(0)
-            for item_master in master_data.get_list_item_master_provider():
+            for item_master in self.master_data.get_list_item_master_provider():
                 if item.is_processed() is False:
                     ratio_nama = fuzz.ratio(item.get_label_name(), item_master.get_nama_master().strip())
                     ratio_alamat = fuzz.ratio(item.get_alamat(), item_master.get_alamat_master().strip())
                     nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
                     total_ratio_extension = float("{:.2f}".format(nilai))
-                    item.set_status("Ratio")
+                    item.set_status_item_provider("Ratio")
 
                     if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
                         item.set_ratio(ratio_nama)
@@ -366,8 +387,8 @@ class MasterMatchProcess(models.Model):
                 list_item_alamat_ratio.append(item.get_alamat_ratio())
 
                 list_item_total_score.append(item.get_total_score())
-                item.set_validity(True)
-                list_item_status.append(item.get_status())
+                item.set_validity()
+                list_item_status.append(item.get_status_item_provider())
 
                 list_item_validity.append(item.is_valid())
 
@@ -384,8 +405,8 @@ class MasterMatchProcess(models.Model):
                 list_item_alamat_ratio.append(ratio_alamat)
 
                 list_item_total_score.append(item.get_total_score())
-                item.set_validity(False)
-                list_item_status.append(item.get_status())
+                item.set_validity()
+                list_item_status.append(item.get_status_item_provider())
 
                 list_item_validity.append(item.is_valid())
 
@@ -477,6 +498,12 @@ class MatchProcess(models.Model):
 
     def set_status_finish(self, status_finish):
         self.status_finish = status_finish
+
+    def set_master_data(self, master_data):
+        self.master_data = master_data
+
+    def get_master_data(self):
+        return self.master_data
 
     def get_status_finish(self):
         return self.status_finish
@@ -600,6 +627,7 @@ class MatchProcess(models.Model):
     def process_matching(self):
         # get lokasi excel
         print("Match Process")
+
         self.set_dataset()
         self.file_result = FileResult()
 
@@ -612,12 +640,12 @@ class MatchProcess(models.Model):
         self.golden_record.set_golden_record_list_item()
         golden_record_list_item = self.golden_record.get_golden_record_list_item()
         print("Compare to golden record list item")
+
         for item_provider in self.processed_provider.get_list_item_provider():
             try:
                 for item_golden in golden_record_list_item:
 
                     if item_golden.get_nama_provider() == item_provider.get_nama_provider():
-
                         item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
                         item_provider.set_label_name(item_golden.get_label_name())
                         item_provider.set_proba_score(item_golden.get_proba_score())
@@ -630,6 +658,7 @@ class MatchProcess(models.Model):
                         item_provider.set_alamat_prediction(item_golden.get_alamat_prediction())
                         item_provider.set_golden_record(1)
                         item_provider.set_saved_in_golden_record(True)
+                        item_provider.set_compared(True)
                         break
 
                 if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is not True:
@@ -662,13 +691,42 @@ class MatchProcess(models.Model):
                     alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
                     total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
                     item_provider.set_total_score(total_score)
+                    if total_score < 70:
+                        item_provider.set_compared(False)
+                    else:
+                        item_provider.set_compared(True)
 
                     item_provider.set_alamat_ratio(alamat_ratio)
                     item_provider.set_count_label_name(0)
                     item_provider.set_alamat_prediction(al.values[0])
                     item_provider.set_golden_record(0)
-                    item_provider.save()
+                    if total_score >= 70:
+                        item_provider.save()
                     item_provider.set_saved_in_golden_record(False)
+
+                for item_master in self.master_data.get_list_item_master_provider():
+                    if item_provider.get_compared() is not True:
+                        score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
+                        alamat_ratio = fuzz.token_set_ratio(item_master.get_alamat_master(), item_provider.get_alamat())
+                        total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
+
+                        if item_provider.get_total_score() <= total_score:
+                            item_provider.set_total_score(total_score)
+                            item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                            item_provider.set_label_name(item_master.get_nama_master())
+                            item_provider.set_proba_score(float(0))
+                            item_provider.set_ratio(score)
+                            item_provider.set_alamat_ratio(alamat_ratio)
+                            item_provider.set_count_label_name(0)
+                            item_provider.set_alamat_prediction(item_master.get_nama_master())
+                            item_provider.set_golden_record(0)
+                            item_provider.set_saved_in_golden_record(False)
+                            item_provider.set_status_item_provider("Direct")
+                            item_provider.save()
+                item_provider.set_compared(True)
+
+
+
             except Exception as e:
                 # self.error_value_write(item_provider, e)
                 print(str(e))
@@ -741,7 +799,8 @@ class GoldenRecordMatch(models.Model):
 
     def set_golden_record_list_item(self):
 
-        self.golden_record_list_item = ItemProvider.objects.raw("select * from model_itemprovider where golden_record = 1")
+        self.golden_record_list_item = ItemProvider.objects.raw(
+            "select * from model_itemprovider where golden_record = 1")
 
     def get_golden_record_list_item(self):
         print("golden record list item")
@@ -773,13 +832,12 @@ class GoldenRecordMatch(models.Model):
         self.list_item_provider = self.provider.get_list_item_provider()
         df_final = self.final_result.get_final_result_dataframe()
         df1 = df_final.loc[df_final['Validity'] == True]
-        # df2 = df1.loc[df1['Status'] == "Master"]
-        df_convert_to_int = df1.astype({'Total_Score':'float'})
-        df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master") | (df_convert_to_int['Total_Score'].ge(90) & df_convert_to_int['Status'].eq("Ratio"))]
+        df_convert_to_int = df1.astype({'Total_Score': 'float'})
+        df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master") | (
+                    df_convert_to_int['Total_Score'].ge(90) & df_convert_to_int['Status'].eq("Ratio"))]
         # df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master")]
 
         # df2 = df_convert_to_int[df_convert_to_int['Total_Score'] >= 90 | df_convert_to_int['Status'] == "Master"]
-        print(df2)
         for row in df2.itertuples(index=True, name='Sheet1'):
             for item_provider in self.list_item_provider:
 
@@ -794,7 +852,7 @@ class GoldenRecordMatch(models.Model):
                         golden.id_finalresult = self.final_result.pk
                         golden.nama_provider = item_provider.get_nama_provider()
                         golden.alamat = item_provider.get_alamat()
-                        golden.status = item_provider.get_status()
+                        golden.status = item_provider.get_status_item_provider()
                         golden.total_ratio = item_provider.get_total_score()
                         golden.save()
 
