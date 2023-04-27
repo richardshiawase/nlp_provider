@@ -6,15 +6,13 @@ from django.forms import model_to_dict
 from fuzzywuzzy import fuzz
 
 from classM.ColumnToRead import ColumnToRead
-from classM.MasterData import MasterData
 
-django.setup()
 import pandas as pd
 
 import warnings
 
 from classM.ExcelBacaTulis import ExcelBacaTulis
-from model.models import ItemProvider, Provider
+
 from classM.Pembersih import Pembersih
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -31,7 +29,7 @@ class DFHandler:
         self.provider_list = []
         self.df = None
         self.column = ColumnToRead()
-        self.master_provider = MasterData()
+        # self.master_provider = MasterData()
 
     def convert_to_dataframe_from_excel(self, excel):
         self.df = self.ex.baca_excel(excel)
@@ -94,80 +92,7 @@ class DFHandler:
 
         return process_dict
 
-    def error_value_write(self, item_provider, e):
-        item_provider.set_label_name("-")
-        item_provider.set_proba_score(0)
-        item_provider.set_count_label_name(0)
-        item_provider.set_alamat_prediction("-")
 
-        # item_provider.save()
-        print("Error read the file " + item_provider.get_nama_provider() + " " + str(e))
-
-    def comparing_item_provider_to_ml_and_save_item(self):
-        print("Process result file to dataframe")
-        pd.options.display.max_colwidth = None
-        df_dataset_non_duplicate = self.df_dataset
-        alamat_prediction_list = []
-        for item_provider in self.perbandingan_model.get_list_item_provider():
-            try:
-                # predict the text !
-                nama_alamat = item_provider.get_nama_alamat()
-                sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
-                y_preds = self.loaded_model1.predict(sample1)
-
-                # add prediction ke list
-                y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
-
-                # calculate proba
-                p = self.loaded_model1.predict_proba(sample1)
-                ix = p.argmax(1).item()
-                nil = float("{:.2f}".format(p[0, ix]))
-                score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
-                # print(item_provider.get_nama_provider(),y_preds,total_score,score,nil)
-                # add proba to list
-                # jika prediksi sama dengan dataset maka ambil alamat dari dataset
-                val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
-                try:
-                    res_master = df_dataset_non_duplicate[val_master]
-                    al = res_master["alamat"].head(1)
-                    item_provider.set_label_name(y_preds)
-                    item_provider.set_proba_score(nil)
-                    item_provider.set_ratio(score)
-
-                    alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
-                    total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
-                    item_provider.set_total_score(total_score)
-
-                    item_provider.set_alamat_ratio(alamat_ratio)
-                    item_provider.set_count_label_name(0)
-                    item_provider.set_alamat_prediction(al.values[0])
-                    item_provider.save()
-                except:
-                    try:
-                        bool_find_in_dataset = (
-                            df_dataset_non_duplicate['subject'].str.contains(re.escape(y_preds)))
-                        res_master = df_dataset_non_duplicate[bool_find_in_dataset]
-                        al = res_master["alamat"].head(0)
-                        item_provider.set_ratio(score)
-                        alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
-
-                        total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
-
-                        item_provider.set_alamat_ratio(0)
-                        item_provider.set_total_score(total_score)
-
-                        item_provider.set_label_name(y_preds)
-                        item_provider.set_proba_score(nil)
-                        item_provider.set_count_label_name(0)
-                        item_provider.set_alamat_prediction(al.values[0])
-                        item_provider.save()
-
-                    except Exception as e:
-                        self.error_value_write(item_provider, e)
-
-
-            except Exception as e:
-                self.error_value_write(item_provider, e)
 
     def pool_handler(self, dataframe):
         concatenated_dict = {}
@@ -295,12 +220,10 @@ class DFHandler:
         list_item_validity = []
         list_item_status = []
 
-        df_result_2 = self.perbandingan_model.get_list_item_provider()
-
-        for item in df_result_2:
+        for item in self.perbandingan_model.get_list_item_provider():
             item.set_processed(False)
-            item.set_validity(False)
-            master_data = MasterData()
+            # item.set_validity(False)
+            # master_data = MasterData()
             for master_obj in self.master_provider.get_list_item_master_provider():
                 if item.get_label_name() == master_obj.get_nama_master():
                     id_master_list.append(master_obj.get_id_master())
@@ -317,19 +240,19 @@ class DFHandler:
                     list_item_total_score.append(item.get_total_score())
                     item.set_processed(True)
 
-                    if item.get_total_score() >= 55:
-                        item.set_validity(True)
-                    else:
-                        item.set_validity(False)
+                    # if item.get_total_score() >= 55:
+                    #     item.set_validity(True)
+                    # else:
+                    #     item.set_validity(False)
 
-                    item.set_status("Master")
+                    item.set_status_item_provider("Master")
 
-                    list_item_status.append(item.get_status())
+                    list_item_status.append(item.get_status_item_provider())
                     list_item_validity.append(item.is_valid())
 
                     break
 
-            item.set_total_score(0)
+            # item.set_total_score(0)
             item.set_ratio(0)
             item.set_alamat_ratio(0)
             for master_obj in self.master_provider.get_list_item_master_provider():
@@ -338,7 +261,7 @@ class DFHandler:
                     ratio_alamat = fuzz.ratio(item.get_alamat(), master_obj.get_alamat_master().strip())
                     nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
                     total_ratio_extension = float("{:.2f}".format(nilai))
-                    item.set_status("Ratio")
+                    item.set_status_item_provider("Ratio")
 
                     if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
                         item.set_ratio(ratio_nama)
@@ -362,8 +285,8 @@ class DFHandler:
                 list_item_alamat_ratio.append(item.get_alamat_ratio())
 
                 list_item_total_score.append(item.get_total_score())
-                item.set_validity(True)
-                list_item_status.append(item.get_status())
+                # item.set_validity(True)
+                list_item_status.append(item.get_status_item_provider())
 
                 list_item_validity.append(item.is_valid())
 
@@ -380,8 +303,8 @@ class DFHandler:
                 list_item_alamat_ratio.append(ratio_alamat)
 
                 list_item_total_score.append(item.get_total_score())
-                item.set_validity(False)
-                list_item_status.append(item.get_status())
+                # item.set_validity(False)
+                list_item_status.append(item.get_status_item_provider())
 
                 list_item_validity.append(item.is_valid())
 
@@ -405,57 +328,5 @@ class DFHandler:
         result_df = pd.DataFrame(dict_result)
         return result_df
 
-    def create_master_provider_item_list(self, dataframe_pembanding):
-        # get specified column to read
-        print("Create provider item list")
-        master_item_list = []
-        for row in dataframe_pembanding.itertuples(index=True, name='Sheet1'):
-            master_data = MasterData()
 
-            master_provider_id = row.ProviderId
-            master_state_id = row.stateId
-            master_city_id = row.cityId
-            master_category_1 = row.Category_1
-            master_category_2 = row.Category_2
-            master_nama_provider = row.PROVIDER_NAME
-            master_alamat = row.ADDRESS
-            master_tel = row.TEL_NO
 
-            master_data.set_id_master(master_provider_id)
-            master_data.set_nama_master(master_nama_provider)
-            master_data.set_alamat_master(master_alamat)
-            master_data.set_state_id_master(master_state_id)
-            master_data.set_city_id_master(master_city_id)
-            master_data.set_category_1_master(master_category_1)
-            master_data.set_category_2_master(master_category_2)
-            master_data.set_telepon_master(master_tel)
-
-            master_item_list.append(master_data)
-
-        self.master_provider.set_list_item_master_provider(master_item_list)
-
-    def create_provider_item_list(self, dataframe_pembanding, pk):
-        # get specified column to read
-        print("Create provider item list")
-        provider_item_list = []
-        for row in dataframe_pembanding.itertuples(index=True, name='Sheet1'):
-            provider_object = ItemProvider()
-            provider_object.set_id_asuransi(self.perbandingan_model.get_id_asuransi_model())
-            provider_object.set_id_model(pk)
-            nama = row.Nama
-            alamat = row.Alamat
-            rawat_inap = row.RI
-            rawat_jalan = row.RJ
-
-            provider_object.set_provider_name(nama)
-            provider_object.set_alamat(alamat)
-            provider_object.set_ri(rawat_inap)
-            provider_object.set_rj(rawat_jalan)
-            provider_object.set_label_name("-")
-            provider_object.set_proba_score(0)
-            provider_object.set_count_label_name(0)
-            provider_object.set_nama_alamat()
-
-            provider_item_list.append(provider_object)
-
-        self.perbandingan_model.set_list_item_provider(provider_item_list)

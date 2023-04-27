@@ -5,6 +5,7 @@ import pickle
 import re
 import shutil
 from collections import defaultdict
+import time
 from functools import reduce
 from multiprocessing import Process, Pool
 from time import sleep
@@ -21,8 +22,9 @@ import warnings
 
 from classM.DFHandler import DFHandler
 from classM.Dataset import Dataset
-from model.models import ItemProvider, List_Processed_Provider
+from classM.ItemMaster import ItemMaster
 from classM.MasterData import MasterData
+from model.models import ItemProvider, List_Processed_Provider, MatchProcess, MasterMatchProcess, GoldenRecordMatch
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
 from classM.PredictionId import PredictionId
@@ -50,19 +52,21 @@ from django.core.cache import cache
 # from .forms import UploadFileForm
 # Create your views here.
 
-dataset = Dataset(pd)
-print(dataset.get_bulk_dataset()['course_title'])
-list_provider_model_object = List_Processed_Provider()
+
+golden_record_match = GoldenRecordMatch()
+golden_record_match.set_master_match_process()
+match_process = MatchProcess()
+match_process.set_golden_record_instance(golden_record_match)
+master_match_process = golden_record_match.get_master_match_process()
+match_process.start()
+match_process.set_list_provider()
+list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
-
-
+master_data = MasterData()
 
 # new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
 # df_dataset["course_titles"] = new_course_title[0]
 # p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
-
-df_non_duplicate = dataset.get_dataframe_after_cleaned_no_duplicate()
-df_handler = DFHandler()
 
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
@@ -108,27 +112,24 @@ def kompilasi_data(request):
 
 
 def newe(request):
-    list_providere = []
-
+    list_provider_model_object.set_empty_provider_list()
     data_list = models.Provider.objects.raw(
-        "select * from model_provider where created_at in (select max(created_at) from model_provider group by nama_asuransi)")
-    provider_list = []
+        "select mm.id,mm.match_percentage,mm.id_model,mm.id_file_result,mm.status_finish,mm.created_at,mp.nama_asuransi,mp.file_location,mf.file_location_result from model_matchprocess mm inner join model_provider mp on mm.id_model = mp.id inner join model_fileresult mf on mm.id_file_result = mf.id order by mm.created_at DESC")
     for data in data_list:
-        pk = data.pk
         provider = Provider()
         provider.set_nama_asuransi_model(data.nama_asuransi)
         provider.set_file_location(data.file_location)
 
-        provider.set_id(pk)
-        provider.status_finish = data.status_finish
-        provider.match_percentage = data.match_percentage
+        provider.set_id(data.id_model)
         provider.file_location_result = data.file_location_result
-
+        provider.set_created_at(data.created_at)
+        provider.set_status_matching(data.status_finish)
         list_item_provider = []
-        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s", [pk])
+        list_item_provider_json = []
+        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
+                                         [provider.get_primary_key_provider()])
 
         for item in dt:
-            item._state.adding = False
             item_provider = ItemProvider()
             item_provider.set_id(item.pk)
             item_provider.set_provider_name(item.nama_provider)
@@ -140,19 +141,16 @@ def newe(request):
             item_provider.set_rj(item.rj)
             item_provider.set_id_asuransi(item.id_asuransi)
             item_provider.set_selected("-")
-            list_item_provider.append(item_provider)
+            del item_provider._state
 
-        provider.set_list_item_provider(list_item_provider)
-        provider_list.append(provider)
-
-    list_provider_model_object.set_provider_list(provider_list)
-
-    for item in list_provider_model_object.get_provider_list():
-        data = model_to_dict(item)
-        list_providere.append(data)
+            # list_item_provider.append(item_provider)
+            list_item_provider_json.append(item_provider.__dict__)
+        provider.set_list_item_provider_json(list_item_provider_json)
+        # provider.set_list_item_provider(list_item_provider)
+        list_provider_model_object.add_provider(provider)
 
     if request.method == "GET":
-        return JsonResponse(list_providere, safe=False)
+        return JsonResponse(list_provider_model_object.get_provider_list_json(), safe=False)
 
     return JsonResponse({'message': 'error'})
 
@@ -160,7 +158,8 @@ def newe(request):
 def perbandingan_rev(request):
     id_provider = request.session.get('id_provider')
     provider = list_provider_model_object.get_a_provider_from_id(id_provider)
-
+    if provider is None:
+        return JsonResponse([],safe=False)
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
 
 
@@ -336,9 +335,9 @@ def list_master_process(request):
         category_1 = row['Category_1']
         category_2 = row['Category_2']
         telephone = row['TEL_NO']
-        master_data = MasterData(id, provider_name_master, address, category_1, category_2, telephone, stateId,
-                                 cityId)
-        master_data_list.append(master_data.__dict__)
+        # master_data = MasterData(id, provider_name_master, address, category_1, category_2, telephone, stateId,
+        #                          cityId)
+        # master_data_list.append(master_data.__dict__)
     return JsonResponse(master_data_list, safe=False)
 
 
@@ -346,6 +345,8 @@ def sinkron_master_process(request):
     response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
     provider_list = response.json().get("val")
     master_data_list = []
+    # master_data = MasterData()
+
     df = pd.DataFrame()
 
     for prov in provider_list:
@@ -357,9 +358,7 @@ def sinkron_master_process(request):
         telephone = prov["TEL_NO"]
         provider_name_master = prov["PROVIDER_NAME"]
         address = prov["ADDRESS"]
-        category = prov["Category_1"]
-        master_data = MasterData(id, provider_name_master, address, category_1, category_2, telephone, stateId, cityId)
-        master_data_list.append(master_data.__dict__)
+
         df = df.append(pd.Series(
             {'ProviderId': id, 'stateId': stateId, 'cityId': cityId, 'Category_1': category_1, 'Category_2': category_2,
              'PROVIDER_NAME': provider_name_master, 'ADDRESS': address, 'TEL_NO': telephone},
@@ -445,56 +444,42 @@ def sinkron_dataset_process(request):
 
 
 def master_varian_process(request):
+
     dff = pd.DataFrame()
-
-    find = False
+    dataset = match_process.get_dataset()
+    master_data = MasterData()
     master_data_list = []
-    dfs = None
-    dfs_varian = None
-    try:
-        dfs = pd.read_excel("master_provider.xlsx")
-
-        dfs_varian = pd.read_excel("dataset_excel_copy.xlsx").groupby('subject')
-    except:
-        print("dataframe not found")
-
-    for index, row in dfs.iterrows():
-        id = row['ProviderId']
-        stateId = row['stateId']
-        cityId = row['cityId']
-        category_1 = row['Category_1']
-        category_2 = row['Category_2']
-        provider_name_master = row['PROVIDER_NAME']
-        address = row['ADDRESS']
-        tel_no = row['TEL_NO']
-        master_data = MasterData(id, provider_name_master, address, category_1, category_2, tel_no, stateId, cityId)
+    dfs_varian = dataset.get_bulk_dataset().groupby('subject')
+    for item_master in tqdm(master_data.get_list_item_master_provider(),total=len(master_data.get_list_item_master_provider())):
         varian_list = []
-
         try:
-            dfe = dfs_varian.get_group(provider_name_master)
+            dfe = dfs_varian.get_group(item_master.get_nama_master())
             for index_varian, row_varian in dfe.iterrows():
                 varian_list.append(row_varian['course_title'])
-                pass
-
-        except:
+        except Exception as e:
+            # print(e)
             continue
 
-        master_data.set_varian(varian_list)
+        item_master.set_varian(varian_list)
 
         dff = dff.append(pd.Series(
-            {'ProviderId': id, 'ProviderType': "Master", 'stateId': stateId, 'cityId': cityId, 'Category_1': category_1,
-             'Category_2': category_2,
-             'PROVIDER_NAME': provider_name_master, 'ADDRESS': address, 'TEL_NO': tel_no},
+            {'ProviderId': item_master.get_id_master(), 'ProviderType': "Master",
+             'stateId': item_master.get_state_id_master(), 'cityId': item_master.get_city_id_master(),
+             'Category_1': item_master.get_category_1_master(),
+             'Category_2': item_master.get_category_2_master(),
+             'PROVIDER_NAME': item_master.get_nama_master(), 'ADDRESS': item_master.get_alamat_master(),
+             'TEL_NO': item_master.get_telepon_master()},
             name=3))
 
-        for varian in master_data.get_varian():
+        for varian in item_master.get_varian():
             dff = dff.append(pd.Series(
-                {'ProviderId': id, 'ProviderType': "Varian", 'stateId': stateId, 'cityId': cityId,
-                 'Category_1': category_1, 'Category_2': category_2,
+                {'ProviderId': item_master.get_id_master(), 'ProviderType': "Varian",
+                 'stateId': item_master.get_state_id_master(), 'cityId': item_master.get_city_id_master(),
+                 'Category_1': item_master.get_category_1_master(), 'Category_2': item_master.get_category_2_master(),
                  'PROVIDER_NAME': varian, 'ADDRESS': "-", 'TEL_NO': "-"},
                 name=3))
 
-        master_data_list.append(master_data.__dict__)
+        # master_data_list.append(master_data.__dict__)
 
     #
     dff.to_excel("master_varian_1.xlsx", index=False)
@@ -699,6 +684,7 @@ def update_temporer_store(request):
 def add_to_dataset(request):
     if request.method == "POST":
         # OPEN DATASET FILE
+        dataset = match_process.get_dataset()
         df = dataset.get_bulk_dataset()
 
         df_basket = pd.read_excel("basket_provider.xlsx")
@@ -710,19 +696,19 @@ def add_to_dataset(request):
 
             item_provider = ItemProvider.objects.get(pk=key_provider)
 
-
             for x in range(10):
                 try:
-                    row = pd.Series({'course_title': item_provider.get_nama_alamat(), 'alamat':item_provider.get_alamat(), 'subject': label_name}, name=3)
+                    row = pd.Series(
+                        {'course_title': item_provider.get_nama_alamat(), 'alamat': item_provider.get_alamat(),
+                         'subject': label_name}, name=3)
                     df = df.append(row, ignore_index=True)
                     cache.delete('dataset')
                 except:
                     break
 
-
-
             try:
-                rowe = pd.Series({'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat()}, name=3)
+                rowe = pd.Series(
+                    {'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat()}, name=3)
                 df_basket = df_basket.append(rowe, ignore_index=True)
             except:
                 break
@@ -740,8 +726,6 @@ def add_to_dataset(request):
 
 
 def process_temporer_store(request):
-
-
     # dfs = cache.get('dataset')
     # if dfs is None:
     #     dfs = pd.read_excel("dataset_excel_copy.xlsx")
@@ -750,6 +734,7 @@ def process_temporer_store(request):
     # dfz = dfs.dropna(subset="alamat")
     # dfa = dfz.drop_duplicates(subset='subject')
     label_list = []
+    dataset = match_process.get_dataset()
     dfa = dataset.get_dataframe_after_cleaned_no_duplicate()
     for index, row in dfa.iterrows():
         alamat = str(row['alamat'])
@@ -830,11 +815,6 @@ def perbandingan_result(request):
     global contexte
     global perbandingan_model
 
-    df_handler.set_df_dataset(df_non_duplicate)
-
-    # init Result File Object
-    file_result = PerbandinganResult()
-
     if request.method == 'POST':
         # # # REQUEST DARI PROSES FILE
         if not bool(request.FILES.get('perbandinganModel', False)):
@@ -866,15 +846,24 @@ def perbandingan_result(request):
             provider.set_file_location(file_url)
             provider.set_nama_asuransi_model(nama_asuransi)
             provider.set_id_asuransi_model(id_asuransi)
+            provider.link_to_item_list()
 
-        # insert pembanding ke DFHandler
-        df_handler.set_perbandingan_model(provider)
+        list_provider_model_object.add_provider(provider)
+        start_time = time.time()
+        match_process.set_master_data(master_data)
+        match_process.process_matching()
+        match_process.create_file_result()
 
-        # create file result with compared master
-        file_result.create_file_result_with_id_master(df_handler)
+        master_match_process.set_master_data(master_data)
+        master_match_process.set_file_result_match_processed(match_process.get_file_result())
+        master_match_process.process_master_matching()
+        master_match_process.save_matching_information()
 
-        file_result.delete_provider_item_hospital_insurances_with_id_insurances(df_handler)
-        file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
-
+        golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
+        golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
+        golden_record_match.process_golden_record()
+        # file_result.delete_provider_item_hospital_insurances_with_id_insurances(df_handler)
+        # file_result.insert_into_end_point_andika_assistant_item_provider(df_handler)
+        print("--- %s seconds ---" % (time.time() - start_time))
     contexte = {"list": []}
     return render(request, 'matching/perbandingan.html', context=contexte)
