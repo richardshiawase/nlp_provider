@@ -222,7 +222,7 @@ class DFHandler:
 
         for item in self.perbandingan_model.get_list_item_provider():
             item.set_processed(False)
-            item.set_validity(False)
+            # item.set_validity(False)
             # master_data = MasterData()
             for master_obj in self.master_provider.get_list_item_master_provider():
                 if item.get_label_name() == master_obj.get_nama_master():
@@ -240,19 +240,19 @@ class DFHandler:
                     list_item_total_score.append(item.get_total_score())
                     item.set_processed(True)
 
-                    if item.get_total_score() >= 55:
-                        item.set_validity(True)
-                    else:
-                        item.set_validity(False)
+                    # if item.get_total_score() >= 55:
+                    #     item.set_validity(True)
+                    # else:
+                    #     item.set_validity(False)
 
-                    item.set_status("Master")
+                    item.set_status_item_provider("Master")
 
-                    list_item_status.append(item.get_status())
+                    list_item_status.append(item.get_status_item_provider())
                     list_item_validity.append(item.is_valid())
 
                     break
 
-            item.set_total_score(0)
+            # item.set_total_score(0)
             item.set_ratio(0)
             item.set_alamat_ratio(0)
             for master_obj in self.master_provider.get_list_item_master_provider():
@@ -261,7 +261,7 @@ class DFHandler:
                     ratio_alamat = fuzz.ratio(item.get_alamat(), master_obj.get_alamat_master().strip())
                     nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
                     total_ratio_extension = float("{:.2f}".format(nilai))
-                    item.set_status("Ratio")
+                    item.set_status_item_provider("Ratio")
 
                     if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
                         item.set_ratio(ratio_nama)
@@ -285,8 +285,8 @@ class DFHandler:
                 list_item_alamat_ratio.append(item.get_alamat_ratio())
 
                 list_item_total_score.append(item.get_total_score())
-                item.set_validity(True)
-                list_item_status.append(item.get_status())
+                # item.set_validity(True)
+                list_item_status.append(item.get_status_item_provider())
 
                 list_item_validity.append(item.is_valid())
 
@@ -303,8 +303,8 @@ class DFHandler:
                 list_item_alamat_ratio.append(ratio_alamat)
 
                 list_item_total_score.append(item.get_total_score())
-                item.set_validity(False)
-                list_item_status.append(item.get_status())
+                # item.set_validity(False)
+                list_item_status.append(item.get_status_item_provider())
 
                 list_item_validity.append(item.is_valid())
 
