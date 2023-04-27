@@ -119,7 +119,7 @@ def newe(request):
         provider = Provider()
         provider.set_nama_asuransi_model(data.nama_asuransi)
         provider.set_file_location(data.file_location)
-
+        print(data.id_model)
         provider.set_id(data.id_model)
         provider.file_location_result = data.file_location_result
         provider.set_created_at(data.created_at)
@@ -157,6 +157,7 @@ def newe(request):
 
 def perbandingan_rev(request):
     id_provider = request.session.get('id_provider')
+    print(id_provider)
     provider = list_provider_model_object.get_a_provider_from_id(id_provider)
     if provider is None:
         return JsonResponse([],safe=False)

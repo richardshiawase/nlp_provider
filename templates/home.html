@@ -73,6 +73,7 @@
 
      $('#albums tbody').on('click', '#buka_file', function () {
             var data = table.row($(this).parents('tr')).data();
+            console.log(data);
             var perbandingan_tampilan = "{% url "perbandingan" %}";
              window.location.href = perbandingan_tampilan;
 
