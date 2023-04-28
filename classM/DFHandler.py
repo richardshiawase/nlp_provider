@@ -245,7 +245,7 @@ class DFHandler:
                     # else:
                     #     item.set_validity(False)
 
-                    item.set_status_item_provider("Master")
+                    # item.set_status_item_provider("Master")
 
                     list_item_status.append(item.get_status_item_provider())
                     list_item_validity.append(item.is_valid())
@@ -261,7 +261,7 @@ class DFHandler:
                     ratio_alamat = fuzz.ratio(item.get_alamat(), master_obj.get_alamat_master().strip())
                     nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
                     total_ratio_extension = float("{:.2f}".format(nilai))
-                    item.set_status_item_provider("Ratio")
+                    # item.set_status_item_provider("Ratio")
 
                     if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
                         item.set_ratio(ratio_nama)
