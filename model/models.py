@@ -309,7 +309,7 @@ class MasterMatchProcess(models.Model):
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
         id_asuransi = provider.get_id_asuransi()
-
+        print(id_asuransi)
         # url = 'https://www.asateknologi.id/api/inshos'
         # for index, row in dataframe_insert_new.iterrows():
         #     myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
@@ -360,26 +360,27 @@ class MasterMatchProcess(models.Model):
 
             for item_master in self.master_data.get_list_item_master_provider():
                 if item.get_label_name() == item_master.get_nama_master():
-                    id_master_list.append(item_master.get_id_master())
-                    provider_name_master_list.append(item_master.get_nama_master())
-                    alamat_master_list.append(item_master.get_alamat_master())
+                    if item.get_total_score() >= 70:
+                        item.set_processed(True)
+                        id_master_list.append(item_master.get_id_master())
+                        provider_name_master_list.append(item_master.get_nama_master())
+                        alamat_master_list.append(item_master.get_alamat_master())
 
-                    list_item_provider_nama.append(item.get_nama_provider())
-                    list_item_provider_alamat.append(item.get_alamat())
-                    list_item_provider_ri.append(item.get_ri())
-                    list_item_provider_rj.append(item.get_rj())
-                    list_item_provider_score.append(item.get_proba_score())
-                    list_item_ratio.append(item.get_ratio())
-                    list_item_alamat_ratio.append(item.get_alamat_ratio())
+                        list_item_provider_nama.append(item.get_nama_provider())
+                        list_item_provider_alamat.append(item.get_alamat())
+                        list_item_provider_ri.append(item.get_ri())
+                        list_item_provider_rj.append(item.get_rj())
+                        list_item_provider_score.append(item.get_proba_score())
+                        list_item_ratio.append(item.get_ratio())
+                        list_item_alamat_ratio.append(item.get_alamat_ratio())
 
-                    list_item_total_score.append(item.get_total_score())
-                    item.set_processed(True)
+                        list_item_total_score.append(item.get_total_score())
 
-                    item.set_status_item_provider("Master")
-                    item.set_validity()
+                        item.set_status_item_provider("Master")
+                        item.set_validity()
 
-                    list_item_status.append(item.get_status_item_provider())
-                    list_item_validity.append(item.is_valid())
+                        list_item_status.append(item.get_status_item_provider())
+                        list_item_validity.append(item.is_valid())
 
                     break
 
@@ -391,7 +392,10 @@ class MasterMatchProcess(models.Model):
                 if item.is_processed() is False:
                     ratio_nama = fuzz.ratio(item.get_label_name(), item_master.get_nama_master().strip())
                     ratio_alamat = fuzz.ratio(item.get_alamat(), item_master.get_alamat_master().strip())
-                    nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
+                    if item.get_proba_score() != 0 :
+                        nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
+                    else:
+                        nilai = (ratio_nama+ratio_alamat)/2
                     total_ratio_extension = float("{:.2f}".format(nilai))
                     item.set_status_item_provider("Ratio")
 
@@ -741,14 +745,15 @@ class MatchProcess(models.Model):
                         total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
 
                         if item_provider.get_total_score() <= total_score:
+                            # print(item_provider.get_nama_provider(),item_master.get_nama_master(),score,alamat_ratio)
                             item_provider.set_total_score(total_score)
                             item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
                             item_provider.set_label_name(item_master.get_nama_master())
-                            item_provider.set_proba_score(score)
+                            item_provider.set_proba_score(0)
                             item_provider.set_ratio(score)
                             item_provider.set_alamat_ratio(alamat_ratio)
                             item_provider.set_count_label_name(0)
-                            item_provider.set_alamat_prediction(item_master.get_nama_master())
+                            item_provider.set_alamat_prediction(item_master.get_alamat_master())
                             item_provider.set_golden_record(0)
                             item_provider.set_saved_in_golden_record(False)
                             item_provider.set_status_item_provider("Direct")

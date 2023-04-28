@@ -136,6 +136,7 @@ def newe(request):
             item_provider.set_alamat_prediction(item.alamat_prediction)
             item_provider.set_alamat(item.alamat)
             item_provider.set_proba_score(item.proba_score)
+            item_provider.set_total_score(item.total_score)
             item_provider.set_label_name(item.label_name)
             item_provider.set_ri(item.ri)
             item_provider.set_rj(item.rj)
