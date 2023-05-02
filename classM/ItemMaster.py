@@ -9,6 +9,11 @@ class ItemMaster:
         self.address = str(address).replace("_x000D_", "")
         self.tel_no = tel_no
 
+        remove_words = ["rs", "rsia", "rumah sakit", "optik", "klinik", "clinic", "lab", "laboratorium", "optic"]
+        for rem in remove_words:
+            self.provider_name = self.provider_name.replace(rem, "")
+        self.nama_provider = self.provider_name.strip()
+
 
 
     def get_category_1_master(self):
