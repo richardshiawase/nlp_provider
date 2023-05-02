@@ -256,7 +256,7 @@ class ItemProvider(models.Model):
                 self.validity = False
 
         else:
-            if self.get_total_score() >= 70:
+            if self.get_total_score() >= 69:
                 self.validity = True
             else:
                 self.validity = False
