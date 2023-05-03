@@ -65,6 +65,9 @@ class ItemProvider(models.Model):
     count_label_name = models.CharField(max_length=2)
     ri = models.CharField(max_length=2)
     rj = models.CharField(max_length=2)
+    stateId = models.CharField(max_length=2)
+    cityId = models.CharField(max_length=2)
+    category_1 = models.CharField(max_length=2)
     nama_alamat = models.CharField(max_length=500)
     alamat_prediction = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -210,7 +213,8 @@ class ItemProvider(models.Model):
         self.save()
 
     def set_provider_name(self, value):
-        remove_words = ["rs", "rsia", "rumah sakit", "optik", "klinik", "clinic", "lab", "laboratorium", "optic"]
+        remove_words = ["rsia", "rsu","rumah sakit","rs", "optik", "klinik", "clinic", "laboratorium", "lab", "optic"]
+        # remove_words = []
         for rem in remove_words:
             value = value.replace(rem, "")
         self.nama_provider = value.strip()
@@ -270,6 +274,18 @@ class ItemProvider(models.Model):
     def get_saved_in_golden_record(self):
         return self.saved_in_golden_record
 
+    def set_city_id(self, city_id):
+        self.cityId = city_id
+
+    def get_city_id(self):
+        return self.cityId
+
+    def set_state_id(self, state_id):
+        self.stateId = state_id
+
+    def get_state_id(self):
+        return self.stateId
+
 
 class FinalResult(models.Model):
     file_final_location_result = models.CharField(max_length=1000)
@@ -312,8 +328,36 @@ class MasterMatchProcess(models.Model):
     def insert_into_end_point_andika_assistant_item_provider(self):
         df_final = self.file_final_result_master.get_final_result_dataframe()
         dataframe_insert_new = df_final.loc[df_final['Validity'] == True]
+
+        dataframe_insert_master = df_final.loc[df_final['Validity'] == False]
+
+        df_convert_to_int = dataframe_insert_master.astype({'Total_Score': 'float'})
+        df2 = df_convert_to_int.loc[df_convert_to_int['Total_Score'].lt(60)]
+
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
+
+        for item_provider in provider.get_list_item_provider():
+            for index, row in df2.iterrows():
+                if row['Alamat'] == item_provider.get_alamat():
+                    print("Found")
+                    print(item_provider.get_nama_provider(),item_provider.get_state_id())
+                    url = 'https://www.asateknologi.id/api/master'
+                    myobj = {'stateId': item_provider.get_state_id(),
+                             'cityId': item_provider.get_city_id(),
+                             'category1': 2,
+                             'provider_name': item_provider.get_nama_provider(),
+                             'address': item_provider.get_alamat(),
+                             'tel':'021',
+                             'inpatient':0,
+                             'outpatient':0}
+                    try:
+                        x = requests.post(url, json=myobj)
+                    except Exception as e:
+                        print(str(e))
+
+                    pass
+
         id_asuransi = provider.get_id_asuransi()
         print(id_asuransi)
         # url = 'https://www.asateknologi.id/api/inshos'
@@ -990,6 +1034,8 @@ class Provider(models.Model):
             alamat = row.Alamat
             rawat_inap = row.RI
             rawat_jalan = row.RJ
+            state_name = row.Provinsi
+            city_name = row.Kota
 
             provider_object.set_provider_name(nama)
             provider_object.set_alamat(alamat)
@@ -1000,6 +1046,21 @@ class Provider(models.Model):
             provider_object.set_count_label_name(0)
             provider_object.set_nama_alamat()
             provider_object.set_saved_in_golden_record(False)
+
+            url = 'https://www.asateknologi.id/api/stateId'
+            myobj = {'stateName': state_name,'cityName':city_name}
+            try:
+                x = requests.post(url, json=myobj)
+                state_id = x.json()["state_id"]
+                city_id = x.json()["city_id"]
+
+            except Exception as e:
+                state_id = 0
+                city_id = 0
+
+            provider_object.set_city_id(city_id)
+            provider_object.set_state_id(state_id)
+            print(city_id,state_id)
 
             provider_item_list.append(provider_object)
 
