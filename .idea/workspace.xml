@@ -5,9 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ec4b836-b3a2-487c-8ac7-00cf0b5546fa" name="Changes" comment="er">
+      <change afterPath="$PROJECT_DIR$/classM/ItemState.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/classM/States.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/master/master_add.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/DFHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/DFHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/MasterData.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/MasterData.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlp_provider/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/master/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/master/index.html" afterDir="false" />
     </list>
@@ -42,25 +44,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/User/PycharmProjects/nlp_provider/templates/matching&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "C:/Users/User/PycharmProjects/nlp_provider/templates/master",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;Python&quot;,
-      &quot;HTML&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "Python",
+      "HTML"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\matching" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\master" />
+      <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\matching" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
