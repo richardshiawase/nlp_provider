@@ -6,12 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="7ec4b836-b3a2-487c-8ac7-00cf0b5546fa" name="Changes" comment="er">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/migrations/0001_initial.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/migrations/0002_goldenrecordmatch.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/migrations/0003_itemprovider_golden_record.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/migrations/0004_auto_20230418_1333.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/migrations/0005_auto_20230418_1335.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

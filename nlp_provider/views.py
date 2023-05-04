@@ -62,11 +62,7 @@ match_process.start()
 match_process.set_list_provider()
 list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
-master_data = MasterData()
 
-# new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
-# df_dataset["course_titles"] = new_course_title[0]
-# p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
 
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
@@ -344,6 +340,33 @@ def list_master_process(request):
 
 
 def sinkron_master_process(request):
+    response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
+    provider_list = response.json().get("val")
+    master_data_list = []
+    # master_data = MasterData()
+
+    df = pd.DataFrame()
+
+    for prov in provider_list:
+        id = prov["id"]
+        stateId = prov["stateId"]
+        cityId = prov["CityId"]
+        category_1 = str(prov["Category_1"])
+        category_2 = prov["Category_2"]
+        telephone = prov["TEL_NO"]
+        provider_name_master = prov["PROVIDER_NAME"]
+        address = prov["ADDRESS"]
+
+        df = df.append(pd.Series(
+            {'ProviderId': id, 'stateId': stateId, 'cityId': cityId, 'Category_1': category_1, 'Category_2': category_2,
+             'PROVIDER_NAME': provider_name_master, 'ADDRESS': address, 'TEL_NO': telephone},
+            name=3))
+
+    df.to_excel("master_provider.xlsx", index=False)
+
+    return JsonResponse(master_data_list, safe=False)
+def sinkron_master_process_not_request():
+    print("Sinkron master proses")
     response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
     provider_list = response.json().get("val")
     master_data_list = []
@@ -816,6 +839,8 @@ def perbandingan_result(request):
     global uploaded_file
     global contexte
     global perbandingan_model
+    sinkron_master_process_not_request()
+    master_data = MasterData()
 
     if request.method == 'POST':
         # # # REQUEST DARI PROSES FILE
