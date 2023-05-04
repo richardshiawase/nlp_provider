@@ -47,6 +47,8 @@ urlpatterns = [
     path('master/master-varian-list-read', views.master_varian_list_read, name="master_varian_list_read"),
 
     path('master/master-list', views.list_master_process, name="master_liste"),
+    path('master/master-add', views.master_add, name="master-add"),
+
     path('master/sinkron-process', views.sinkron_master_process, name="sinkron_master_process"),
     path('master/download_master', views.download_master, name="download_master"),
     path('master/download_master_varian', views.download_master_varian, name="download_master_varian"),

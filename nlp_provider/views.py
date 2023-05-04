@@ -24,6 +24,7 @@ from classM.DFHandler import DFHandler
 from classM.Dataset import Dataset
 from classM.ItemMaster import ItemMaster
 from classM.MasterData import MasterData
+from classM.States import States
 from model.models import ItemProvider, List_Processed_Provider, MatchProcess, MasterMatchProcess, GoldenRecordMatch
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
@@ -68,7 +69,7 @@ filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
-
+state = States()
 
 def index(request):
     context = {"list_pembanding": []}
@@ -314,6 +315,14 @@ def list_master_varian(request):
 
 def list_master_sinkron(request):
     return render(request, 'master/sinkron.html')
+
+
+
+def master_add(request):
+
+    context = {"label_list": state.get_item_state_list()}
+    print(context)
+    return render(request, 'master/master_add.html', context=context)
 
 
 def list_master_process(request):
