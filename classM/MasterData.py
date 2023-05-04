@@ -24,7 +24,9 @@ class MasterData:
 
     def set_list_item_master_provider(self):
         print("Create provider item list")
-
+        print(self.dataframe_master["Category_1"])
+        # self.dataframe_master["Category_1"] = self.dataframe_master["Category_1"]
+        # self.dataframe_master["Category_1"] = pd.to_numeric(self.dataframe_master["Category_1"])
         for row in self.dataframe_master.itertuples(index=True, name='Sheet1'):
 
             master_provider_id = row.ProviderId
@@ -49,6 +51,12 @@ class MasterData:
 
     def get_list_item_master_provider(self):
         return self.list_item_master_provider
+
+    def get_list_item_master_provider_json(self):
+        ls = []
+        for item_master in self.get_list_item_master_provider():
+            ls.append(item_master.__dict__)
+        return ls
 
     def get_dataframe(self):
         return self.dataframe_master

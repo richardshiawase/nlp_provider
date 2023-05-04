@@ -317,26 +317,9 @@ def list_master_sinkron(request):
 
 
 def list_master_process(request):
-    master_data_list = []
-    dfs = None
-    try:
-        dfs = pd.read_excel("master_provider.xlsx")
-    except:
-        print("dataframe not found")
-
-    for index, row in dfs.iterrows():
-        id = row['ProviderId']
-        stateId = row['stateId']
-        cityId = row['cityId']
-        provider_name_master = str(row['PROVIDER_NAME'])
-        address = row['ADDRESS']
-        category_1 = row['Category_1']
-        category_2 = row['Category_2']
-        telephone = row['TEL_NO']
-        # master_data = MasterData(id, provider_name_master, address, category_1, category_2, telephone, stateId,
-        #                          cityId)
-        # master_data_list.append(master_data.__dict__)
-    return JsonResponse(master_data_list, safe=False)
+    master_data = MasterData()
+    list_item_master = master_data.get_list_item_master_provider_json()
+    return JsonResponse(list_item_master, safe=False)
 
 
 def sinkron_master_process(request):
@@ -351,7 +334,10 @@ def sinkron_master_process(request):
         id = prov["id"]
         stateId = prov["stateId"]
         cityId = prov["CityId"]
-        category_1 = str(prov["Category_1"])
+        try:
+            category_1 = int(prov["Category_1"])
+        except:
+            category_1 = 0
         category_2 = prov["Category_2"]
         telephone = prov["TEL_NO"]
         provider_name_master = prov["PROVIDER_NAME"]
@@ -378,7 +364,10 @@ def sinkron_master_process_not_request():
         id = prov["id"]
         stateId = prov["stateId"]
         cityId = prov["CityId"]
-        category_1 = str(prov["Category_1"])
+        try:
+            category_1 = int(prov["Category_1"])
+        except:
+            category_1 = 0
         category_2 = prov["Category_2"]
         telephone = prov["TEL_NO"]
         provider_name_master = prov["PROVIDER_NAME"]

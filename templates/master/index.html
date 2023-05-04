@@ -2,20 +2,27 @@
 {% block title %} Model {% endblock %}
 
 {% block content %}
-
 <div class="container">
-        <div class="row">
+        <div class="row mt-3">
+            <div class="col-sm-3">
+                <button type="button" id="btn_tambah_master" class="btn btn-primary" >
+                  Tambah Master
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="row mt-3">
 
             <table id="albumse" class="table table-striped table-bordered" style="width:100%">
                 <thead>
                 <tr>
 <!--                    <th></th>-->
-                    <th style="width:2%" data-data="rank">State ID</th>
-                    <th style="width:2%" data-data="rank">City ID</th>
+                    <th style="width:2%" data-data="rank">Provider ID</th>
                     <th style="width:20%" data-data="rank">Nama</th>
                     <th style="width:30%" data-data="rank">Alamat</th>
-                    <th style="width:2%" data-data="rank">Kategori 1</th>
-                    <th style="width:2%" data-data="rank">Kategori 2</th>
+                    <th style="width:2%" data-data="rank">Kategori</th>
                     <th style="width:10%" data-data="rank">Phone</th>
 
 
@@ -31,21 +38,16 @@
 <script>
 
 
-<!--       /* Formatting function for row details - modify as you need */-->
-<!--        function format(d) {-->
-<!--            // `d` is the original data object for the row-->
-<!--            console.log(d.varian);-->
-<!--            var eo = "";-->
-<!--            for(key in d.varian){-->
-<!--                 eo += "<tr><td>Full name:</td><td>"+d.varian[key]+"</td></tr>";-->
-<!--            }-->
-<!--            return (-->
-<!--                '<table>' +-->
-<!--                    eo-->
-<!--                + '</table>'-->
-<!--            );-->
-<!--        }-->
+
       $(document).ready(function() {
+
+            $('#btn_tambah_master').click(function(){
+              var url = "www.google.com";
+
+               window.open(url);
+
+              return false;
+            });
 
 
          var table =     $('#albumse').DataTable({
@@ -62,9 +64,7 @@
 
                    {
                     "render" : function(data,type,row){
-                        console.log(data);
                         switch(data){
-
                             case "1":
                                 return "Rumah Sakit";
                                 break;
@@ -84,7 +84,7 @@
 
                         }
                     },
-                    targets : 2
+                    targets : 3
                   }
               ],
 
@@ -95,13 +95,11 @@
 <!--                data: null,-->
 <!--                defaultContent: '',-->
 <!--            },-->
-                  {   data: "state_id" },
-                  {   data: "city_id" },
+                  {   data: "provider_id" },
                   {   data: "nama_provider" },
-                  {   data: "alamat" },
+                  {   data: "address" },
                   {   data: "category_1" },
-                  {   data: "category_2" },
-                  {   data: "phone" },
+                  {   data: "tel_no" },
 
 
               ],
