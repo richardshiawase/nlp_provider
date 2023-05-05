@@ -64,12 +64,12 @@ match_process.set_list_provider()
 list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
 
-
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
 state = States()
+
 
 def index(request):
     context = {"list_pembanding": []}
@@ -158,7 +158,7 @@ def perbandingan_rev(request):
     print(id_provider)
     provider = list_provider_model_object.get_a_provider_from_id(id_provider)
     if provider is None:
-        return JsonResponse([],safe=False)
+        return JsonResponse([], safe=False)
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
 
 
@@ -317,11 +317,8 @@ def list_master_sinkron(request):
     return render(request, 'master/sinkron.html')
 
 
-
 def master_add(request):
-
-    context = {"label_list": state.get_item_state_list()}
-    print(context)
+    context = {"state_list": state.get_item_state_dict().values(), "city_list": state.get_item_city_list()}
     return render(request, 'master/master_add.html', context=context)
 
 
@@ -360,6 +357,8 @@ def sinkron_master_process(request):
     df.to_excel("master_provider.xlsx", index=False)
 
     return JsonResponse(master_data_list, safe=False)
+
+
 def sinkron_master_process_not_request():
     print("Sinkron master proses")
     response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
@@ -467,13 +466,13 @@ def sinkron_dataset_process(request):
 
 
 def master_varian_process(request):
-
     dff = pd.DataFrame()
     dataset = match_process.get_dataset()
     master_data = MasterData()
     master_data_list = []
     dfs_varian = dataset.get_bulk_dataset().groupby('subject')
-    for item_master in tqdm(master_data.get_list_item_master_provider(),total=len(master_data.get_list_item_master_provider())):
+    for item_master in tqdm(master_data.get_list_item_master_provider(),
+                            total=len(master_data.get_list_item_master_provider())):
         varian_list = []
         try:
             dfe = dfs_varian.get_group(item_master.get_nama_master())
@@ -661,6 +660,41 @@ def loop_delete(link_result):
         read_link_result_and_delete_provider_name2(nama_provider, link_result)
 
     dfs.to_excel(link_result, sheet_name='Sheet1', index=False)
+
+
+def add_master_by_dashboard(request):
+    if request.method == "POST":
+        nama_provider = request.POST["nama_provider"]
+        alamat_provider = request.POST["alamat_provider"]
+        provinsi_provider = request.POST["provinsi_provider"]
+        city_provider = request.POST["city_provider"]
+        telepon_provider = request.POST["telepon_provider"]
+        kategori_provider = request.POST["kategori_provider"]
+        latitude_provider = request.POST["latitude_provider"]
+        longitude_provider = request.POST["longitude_provider"]
+
+        provinsi_provider = state.get_item_state_dict().get(provinsi_provider)
+        city = state.get_city()
+        city_provider = city.get_item_city_only_dict().get(city_provider)
+
+        print(nama_provider,alamat_provider,provinsi_provider.get_state_id(),city_provider.get_city_id(),telepon_provider,kategori_provider,latitude_provider,longitude_provider)
+        url = 'https://www.asateknologi.id/api/master'
+        myobj = {'stateId': provinsi_provider.get_state_id(),
+                 'cityId': city_provider.get_city_id(),
+                 'category1': kategori_provider,
+                 'provider_name': nama_provider,
+                 'address': alamat_provider,
+                 'tel': telepon_provider,
+                 'latitude':latitude_provider,
+                 'longitude':longitude_provider
+            }
+        try:
+            x = requests.post(url, json=myobj)
+        except Exception as e:
+            print(str(e))
+
+    # return HttpResponse(context)
+    return HttpResponse("OK")
 
 
 def add_master_store(request):

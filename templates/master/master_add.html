@@ -5,64 +5,67 @@
 <div class="container">
 
 
-        <div class="row mt-3">
+        <div class="row mt-3 bg-light text-dark rounded">
             <p class="h3 mb-3">Add  Master</p>
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input type="text" class="form-control" placeholder="Nama Provider">
-            </div>
+                <form action="/master/master-add-item" method="post">
+                    {% csrf_token %}
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input type="text" class="form-control" placeholder="Alamat Provider">
-            </div>
+                <div class="mb-2 ">
+                    <label for="nama_provider" class="form-label">Nama Provider</label>
+                    <input type="text" class="form-control" id="nama_provider" placeholder="Masukan Nama Provider" name="nama_provider" value="konde" required>
+                  </div>
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input class="form-control" list="datalistOptionsProvinsi" id="provinsiDataList" placeholder="Provinsi..ketik untuk mencari...">
-                    <datalist id="datalistOptionsProvinsi">
-                        {% for label in label_list %}
-                            <option value="{{ label }}" >{{ label.state_name }}</option>
-                        {% endfor %}
-                    </datalist>
-            </div>
+                <div class="mb-2">
+                    <label for="alamat_provider" class="form-label">Alamat Provider</label>
+                    <input type="text" class="form-control" id="alamat_provider" placeholder="Masukan Alamat Provider" name="alamat_provider" value="alamat konde" required>
+                  </div>
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-                    <input class="form-control" list="datalistOptionsCity" id="cityDataList" placeholder="Kota..ketik untuk mencari...">
-                    <datalist id="datalistOptionsCity">
-                      <option value="San Francisco">
-                      <option value="New York">
-                      <option value="Seattle">
-                      <option value="Los Angeles">
-                      <option value="Chicago">
-                    </datalist>
-            </div>
+                <div class="mb-2">
+                    <label class="form-label">Daftar Provinsi</label>
+                     <input class="form-control" list="datalistOptionsProvinsi" id="provinsi_provider" placeholder="Provinsi..ketik untuk mencari..." name="provinsi_provider">
+                        <datalist id="datalistOptionsProvinsi">
+                            {% for state in state_list %}
+                                <option value="{{ state.state_name }}" >{{ state.state_name }}</option>
+                            {% endfor %}
+                        </datalist>
+                  </div>
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input type="text" class="form-control" placeholder="Telepon">
-            </div>
+                <div class="mb-2">
+                    <label  class="form-label">Daftar Kota</label>
+                        <input class="form-control" list="datalistOptionsCity" id="city_provider" placeholder="Kota..ketik untuk mencari..." name="city_provider">
+                         <datalist id="datalistOptionsCity">
+                            {% for city in city_list %}
+                                <option value="{{ city.city_name }}" >{{ city.city_name }}</option>
+                            {% endfor %}
+                        </datalist>
+                </div>
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input type="text" class="form-control" placeholder="Kategori">
-            </div>
+                <div class="mb-2">
+                    <label for="alamat_provider" class="form-label">Telepon Provider</label>
+                    <input type="text" class="form-control" id="telepon" placeholder="Nomor Telepon Provider" value="02100000" name="telepon_provider" required>
+                  </div>
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input type="text" class="form-control" placeholder="Latitude">
-            </div>
+                <div class="mb-2">
+                    <label  class="form-label">Kategori</label>
+                  <input type="text" class="form-control" placeholder="Kategori" value="1" name="kategori_provider">
+                </div>
 
-            <div class="input-group mb-3 input-group-sm">
-               <span class="input-group-text">@</span>
-              <input type="text" class="form-control" placeholder="Longitude">
-            </div>
+                <div class="mb-2">
+                    <label  class="form-label">Latitude</label>
+                  <input type="text" class="form-control" placeholder="Latitude" value="111" name="latitude_provider">
+                </div>
 
-          <div class="col-sm-3">
-              <button type="button" class="btn btn-primary">Save</button>
-            </div>
+                <div class="mb-2">
+                   <label  class="form-label">Longitude</label>
+                  <input type="text" class="form-control" placeholder="Longitude" value="112" name="longitude_provider">
+                </div>
+
+                <div class="col-sm-3 mt-2 mb-2 ">
+                    <input type="submit"  class="btn btn-primary" value="Save"/>
+                </div>
+            </form>
         </div>
+
 
 
 

@@ -54,6 +54,10 @@ urlpatterns = [
     path('master/download_master_varian', views.download_master_varian, name="download_master_varian"),
 
     path('result/', views.perbandingan_result, name="result"),
+
+    # add to master by dashboard
+    path('master/master-add-item', views.add_master_by_dashboard, name="master-add-item"),
+
     path('temporer-store/',views.temporer_store,name="temporer"),
     path('add-to-master/', views.add_master_store, name="add-to-master"),
 
