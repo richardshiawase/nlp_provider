@@ -16,7 +16,7 @@ from django.core import serializers
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.forms import model_to_dict
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 import warnings
 
@@ -676,8 +676,6 @@ def add_master_by_dashboard(request):
         provinsi_provider = state.get_item_state_dict().get(provinsi_provider)
         city = state.get_city()
         city_provider = city.get_item_city_only_dict().get(city_provider)
-
-        print(nama_provider,alamat_provider,provinsi_provider.get_state_id(),city_provider.get_city_id(),telepon_provider,kategori_provider,latitude_provider,longitude_provider)
         url = 'https://www.asateknologi.id/api/master'
         myobj = {'stateId': provinsi_provider.get_state_id(),
                  'cityId': city_provider.get_city_id(),
@@ -685,16 +683,20 @@ def add_master_by_dashboard(request):
                  'provider_name': nama_provider,
                  'address': alamat_provider,
                  'tel': telepon_provider,
-                 'latitude':latitude_provider,
-                 'longitude':longitude_provider
-            }
+                 'latitude': latitude_provider,
+                 'longitude': longitude_provider
+                 }
         try:
-            x = requests.post(url, json=myobj)
+            pass
+            # x = requests.post(url, json=myobj)
+            # token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
+            # header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+            # url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
+            # d = requests.get(url_sinkron_sinta,headers=header)
         except Exception as e:
-            print(str(e))
+            print(e)
 
-    # return HttpResponse(context)
-    return HttpResponse("OK")
+    return HttpResponse(400)
 
 
 def add_master_store(request):

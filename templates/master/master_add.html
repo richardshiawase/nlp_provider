@@ -1,23 +1,27 @@
 {% extends 'base.html' %}
-{% block title %} Model {% endblock %}
+{% block title %} Tambah Master {% endblock %}
 
 {% block content %}
 <div class="container">
 
 
         <div class="row mt-3 bg-light text-dark rounded">
-            <p class="h3 mb-3">Add  Master</p>
-                <form action="/master/master-add-item" method="post">
-                    {% csrf_token %}
+            <div id="alert_success" class="d-none alert alert-success">
+              <strong>Berhasil !</strong> <label>Penambahan item master <label class="h2" id="nama_master_lbl"></label> berhasil</label>
+            </div>
 
+            <div id="alert_gagal" class="d-none alert alert-danger">
+                <strong>Gagal!</strong> Penambahan item master gagal.
+            </div>
+                <form id="configform" name="input" action="#">
                 <div class="mb-2 ">
                     <label for="nama_provider" class="form-label">Nama Provider</label>
-                    <input type="text" class="form-control" id="nama_provider" placeholder="Masukan Nama Provider" name="nama_provider" value="konde" required>
+                    <input type="text" class="form-control" id="nama_provider" placeholder="Masukan Nama Provider" name="nama_provider"  required>
                   </div>
 
                 <div class="mb-2">
                     <label for="alamat_provider" class="form-label">Alamat Provider</label>
-                    <input type="text" class="form-control" id="alamat_provider" placeholder="Masukan Alamat Provider" name="alamat_provider" value="alamat konde" required>
+                    <input type="text" class="form-control" id="alamat_provider" placeholder="Masukan Alamat Provider" name="alamat_provider"  required>
                   </div>
 
                 <div class="mb-2">
@@ -42,28 +46,29 @@
 
                 <div class="mb-2">
                     <label for="alamat_provider" class="form-label">Telepon Provider</label>
-                    <input type="text" class="form-control" id="telepon" placeholder="Nomor Telepon Provider" value="02100000" name="telepon_provider" required>
+                    <input type="text" class="form-control" id="telepon_provider" placeholder="Nomor Telepon Provider"  name="telepon_provider" required>
                   </div>
 
                 <div class="mb-2">
                     <label  class="form-label">Kategori</label>
-                  <input type="text" class="form-control" placeholder="Kategori" value="1" name="kategori_provider">
+                  <input type="text" class="form-control" placeholder="Kategori" id="kategori_provider"  name="kategori_provider">
                 </div>
 
                 <div class="mb-2">
                     <label  class="form-label">Latitude</label>
-                  <input type="text" class="form-control" placeholder="Latitude" value="111" name="latitude_provider">
+                  <input type="text" class="form-control" placeholder="Latitude" id="latitude_provider"  name="latitude_provider">
                 </div>
 
                 <div class="mb-2">
                    <label  class="form-label">Longitude</label>
-                  <input type="text" class="form-control" placeholder="Longitude" value="112" name="longitude_provider">
+                  <input type="text" class="form-control" placeholder="Longitude" id="longitude_provider" name="longitude_provider">
                 </div>
 
-                <div class="col-sm-3 mt-2 mb-2 ">
-                    <input type="submit"  class="btn btn-primary" value="Save"/>
+                <div class=" mb-2 ">
+                    <input id="submit_btn" type="submit"  class="btn btn-primary" value="Save"/>
                 </div>
-            </form>
+
+                </form>
         </div>
 
 
@@ -77,21 +82,45 @@
 
 
       $(document).ready(function() {
-    $(".select_picker").select2();
 
-            $('#btn_tambah_master').click(function(){
-              var url = "master-add";
-               window.open(url);
-              return false;
+            $('#submit_btn').on('click',function(e){
+               e.preventDefault();
+                 $.ajax(
+                    {
+                        dataType: 'text',
+                        type:"POST",
+                        url: "/master/master-add-item",
+                        data:{
+                            "nama_provider": $("#nama_provider").val(),
+                            "alamat_provider": $("#alamat_provider").val(),
+                            "provinsi_provider": $("#provinsi_provider").val(),
+                            "city_provider" : $("#city_provider").val(),
+                            "telepon_provider": $("#telepon_provider").val(),
+                            "kategori_provider": $("#kategori_provider").val(),
+                            "latitude_provider":$("#latitude_provider").val(),
+                            "longitude_provider":$("#longitude_provider").val(),
+                            "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                        },
+                        success: function( data )
+                        {
+                            if(data==200){
+                                $("#alert_success").removeClass("d-none");
+                                $("#nama_master_lbl").text($("#nama_provider").val());
+
+                                reset();
+                            }
+
+                            if(data!=200){
+                                $("#alert_gagal").removeClass("d-none");
+                            }
+                        }
+                 })
+
             });
 
-
-
-
-
-
-
-
+        function reset(){
+            $("#configform").trigger("reset");
+        }
 
       });
 </script>
