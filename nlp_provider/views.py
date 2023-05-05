@@ -688,15 +688,15 @@ def add_master_by_dashboard(request):
                  }
         try:
             pass
-            # x = requests.post(url, json=myobj)
-            # token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
-            # header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-            # url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            # d = requests.get(url_sinkron_sinta,headers=header)
+            x = requests.post(url, json=myobj)
+            token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
+            header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+            url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
+            d = requests.get(url_sinkron_sinta,headers=header)
         except Exception as e:
             print(e)
 
-    return HttpResponse(400)
+    return HttpResponse(200)
 
 
 def add_master_store(request):
