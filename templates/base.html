@@ -83,17 +83,17 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Master</a>
                      <ul class="dropdown-menu">
+                         <li><a class="dropdown-item" href="{% url 'master'%}">List</a></li>
                         <li><a class="dropdown-item" href="{% url 'sinkron_master_process'%}">Sinkronisasi Master</a></li>
-                         <li><a class="dropdown-item" href="{% url 'master_varian_process'%}">Sinkronisasi Master Varian</a></li>
-                         <li><a class="dropdown-item" href="{% url 'sinkron_dataset_process'%}">Sinkronisasi Dataset</a></li>
+                         <li><a class="dropdown-item disabled" href="{% url 'master_varian_process'%}">Sinkronisasi Master Varian</a></li>
+                         <li><a class="dropdown-item disabled" href="{% url 'sinkron_dataset_process'%}">Sinkronisasi Dataset</a></li>
 
-                        <li><a class="dropdown-item" href="{% url 'master'%}">List</a></li>
-                         <li><a class="dropdown-item" href="{% url 'master_varian_list'%}">List with Varian</a></li>
+                         <li><a class="dropdown-item disabled" href="{% url 'master_varian_list'%}">List with Varian</a></li>
 
-                        <li><a class="dropdown-item" href="{% url 'upload_master'%}">Bulk Upload</a></li>
-                        <li><a class="dropdown-item" href="{% url 'model:model_route'%}">Cherry Picking</a></li>
-                        <li><a class="dropdown-item" href="{% url 'download_master' %}">Download Master</a></li>
-                        <li><a class="dropdown-item" href="{% url 'download_master_varian' %}">Download Master Varian</a></li>
+                        <li><a class="dropdown-item disabled" href="{% url 'upload_master'%}">Bulk Upload</a></li>
+                        <li><a class="dropdown-item disabled" href="{% url 'model:model_route'%}">Cherry Picking</a></li>
+                        <li><a class="dropdown-item disabled" href="{% url 'download_master' %}">Download Master</a></li>
+                        <li><a class="dropdown-item disabled" href="{% url 'download_master_varian' %}">Download Master Varian</a></li>
 
                     </ul>
                 </li>
