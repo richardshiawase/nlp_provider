@@ -591,6 +591,13 @@ class MatchProcess(models.Model):
     status_finish = models.CharField(max_length=8)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def get_category_dict(self):
+        kategori_dict = {}
+        kategori_dict["RS"] = 1
+        kategori_dict["KLINIK"] = 2
+        kategori_dict["APOTEK"] = 3
+        return kategori_dict
+
     def set_golden_record_instance(self, golden_record):
         self.golden_record = golden_record
 
