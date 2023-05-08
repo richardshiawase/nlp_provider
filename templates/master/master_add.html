@@ -51,7 +51,12 @@
 
                 <div class="mb-2">
                     <label  class="form-label">Kategori</label>
-                  <input type="text" class="form-control" placeholder="Kategori" id="kategori_provider"  name="kategori_provider">
+                    <input class="form-control" list="datalistKategori" id="kategori_provider" placeholder="Kategori..ketik untuk mencari..." name="kategori_provider">
+                         <datalist id="datalistKategori">
+                            {% for kategori_key in kategori_dict %}
+                                <option value="{{ kategori_key }}" >{{ kategori_key }}</option>
+                            {% endfor %}
+                        </datalist>
                 </div>
 
                 <div class="mb-2">

@@ -318,7 +318,8 @@ def list_master_sinkron(request):
 
 
 def master_add(request):
-    context = {"state_list": state.get_item_state_dict().values(), "city_list": state.get_item_city_list()}
+    kategori_dict = match_process.get_category_dict()
+    context = {"state_list": state.get_item_state_dict().values(), "city_list": state.get_item_city_list(), "kategori_dict":kategori_dict.keys()}
     return render(request, 'master/master_add.html', context=context)
 
 
@@ -672,7 +673,8 @@ def add_master_by_dashboard(request):
         kategori_provider = request.POST["kategori_provider"]
         latitude_provider = request.POST["latitude_provider"]
         longitude_provider = request.POST["longitude_provider"]
-
+        cat_dict = match_process.get_category_dict()
+        kategori_provider = cat_dict.get(kategori_provider)
         provinsi_provider = state.get_item_state_dict().get(provinsi_provider)
         city = state.get_city()
         city_provider = city.get_item_city_only_dict().get(city_provider)
@@ -688,11 +690,11 @@ def add_master_by_dashboard(request):
                  }
         try:
             pass
-            x = requests.post(url, json=myobj)
+            # x = requests.post(url, json=myobj)
             token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
             header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
             url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            d = requests.get(url_sinkron_sinta,headers=header)
+            # d = requests.get(url_sinkron_sinta,headers=header)
         except Exception as e:
             print(e)
 
