@@ -29,12 +29,19 @@ urlpatterns = [
     path('kompilasi_data', views.kompilasi_data, name='kompilasi_data'),  # new
 
     path('new', views.newe, name='newe'),  # new
+    path('master-linked-load', views.master_linked_load, name='master_linked_load'),  # new
+
     path('match_rev/', views.perbandingan_rev, name="perbandingan_rev"),
     path('hapus_tampungan',views.hapus_tampungan,name="hapus_tampungan"),
     path('tampungan_rev/', views.tampungan_rev, name="tampungan_rev"),
 
     path('match/',views.perbandingan,name="perbandingan"),
+    path('hos_ins_list/', views.hos_ins_list, name="hos_ins_list"),
+    path('hos_ins_list_page/', views.hos_ins_list_page, name="hos_ins_list_page"),
+    path('hos_ins_list_item/', views.hos_ins_list_item, name="hos_ins_list_item"),
+
     path('tampungan/', views.tampungan, name="tampungan"),
+    path('linked-master/', views.linked_master, name="linked-master"),
 
     path('master/', views.upload_master, name="upload_master"),
     path('master/list', views.list_master, name="master"),
@@ -54,6 +61,7 @@ urlpatterns = [
     path('master/download_master_varian', views.download_master_varian, name="download_master_varian"),
 
     path('result/', views.perbandingan_result, name="result"),
+    path('unlinkhos/', views.unlink_hos, name="unlinkhos"),
 
     # add to master by dashboard
     path('master/master-add-item', views.add_master_by_dashboard, name="master-add-item"),

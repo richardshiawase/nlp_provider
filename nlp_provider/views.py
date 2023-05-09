@@ -20,8 +20,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 import warnings
 
+from classM.Asuransi import Asuransi
 from classM.DFHandler import DFHandler
 from classM.Dataset import Dataset
+from classM.HospitalInsurance import HospitalInsurance
 from classM.ItemMaster import ItemMaster
 from classM.MasterData import MasterData
 from classM.States import States
@@ -69,6 +71,7 @@ tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
 state = States()
+asuransi = Asuransi()
 
 
 def index(request):
@@ -107,7 +110,13 @@ def kompilasi_data(request):
 
     return JsonResponse(provider_list, safe=False)
 
+def master_linked_load(request):
 
+    if request.method == "GET":
+        ls = asuransi.get_list_item_asuransi()
+        return JsonResponse(ls, safe=False)
+
+    return JsonResponse({'message': 'error'})
 def newe(request):
     list_provider_model_object.set_empty_provider_list()
     data_list = models.Provider.objects.raw(
@@ -162,6 +171,51 @@ def perbandingan_rev(request):
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
 
 
+def hos_ins_list_item(request):
+    if 'hospital_linked_list' in request.session:
+        hospital_linked_list = request.session['hospital_linked_list']
+        return JsonResponse(list(hospital_linked_list.values()),safe=False)
+
+def hos_ins_list_page(request):
+    context = {"data":[]}
+    return render(request, 'matching/index_hospital_asuransi.html', context=context)
+
+
+
+def hos_ins_list(request):
+
+    asuransi_dict = asuransi.get_dict_item_asuransi()
+    if request.method == "POST":
+        data = json.loads(request.POST["data"])
+        nama_asuransi = data["singkatan"]
+        asu = asuransi_dict.get(nama_asuransi)
+        request.session['nama_asuransi'] = nama_asuransi
+        request.session['hospital_linked_list'] = asu["hospital_linked_list"]
+        return JsonResponse({'data':asu["hospital_linked_list"],'nama_asuransi':nama_asuransi})
+
+def unlink_hos(request):
+    if request.method == "POST":
+        data = json.loads(request.POST["data"])
+        id_hosins = data['id_hosins']
+        url = 'https://www.asateknologi.id/api/unlink-inshos'
+        myobj = {'id_hosins': id_hosins}
+        x = requests.post(url, json=myobj)
+        asuransi_dict = asuransi.get_dict_item_asuransi()
+        asu = asuransi_dict.get(request.session['nama_asuransi'])
+
+
+        if(x.status_code == 200):
+            if 'hospital_linked_list' in request.session:
+                hospital_linked_list = request.session['hospital_linked_list']
+                del hospital_linked_list[str(id_hosins)]
+                asu["hospital_linked_list"] = hospital_linked_list
+                asu["linked_hospital_count"] = len(hospital_linked_list)
+                request.session['hospital_linked_list'] = hospital_linked_list
+
+
+        return JsonResponse({'data':x.status_code})
+
+
 def perbandingan(request):
     response = requests.get('https://asateknologi.id/api/insuranceall')
     response = response.json()
@@ -182,6 +236,11 @@ def tampungan(request):
 
     context = {"provider_list": [], "link_result": link_result}
     return render(request, 'matching/perbandingan_basket.html', context=context)
+
+def linked_master(request):
+    return render(request, 'matching/linked_master.html')
+
+    # return JsonResponse(asuransi.get_dict_item_asuransi(), safe=False)
 
 
 def tampungan_rev(request):
