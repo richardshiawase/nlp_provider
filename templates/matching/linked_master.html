@@ -1,0 +1,103 @@
+<!-- templates/home.html-->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Linked Master{% endblock %}
+{% block content %}
+
+<div class="container mt-3">
+
+
+
+  <div class="container">
+    <div class="row">
+              <img id="meditate" style = "position:absolute; left: 20%; height:80%;width:50%;"src="{% static 'meditate.gif' %}" alt="My Image">
+
+      <div id="tampungan" class="col-sm-12">
+
+        <table id="albums" class="table table-striped table-bordered" style="width:100%" >
+          <thead>
+            <tr>
+              <th data-data="rank">Asuransi</th>
+              <th data-data="rank">Jumlah Item</th>
+              <th data-data="rank">Action</th>
+
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+ <script>
+      $(document).ready(function() {
+        $("#meditate").hide();
+
+        var table =     $('#albums').DataTable({
+
+              ajax: {
+              url: "{% url 'master_linked_load' %}",
+              type: 'GET',
+              dataSrc: "",
+
+
+          },
+
+
+          columnDefs: [
+
+
+                   {
+                    "render" : function(data,type,row){
+                      return '<button id="buka_file" type="button" class="btn btn-primary">Process</button>'
+                    },
+                    targets : 2
+                  }
+              ],
+
+          columns: [
+                  {   data: "singkatan" },
+                  {   data: "linked_hospital_count" },
+
+              ],
+
+
+          });
+
+
+     $('#albums tbody').on('click', '#buka_file', function () {
+            var data = table.row($(this).parents('tr')).data();
+
+            $.ajax(
+                {
+                    dataType: "json",
+                    method:"POST",
+                    url: "{% url 'hos_ins_list' %}",
+                    data:{
+                        "data": JSON.stringify(data),
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+
+                    success: function( data )
+                    {
+                         $("#meditate").hide();
+                         console.log(data);
+                          window.location.href = "{% url 'hos_ins_list_page' %}";
+
+                    }
+                 })
+                 return false;
+
+        });
+
+
+
+
+
+      });
+  </script>
+
+{% endblock %}
