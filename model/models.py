@@ -65,6 +65,9 @@ class ItemProvider(models.Model):
     count_label_name = models.CharField(max_length=2)
     ri = models.CharField(max_length=2)
     rj = models.CharField(max_length=2)
+    stateId = models.CharField(max_length=2)
+    cityId = models.CharField(max_length=2)
+    category_1 = models.CharField(max_length=2)
     nama_alamat = models.CharField(max_length=500)
     alamat_prediction = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -107,9 +110,11 @@ class ItemProvider(models.Model):
         except:
             self.status = status
 
-
     def get_status_item_provider(self):
-        return self.status
+        try:
+            return self.status
+        except Exception as e:
+            return None
 
     def set_processed(self, found):
         self.found = found
@@ -186,6 +191,7 @@ class ItemProvider(models.Model):
         return self.nama_asuransi
 
     def get_nama_provider(self):
+
         return self.nama_provider
 
     def get_alamat(self):
@@ -207,7 +213,11 @@ class ItemProvider(models.Model):
         self.save()
 
     def set_provider_name(self, value):
-        self.nama_provider = value
+        remove_words = ["rsia", "rsu","rumah sakit","rs", "optik", "klinik", "clinic", "laboratorium", "lab", "optic"]
+        # remove_words = []
+        for rem in remove_words:
+            value = value.replace(rem, "")
+        self.nama_provider = value.strip()
 
     def set_alamat(self, param):
         self.alamat = param
@@ -243,14 +253,14 @@ class ItemProvider(models.Model):
         return self.id_asuransi
 
     def set_validity(self):
-        if self.get_status_item_provider() == "Master" or self.get_status_item_provider() == "Ratio" :
-            if self.get_total_score() >=60:
+        if self.get_status_item_provider() == "Master" or self.get_status_item_provider() == "Ratio":
+            if self.get_total_score() >= 60:
                 self.validity = True
             else:
                 self.validity = False
 
         else:
-            if self.get_total_score() >= 70:
+            if self.get_total_score() >= 69:
                 self.validity = True
             else:
                 self.validity = False
@@ -263,6 +273,18 @@ class ItemProvider(models.Model):
 
     def get_saved_in_golden_record(self):
         return self.saved_in_golden_record
+
+    def set_city_id(self, city_id):
+        self.cityId = city_id
+
+    def get_city_id(self):
+        return self.cityId
+
+    def set_state_id(self, state_id):
+        self.stateId = state_id
+
+    def get_state_id(self):
+        return self.stateId
 
 
 class FinalResult(models.Model):
@@ -306,8 +328,36 @@ class MasterMatchProcess(models.Model):
     def insert_into_end_point_andika_assistant_item_provider(self):
         df_final = self.file_final_result_master.get_final_result_dataframe()
         dataframe_insert_new = df_final.loc[df_final['Validity'] == True]
+
+        dataframe_insert_master = df_final.loc[df_final['Validity'] == False]
+
+        df_convert_to_int = dataframe_insert_master.astype({'Total_Score': 'float'})
+        df2 = df_convert_to_int.loc[df_convert_to_int['Total_Score'].lt(60)]
+
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
+
+        for item_provider in provider.get_list_item_provider():
+            for index, row in df2.iterrows():
+                if row['Alamat'] == item_provider.get_alamat():
+                    print("Found")
+                    print(item_provider.get_nama_provider(),item_provider.get_state_id())
+                    url = 'https://www.asateknologi.id/api/master'
+                    myobj = {'stateId': item_provider.get_state_id(),
+                             'cityId': item_provider.get_city_id(),
+                             'category1': 2,
+                             'provider_name': item_provider.get_nama_provider(),
+                             'address': item_provider.get_alamat(),
+                             'tel':'021',
+                             'inpatient':0,
+                             'outpatient':0}
+                    try:
+                        x = requests.post(url, json=myobj)
+                    except Exception as e:
+                        print(str(e))
+
+                    pass
+
         id_asuransi = provider.get_id_asuransi()
         print(id_asuransi)
         url = 'https://www.asateknologi.id/api/inshos'
@@ -384,6 +434,29 @@ class MasterMatchProcess(models.Model):
 
                     break
 
+                if item.get_status_item_provider() == "Direct":
+                    item.set_processed(True)
+                    id_master_list.append(item.get_id_master())
+                    provider_name_master_list.append(item.get_nama_master_provider())
+                    alamat_master_list.append(item.get_alamat_master_provider())
+
+                    list_item_provider_nama.append(item.get_nama_provider())
+                    list_item_provider_alamat.append(item.get_alamat())
+                    list_item_provider_ri.append(item.get_ri())
+                    list_item_provider_rj.append(item.get_rj())
+                    list_item_provider_score.append(item.get_proba_score())
+                    list_item_ratio.append(item.get_ratio())
+                    list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                    list_item_total_score.append(item.get_total_score())
+
+                    item.set_validity()
+
+                    list_item_status.append(item.get_status_item_provider())
+                    list_item_validity.append(item.is_valid())
+
+                    break
+
             if item.is_processed() is False:
                 item.set_total_score(0)
                 item.set_ratio(0)
@@ -392,10 +465,10 @@ class MasterMatchProcess(models.Model):
                 if item.is_processed() is False:
                     ratio_nama = fuzz.ratio(item.get_label_name(), item_master.get_nama_master().strip())
                     ratio_alamat = fuzz.ratio(item.get_alamat(), item_master.get_alamat_master().strip())
-                    if item.get_proba_score() != 0 :
+                    if item.get_proba_score() != 0:
                         nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
                     else:
-                        nilai = (ratio_nama+ratio_alamat)/2
+                        nilai = (ratio_nama + ratio_alamat) / 2
                     total_ratio_extension = float("{:.2f}".format(nilai))
                     item.set_status_item_provider("Ratio")
 
@@ -517,6 +590,13 @@ class MatchProcess(models.Model):
     match_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     status_finish = models.CharField(max_length=8)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_category_dict(self):
+        kategori_dict = {}
+        kategori_dict["RS"] = 1
+        kategori_dict["KLINIK"] = 2
+        kategori_dict["APOTEK"] = 3
+        return kategori_dict
 
     def set_golden_record_instance(self, golden_record):
         self.golden_record = golden_record
@@ -741,11 +821,10 @@ class MatchProcess(models.Model):
                 for item_master in self.master_data.get_list_item_master_provider():
                     if item_provider.get_compared() is not True:
                         score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
-                        alamat_ratio = fuzz.token_set_ratio(item_master.get_alamat_master(), item_provider.get_alamat())
+                        alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
                         total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
 
                         if item_provider.get_total_score() <= total_score:
-                            # print(item_provider.get_nama_provider(),item_master.get_nama_master(),score,alamat_ratio)
                             item_provider.set_total_score(total_score)
                             item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
                             item_provider.set_label_name(item_master.get_nama_master())
@@ -757,6 +836,9 @@ class MatchProcess(models.Model):
                             item_provider.set_golden_record(0)
                             item_provider.set_saved_in_golden_record(False)
                             item_provider.set_status_item_provider("Direct")
+                            item_provider.set_id_master(item_master.get_id_master())
+                            item_provider.set_nama_master_provider(item_master.get_nama_master())
+                            item_provider.set_alamat_master_provider(item_master.get_alamat_master())
                             item_provider.save()
                 item_provider.set_compared(True)
 
@@ -869,7 +951,7 @@ class GoldenRecordMatch(models.Model):
         df1 = df_final.loc[df_final['Validity'] == True]
         df_convert_to_int = df1.astype({'Total_Score': 'float'})
         df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master") | (
-                    df_convert_to_int['Total_Score'].ge(90) & df_convert_to_int['Status'].eq("Ratio"))]
+                df_convert_to_int['Total_Score'].ge(90) & df_convert_to_int['Status'].eq("Ratio"))]
         # df2 = df_convert_to_int.loc[df_convert_to_int['Status'].eq("Master")]
         # df2 = df_convert_to_int[df_convert_to_int['Total_Score'] >= 90 | df_convert_to_int['Status'] == "Master"]
         for row in df2.itertuples(index=True, name='Sheet1'):
@@ -959,6 +1041,8 @@ class Provider(models.Model):
             alamat = row.Alamat
             rawat_inap = row.RI
             rawat_jalan = row.RJ
+            state_name = row.Provinsi
+            city_name = row.Kota
 
             provider_object.set_provider_name(nama)
             provider_object.set_alamat(alamat)
@@ -969,6 +1053,21 @@ class Provider(models.Model):
             provider_object.set_count_label_name(0)
             provider_object.set_nama_alamat()
             provider_object.set_saved_in_golden_record(False)
+
+            url = 'https://www.asateknologi.id/api/stateId'
+            myobj = {'stateName': state_name,'cityName':city_name}
+            try:
+                x = requests.post(url, json=myobj)
+                state_id = x.json()["state_id"]
+                city_id = x.json()["city_id"]
+
+            except Exception as e:
+                state_id = 0
+                city_id = 0
+
+            provider_object.set_city_id(city_id)
+            provider_object.set_state_id(state_id)
+            print(city_id,state_id)
 
             provider_item_list.append(provider_object)
 

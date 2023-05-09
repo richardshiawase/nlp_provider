@@ -255,78 +255,78 @@ class DFHandler:
             # item.set_total_score(0)
             item.set_ratio(0)
             item.set_alamat_ratio(0)
-            for master_obj in self.master_provider.get_list_item_master_provider():
-                if item.is_processed() is False:
-                    ratio_nama = fuzz.ratio(item.get_label_name(), master_obj.get_nama_master().strip())
-                    ratio_alamat = fuzz.ratio(item.get_alamat(), master_obj.get_alamat_master().strip())
-                    nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
-                    total_ratio_extension = float("{:.2f}".format(nilai))
-                    # item.set_status_item_provider("Ratio")
+            # for master_obj in self.master_provider.get_list_item_master_provider():
+            #     if item.is_processed() is False:
+            #         ratio_nama = fuzz.ratio(item.get_label_name(), master_obj.get_nama_master().strip())
+            #         ratio_alamat = fuzz.ratio(item.get_alamat(), master_obj.get_alamat_master().strip())
+            #         nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
+            #         total_ratio_extension = float("{:.2f}".format(nilai))
+            #         # item.set_status_item_provider("Ratio")
+            #
+            #         if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
+            #             item.set_ratio(ratio_nama)
+            #             item.set_alamat_ratio(ratio_alamat)
+            #             item.set_total_score(total_ratio_extension)
+            #             master_data.set_id_master(master_obj.get_id_master())
+            #             master_data.set_nama_master(master_obj.get_nama_master())
+            #             master_data.set_alamat_master(master_obj.get_alamat_master())
 
-                    if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
-                        item.set_ratio(ratio_nama)
-                        item.set_alamat_ratio(ratio_alamat)
-                        item.set_total_score(total_ratio_extension)
-                        master_data.set_id_master(master_obj.get_id_master())
-                        master_data.set_nama_master(master_obj.get_nama_master())
-                        master_data.set_alamat_master(master_obj.get_alamat_master())
+            # if item.get_total_score() >= 55 and item.is_processed() is False:
+            #
+            #     id_master_list.append(master_data.get_id_master())
+            #     provider_name_master_list.append(master_data.get_nama_master())
+            #     alamat_master_list.append(master_data.get_alamat_master())
+            #     list_item_provider_nama.append(item.get_nama_provider())
+            #     list_item_provider_alamat.append(item.get_alamat())
+            #     list_item_provider_ri.append(item.get_ri())
+            #     list_item_provider_rj.append(item.get_rj())
+            #     list_item_provider_score.append(item.get_proba_score())
+            #     list_item_ratio.append(item.get_ratio())
+            #     list_item_alamat_ratio.append(item.get_alamat_ratio())
+            #
+            #     list_item_total_score.append(item.get_total_score())
+            #     # item.set_validity(True)
+            #     list_item_status.append(item.get_status_item_provider())
+            #
+            #     list_item_validity.append(item.is_valid())
 
-            if item.get_total_score() >= 55 and item.is_processed() is False:
-
-                id_master_list.append(master_data.get_id_master())
-                provider_name_master_list.append(master_data.get_nama_master())
-                alamat_master_list.append(master_data.get_alamat_master())
-                list_item_provider_nama.append(item.get_nama_provider())
-                list_item_provider_alamat.append(item.get_alamat())
-                list_item_provider_ri.append(item.get_ri())
-                list_item_provider_rj.append(item.get_rj())
-                list_item_provider_score.append(item.get_proba_score())
-                list_item_ratio.append(item.get_ratio())
-                list_item_alamat_ratio.append(item.get_alamat_ratio())
-
-                list_item_total_score.append(item.get_total_score())
-                # item.set_validity(True)
-                list_item_status.append(item.get_status_item_provider())
-
-                list_item_validity.append(item.is_valid())
-
-            elif item.get_total_score() < 55 and item.is_processed() is False:
-                id_master_list.append(master_data.get_id_master())
-                provider_name_master_list.append(master_data.get_nama_master())
-                alamat_master_list.append(master_data.get_alamat_master())
-                list_item_provider_nama.append(item.get_nama_provider())
-                list_item_provider_alamat.append(item.get_alamat())
-                list_item_provider_ri.append(item.get_ri())
-                list_item_provider_rj.append(item.get_rj())
-                list_item_provider_score.append(item.get_proba_score())
-                list_item_ratio.append(ratio_nama)
-                list_item_alamat_ratio.append(ratio_alamat)
-
-                list_item_total_score.append(item.get_total_score())
-                # item.set_validity(False)
-                list_item_status.append(item.get_status_item_provider())
-
-                list_item_validity.append(item.is_valid())
-
-
-
-        dict_result = {
-            'IdMaster': pd.Series(id_master_list),
-            'Master_Nama': pd.Series(provider_name_master_list),
-            'Master_Alamat': pd.Series(alamat_master_list),
-            'Nama': pd.Series(list_item_provider_nama),
-            'Alamat': pd.Series(list_item_provider_alamat),
-            'Score': pd.Series(list_item_provider_score),
-            'Ratio': pd.Series(list_item_ratio),
-            'Alamat_Ratio': pd.Series(list_item_alamat_ratio),
-            'Total_Score': pd.Series(list_item_total_score),
-            'RI': pd.Series(list_item_provider_ri),
-            'RJ': pd.Series(list_item_provider_rj),
-            'Validity': pd.Series(list_item_validity),
-            'Status': pd.Series(list_item_status)
-        }
-        result_df = pd.DataFrame(dict_result)
-        return result_df
+        #     elif item.get_total_score() < 55 and item.is_processed() is False:
+        #         id_master_list.append(master_data.get_id_master())
+        #         provider_name_master_list.append(master_data.get_nama_master())
+        #         alamat_master_list.append(master_data.get_alamat_master())
+        #         list_item_provider_nama.append(item.get_nama_provider())
+        #         list_item_provider_alamat.append(item.get_alamat())
+        #         list_item_provider_ri.append(item.get_ri())
+        #         list_item_provider_rj.append(item.get_rj())
+        #         list_item_provider_score.append(item.get_proba_score())
+        #         list_item_ratio.append(ratio_nama)
+        #         list_item_alamat_ratio.append(ratio_alamat)
+        #
+        #         list_item_total_score.append(item.get_total_score())
+        #         # item.set_validity(False)
+        #         list_item_status.append(item.get_status_item_provider())
+        #
+        #         list_item_validity.append(item.is_valid())
+        #
+        #
+        #
+        # dict_result = {
+        #     'IdMaster': pd.Series(id_master_list),
+        #     'Master_Nama': pd.Series(provider_name_master_list),
+        #     'Master_Alamat': pd.Series(alamat_master_list),
+        #     'Nama': pd.Series(list_item_provider_nama),
+        #     'Alamat': pd.Series(list_item_provider_alamat),
+        #     'Score': pd.Series(list_item_provider_score),
+        #     'Ratio': pd.Series(list_item_ratio),
+        #     'Alamat_Ratio': pd.Series(list_item_alamat_ratio),
+        #     'Total_Score': pd.Series(list_item_total_score),
+        #     'RI': pd.Series(list_item_provider_ri),
+        #     'RJ': pd.Series(list_item_provider_rj),
+        #     'Validity': pd.Series(list_item_validity),
+        #     'Status': pd.Series(list_item_status)
+        # }
+        # result_df = pd.DataFrame(dict_result)
+        # return result_df
 
 
 

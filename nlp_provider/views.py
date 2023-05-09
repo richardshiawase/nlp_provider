@@ -16,14 +16,17 @@ from django.core import serializers
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.forms import model_to_dict
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 import warnings
 
+from classM.Asuransi import Asuransi
 from classM.DFHandler import DFHandler
 from classM.Dataset import Dataset
+from classM.HospitalInsurance import HospitalInsurance
 from classM.ItemMaster import ItemMaster
 from classM.MasterData import MasterData
+from classM.States import States
 from model.models import ItemProvider, List_Processed_Provider, MatchProcess, MasterMatchProcess, GoldenRecordMatch
 from classM.Pembersih import Pembersih
 from classM.PerbandinganResult import PerbandinganResult
@@ -62,16 +65,13 @@ match_process.start()
 match_process.set_list_provider()
 list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
-master_data = MasterData()
-
-# new_course_title = df_dataset['course_title'].str.lower().str.split("#", n=1, expand=True)
-# df_dataset["course_titles"] = new_course_title[0]
-# p = Pembersih((df_dataset.drop_duplicates(['course_title'], keep='first')))
 
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
+state = States()
+asuransi = Asuransi()
 
 
 def index(request):
@@ -110,7 +110,13 @@ def kompilasi_data(request):
 
     return JsonResponse(provider_list, safe=False)
 
+def master_linked_load(request):
 
+    if request.method == "GET":
+        ls = asuransi.get_list_item_asuransi()
+        return JsonResponse(ls, safe=False)
+
+    return JsonResponse({'message': 'error'})
 def newe(request):
     list_provider_model_object.set_empty_provider_list()
     data_list = models.Provider.objects.raw(
@@ -161,8 +167,53 @@ def perbandingan_rev(request):
     print(id_provider)
     provider = list_provider_model_object.get_a_provider_from_id(id_provider)
     if provider is None:
-        return JsonResponse([],safe=False)
+        return JsonResponse([], safe=False)
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
+
+
+def hos_ins_list_item(request):
+    if 'hospital_linked_list' in request.session:
+        hospital_linked_list = request.session['hospital_linked_list']
+        return JsonResponse(list(hospital_linked_list.values()),safe=False)
+
+def hos_ins_list_page(request):
+    context = {"data":[]}
+    return render(request, 'matching/index_hospital_asuransi.html', context=context)
+
+
+
+def hos_ins_list(request):
+
+    asuransi_dict = asuransi.get_dict_item_asuransi()
+    if request.method == "POST":
+        data = json.loads(request.POST["data"])
+        nama_asuransi = data["singkatan"]
+        asu = asuransi_dict.get(nama_asuransi)
+        request.session['nama_asuransi'] = nama_asuransi
+        request.session['hospital_linked_list'] = asu["hospital_linked_list"]
+        return JsonResponse({'data':asu["hospital_linked_list"],'nama_asuransi':nama_asuransi})
+
+def unlink_hos(request):
+    if request.method == "POST":
+        data = json.loads(request.POST["data"])
+        id_hosins = data['id_hosins']
+        url = 'https://www.asateknologi.id/api/unlink-inshos'
+        myobj = {'id_hosins': id_hosins}
+        x = requests.post(url, json=myobj)
+        asuransi_dict = asuransi.get_dict_item_asuransi()
+        asu = asuransi_dict.get(request.session['nama_asuransi'])
+
+
+        if(x.status_code == 200):
+            if 'hospital_linked_list' in request.session:
+                hospital_linked_list = request.session['hospital_linked_list']
+                del hospital_linked_list[str(id_hosins)]
+                asu["hospital_linked_list"] = hospital_linked_list
+                asu["linked_hospital_count"] = len(hospital_linked_list)
+                request.session['hospital_linked_list'] = hospital_linked_list
+
+
+        return JsonResponse({'data':x.status_code})
 
 
 def perbandingan(request):
@@ -185,6 +236,11 @@ def tampungan(request):
 
     context = {"provider_list": [], "link_result": link_result}
     return render(request, 'matching/perbandingan_basket.html', context=context)
+
+def linked_master(request):
+    return render(request, 'matching/linked_master.html')
+
+    # return JsonResponse(asuransi.get_dict_item_asuransi(), safe=False)
 
 
 def tampungan_rev(request):
@@ -320,27 +376,16 @@ def list_master_sinkron(request):
     return render(request, 'master/sinkron.html')
 
 
-def list_master_process(request):
-    master_data_list = []
-    dfs = None
-    try:
-        dfs = pd.read_excel("master_provider.xlsx")
-    except:
-        print("dataframe not found")
+def master_add(request):
+    kategori_dict = match_process.get_category_dict()
+    context = {"state_list": state.get_item_state_dict().values(), "city_list": state.get_item_city_list(), "kategori_dict":kategori_dict.keys()}
+    return render(request, 'master/master_add.html', context=context)
 
-    for index, row in dfs.iterrows():
-        id = row['ProviderId']
-        stateId = row['stateId']
-        cityId = row['cityId']
-        provider_name_master = str(row['PROVIDER_NAME'])
-        address = row['ADDRESS']
-        category_1 = row['Category_1']
-        category_2 = row['Category_2']
-        telephone = row['TEL_NO']
-        # master_data = MasterData(id, provider_name_master, address, category_1, category_2, telephone, stateId,
-        #                          cityId)
-        # master_data_list.append(master_data.__dict__)
-    return JsonResponse(master_data_list, safe=False)
+
+def list_master_process(request):
+    master_data = MasterData()
+    list_item_master = master_data.get_list_item_master_provider_json()
+    return JsonResponse(list_item_master, safe=False)
 
 
 def sinkron_master_process(request):
@@ -355,7 +400,42 @@ def sinkron_master_process(request):
         id = prov["id"]
         stateId = prov["stateId"]
         cityId = prov["CityId"]
-        category_1 = str(prov["Category_1"])
+        try:
+            category_1 = int(prov["Category_1"])
+        except:
+            category_1 = 0
+        category_2 = prov["Category_2"]
+        telephone = prov["TEL_NO"]
+        provider_name_master = prov["PROVIDER_NAME"]
+        address = prov["ADDRESS"]
+
+        df = df.append(pd.Series(
+            {'ProviderId': id, 'stateId': stateId, 'cityId': cityId, 'Category_1': category_1, 'Category_2': category_2,
+             'PROVIDER_NAME': provider_name_master, 'ADDRESS': address, 'TEL_NO': telephone},
+            name=3))
+
+    df.to_excel("master_provider.xlsx", index=False)
+
+    return JsonResponse(master_data_list, safe=False)
+
+
+def sinkron_master_process_not_request():
+    print("Sinkron master proses")
+    response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
+    provider_list = response.json().get("val")
+    master_data_list = []
+    # master_data = MasterData()
+
+    df = pd.DataFrame()
+
+    for prov in provider_list:
+        id = prov["id"]
+        stateId = prov["stateId"]
+        cityId = prov["CityId"]
+        try:
+            category_1 = int(prov["Category_1"])
+        except:
+            category_1 = 0
         category_2 = prov["Category_2"]
         telephone = prov["TEL_NO"]
         provider_name_master = prov["PROVIDER_NAME"]
@@ -446,13 +526,13 @@ def sinkron_dataset_process(request):
 
 
 def master_varian_process(request):
-
     dff = pd.DataFrame()
     dataset = match_process.get_dataset()
     master_data = MasterData()
     master_data_list = []
     dfs_varian = dataset.get_bulk_dataset().groupby('subject')
-    for item_master in tqdm(master_data.get_list_item_master_provider(),total=len(master_data.get_list_item_master_provider())):
+    for item_master in tqdm(master_data.get_list_item_master_provider(),
+                            total=len(master_data.get_list_item_master_provider())):
         varian_list = []
         try:
             dfe = dfs_varian.get_group(item_master.get_nama_master())
@@ -642,6 +722,44 @@ def loop_delete(link_result):
     dfs.to_excel(link_result, sheet_name='Sheet1', index=False)
 
 
+def add_master_by_dashboard(request):
+    if request.method == "POST":
+        nama_provider = request.POST["nama_provider"]
+        alamat_provider = request.POST["alamat_provider"]
+        provinsi_provider = request.POST["provinsi_provider"]
+        city_provider = request.POST["city_provider"]
+        telepon_provider = request.POST["telepon_provider"]
+        kategori_provider = request.POST["kategori_provider"]
+        latitude_provider = request.POST["latitude_provider"]
+        longitude_provider = request.POST["longitude_provider"]
+        cat_dict = match_process.get_category_dict()
+        kategori_provider = cat_dict.get(kategori_provider)
+        provinsi_provider = state.get_item_state_dict().get(provinsi_provider)
+        city = state.get_city()
+        city_provider = city.get_item_city_only_dict().get(city_provider)
+        url = 'https://www.asateknologi.id/api/master'
+        myobj = {'stateId': provinsi_provider.get_state_id(),
+                 'cityId': city_provider.get_city_id(),
+                 'category1': kategori_provider,
+                 'provider_name': nama_provider,
+                 'address': alamat_provider,
+                 'tel': telepon_provider,
+                 'latitude': latitude_provider,
+                 'longitude': longitude_provider
+                 }
+        try:
+            pass
+            # x = requests.post(url, json=myobj)
+            token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
+            header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+            url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
+            # d = requests.get(url_sinkron_sinta,headers=header)
+        except Exception as e:
+            print(e)
+
+    return HttpResponse(200)
+
+
 def add_master_store(request):
     if request.method == "POST":
         df = pd.read_excel("Master_Add.xlsx")
@@ -816,6 +934,8 @@ def perbandingan_result(request):
     global uploaded_file
     global contexte
     global perbandingan_model
+    sinkron_master_process_not_request()
+    master_data = MasterData()
 
     if request.method == 'POST':
         # # # REQUEST DARI PROSES FILE

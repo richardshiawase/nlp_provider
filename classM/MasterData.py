@@ -14,6 +14,7 @@ class MasterData:
 
         self.dataframe_master = pembersih._return_df()
         self.list_item_master_provider = []
+        self.dict_item_master_provider = {}
         self.set_list_item_master_provider()
 
     def get_master_excel_location(self):
@@ -24,7 +25,8 @@ class MasterData:
 
     def set_list_item_master_provider(self):
         print("Create provider item list")
-
+        # self.dataframe_master["Category_1"] = self.dataframe_master["Category_1"]
+        # self.dataframe_master["Category_1"] = pd.to_numeric(self.dataframe_master["Category_1"])
         for row in self.dataframe_master.itertuples(index=True, name='Sheet1'):
 
             master_provider_id = row.ProviderId
@@ -45,10 +47,19 @@ class MasterData:
                                     master_alamat,
                                     master_tel)
             self.list_item_master_provider.append(itemMaster)
+            self.dict_item_master_provider[master_provider_id] = itemMaster
 
+    def get_dict_item_master_provider(self):
+        return self.dict_item_master_provider
 
     def get_list_item_master_provider(self):
         return self.list_item_master_provider
+
+    def get_list_item_master_provider_json(self):
+        ls = []
+        for item_master in self.get_list_item_master_provider():
+            ls.append(item_master.__dict__)
+        return ls
 
     def get_dataframe(self):
         return self.dataframe_master
