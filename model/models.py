@@ -360,14 +360,14 @@ class MasterMatchProcess(models.Model):
 
         id_asuransi = provider.get_id_asuransi()
         print(id_asuransi)
-        url = 'https://www.asateknologi.id/api/inshos'
-        for index, row in dataframe_insert_new.iterrows():
-            myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
-                     'inpatient': row['RI']}
-            try:
-                x = requests.post(url, json=myobj)
-            except Exception as e:
-                print(str(e))
+        # url = 'https://www.asateknologi.id/api/inshos'
+        # for index, row in dataframe_insert_new.iterrows():
+        #     myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
+        #              'inpatient': row['RI']}
+        #     try:
+        #         x = requests.post(url, json=myobj)
+        #     except Exception as e:
+        #         print(str(e))
         #
         # pass
 
