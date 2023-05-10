@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %} Model {% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+
+    <form id="data"  method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-3">
+                {% csrf_token %}
+                <input class="form-control" type="file" id="formFile" name="perbandinganModel">
+            </div>
+
+            <div class="col-sm-3">
+                <select class="form-select" name="insurance_option">
+                    {% for insurance in list_insurance %}
+                    <option value="{{insurance.nama_asuransi}}#{{ insurance.id_asuransi }}">{{ insurance.nama_asuransi }}</option>
+
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-sm-3">
+                <button id="bandingkan_tombol" type="submit" class="btn btn-primary" ><span id="bandingkan_spinner" class="spinner-border spinner-border-sm d-none"></span> Bandingkan</button>
+
+            </div>
+
+        </div>
+    </form>
+
+    <div class="container">
+        <div class="row">
+
+
+            <div class="mb-3 mt-3 ">
+                    <label class="form-label">Provider: {{ nama_asuransi }}</label>
+                    <input type="hidden" class="form-control" id="id_link_result" placeholder="Enter Provider" name="link_result" value ="{{ link_result }}">
+            </div>
+
+
+            <table id="albumse" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                <tr>
+                    <th data-data="rank">Id</th>
+                    <th data-data="rank">Provider Name</th>
+                    <th data-data="rank">Alamat</th>
+                    <th data-data="rank">Alamat Prediction</th>
+                    <th data-data="rank">Label</th>
+                    <th data-data="rank">Score</th>
+                    <th data-data="rank">Selected</th>
+
+
+                </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+
+
+
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+
+     var table =     $('#albumse').DataTable({
+      data:[],
+      columns: [
+              {   data:  "id"},
+              {   data: "nama_provider" },
+              {   data: "alamat" },
+              {   data: "alamat_prediction"},
+              {   data: "label_name" },
+              {   data: "total_score" },
+              {   data: "selected" }
+
+          ],
+
+
+      });
+    $("form#data").submit(function(e) {
+            e.preventDefault();
+
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: "{% url 'result' %}",
+                type: 'POST',
+                data: formData,
+                beforeSend : function() {
+                      $('#bandingkan_spinner').removeClass("d-none")
+                        $('#bandingkan_tombol').addClass('disabled');
+                 },
+                success: function (data) {
+                    $('#bandingkan_spinner').addClass("d-none")
+                    $('#bandingkan_tombol').removeClass('disabled');
+                    table.rows.add(data).draw()
+
+                },
+                cache: true,
+                contentType: false,
+                processData: false
+            });
+
+        });
+
+
+
+
+
+
+
+    });
+
+
+
+
+
+</script>
+{% endblock %}

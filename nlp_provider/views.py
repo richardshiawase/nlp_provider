@@ -162,13 +162,12 @@ def newe(request):
     return JsonResponse({'message': 'error'})
 
 
-def perbandingan_rev(request):
-    id_provider = request.session.get('id_provider')
-    print(id_provider)
-    provider = list_provider_model_object.get_a_provider_from_id(id_provider)
-    if provider is None:
-        return JsonResponse([], safe=False)
-    return JsonResponse(provider.get_list_item_provider_json(), safe=False)
+def open_file_perbandingan(request):
+
+    data = request.session['data_provider']
+    id_provider = data['id']
+    # provider = list_provider_model_object.get_a_provider_from_id(id_provider)
+    return JsonResponse(data["list_item_provider_json"], safe=False)
 
 
 def hos_ins_list_item(request):
@@ -217,16 +216,28 @@ def unlink_hos(request):
 
 
 def perbandingan(request):
-    response = requests.get('https://asateknologi.id/api/insuranceall')
-    response = response.json()
+
 
     if request.method == "POST":
-        id_provider = request.POST["id_provider"]
-        request.session['id_provider'] = id_provider
+        data = json.loads(request.POST["data"])
+        request.session['data_provider'] = data
+        # request.session['response'] = response
         # loop_delete(file_location)
+        return JsonResponse(200, safe=False)
 
-    context = {"list_insurance": response.get("val"), "list": [], "link_result": "-"}
-    return render(request, 'matching/perbandingan.html', context=context)
+def perbandingan_page(request):
+    data = request.session['data_provider']
+    nama_asuransi = data['nama_asuransi']
+    link_result = data["file_location_result"]
+
+    context = { "list": [], "link_result": link_result,'nama_asuransi':nama_asuransi}
+    return render(request, 'matching/perbandingan_page_open_result.html', context=context)
+
+def perbandingan_upload_page(request):
+    response = requests.get('https://asateknologi.id/api/insuranceall')
+    response = response.json()
+    context = {"list_insurance":response["val"]}
+    return render(request, 'matching/perbandingan-upload.html', context=context)
 
 
 def tampungan(request):
@@ -985,7 +996,37 @@ def perbandingan_result(request):
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
         # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        # master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
-    contexte = {"list": []}
-    return render(request, 'matching/perbandingan.html', context=contexte)
+
+        list_item_provider_json = []
+        list_item_provider = []
+
+        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
+                                         [provider.get_primary_key_provider()])
+        for item in dt:
+            item_provider = ItemProvider()
+            item_provider.set_id(item.pk)
+            item_provider.set_provider_name(item.nama_provider)
+            item_provider.set_alamat_prediction(item.alamat_prediction)
+            item_provider.set_alamat(item.alamat)
+            item_provider.set_proba_score(item.proba_score)
+            item_provider.set_total_score(item.total_score)
+            item_provider.set_label_name(item.label_name)
+            item_provider.set_ri(item.ri)
+            item_provider.set_rj(item.rj)
+            item_provider.set_id_asuransi(item.id_asuransi)
+            item_provider.set_selected("-")
+            del item_provider._state
+
+            list_item_provider.append(item_provider)
+            list_item_provider_json.append(item_provider.__dict__)
+        provider.set_list_item_provider_json(list_item_provider_json)
+        provider.set_list_item_provider(list_item_provider)
+
+
+
+
+
+    return JsonResponse(provider.get_list_item_provider_json(), safe=False)
+
