@@ -31,11 +31,16 @@ urlpatterns = [
     path('new', views.newe, name='newe'),  # new
     path('master-linked-load', views.master_linked_load, name='master_linked_load'),  # new
 
-    path('match_rev/', views.perbandingan_rev, name="perbandingan_rev"),
+
+    path('perbandingan-upload-page/', views.perbandingan_upload_page, name="perbandingan-upload-page"),
+
+    path('open_file_perbandingan/', views.open_file_perbandingan, name="open_file_perbandingan"),
     path('hapus_tampungan',views.hapus_tampungan,name="hapus_tampungan"),
     path('tampungan_rev/', views.tampungan_rev, name="tampungan_rev"),
 
     path('match/',views.perbandingan,name="perbandingan"),
+    path('match-page/', views.perbandingan_page, name="perbandingan-page"),
+
     path('hos_ins_list/', views.hos_ins_list, name="hos_ins_list"),
     path('hos_ins_list_page/', views.hos_ins_list_page, name="hos_ins_list_page"),
     path('hos_ins_list_item/', views.hos_ins_list_item, name="hos_ins_list_item"),
