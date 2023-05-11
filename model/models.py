@@ -360,16 +360,16 @@ class MasterMatchProcess(models.Model):
 
         id_asuransi = provider.get_id_asuransi()
         print(id_asuransi)
-        # url = 'https://www.asateknologi.id/api/inshos'
-        # for index, row in dataframe_insert_new.iterrows():
-        #     myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
-        #              'inpatient': row['RI']}
-        #     try:
-        #         x = requests.post(url, json=myobj)
-        #     except Exception as e:
-        #         print(str(e))
-        #
-        # pass
+        url = 'https://www.asateknologi.id/api/inshos'
+        for index, row in dataframe_insert_new.iterrows():
+            myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
+                     'inpatient': row['RI']}
+            try:
+                x = requests.post(url, json=myobj)
+            except Exception as e:
+                print(str(e))
+
+        pass
 
     def delete_provider_item_hospital_insurances_with_id_insurances(self):
         self.file_result = self.get_file_result_match_processed()
@@ -640,6 +640,8 @@ class MatchProcess(models.Model):
         # self.list_provider.set_empty_provider_list()
 
     def get_list_provider(self):
+        print("tengen")
+        print(self.list_provider)
         return self.list_provider
 
     def set_dataset(self):

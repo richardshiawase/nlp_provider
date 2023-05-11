@@ -166,6 +166,7 @@ def perbandingan_rev(request):
     id_provider = request.session.get('id_provider')
     print(id_provider)
     provider = list_provider_model_object.get_a_provider_from_id(id_provider)
+
     if provider is None:
         return JsonResponse([], safe=False)
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
