@@ -74,22 +74,22 @@
      $('#albums tbody').on('click', '#buka_file', function () {
             var data = table.row($(this).parents('tr')).data();
             console.log(data);
-            var perbandingan_tampilan = "{% url "perbandingan" %}";
-             window.location.href = perbandingan_tampilan;
+            var perbandingan_page = "{% url "perbandingan-page" %}";
 
             $.ajax(
                 {
-                    dataType: 'text',
+                    dataType: 'json',
                     method:"POST",
                     url: "{% url 'perbandingan' %}",
                     data:{
-                        "id_provider": data.id,
+                        "data":JSON.stringify(data),
                         "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
                     },
 
                     success: function( data )
                     {
                          $("#meditate").hide();
+                         window.location.href = perbandingan_page;
 
 
                     }

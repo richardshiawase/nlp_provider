@@ -1069,7 +1069,6 @@ class Provider(models.Model):
 
             provider_object.set_city_id(city_id)
             provider_object.set_state_id(state_id)
-            print(city_id,state_id)
 
             provider_item_list.append(provider_object)
 
