@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1f260db4-f187-440b-b0ee-5b83593cbfaa" name="Changes" comment="">
+    <list default="true" id="7ec4b836-b3a2-487c-8ac7-00cf0b5546fa" name="Changes" comment="er">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classM/HospitalInsurance.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/HospitalInsurance.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

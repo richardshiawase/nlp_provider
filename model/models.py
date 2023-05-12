@@ -876,10 +876,12 @@ class MatchProcess(models.Model):
         self.save_matching_information()
 
     def save_matching_information(self):
+        if self.id is not None:
+            self.id+=1
         self.id_file_result = self.file_result.pk
         self.id_model = self.processed_provider.get_primary_key_provider()
         self.match_percentage = 1.00
-        self.save()
+        self.save(force_insert=True)
 
     def set_id(self, pk):
         self.id = pk

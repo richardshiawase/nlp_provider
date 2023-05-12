@@ -13,6 +13,7 @@ class HospitalInsurance:
 
         for val in x.json()["val"]:
             item = ItemHospitalInsurance()
+
             item.set_category(val["category_1"])
             item.set_hospital_name(val['provider_name'])
             item.set_hospital_address(val['address'])
