@@ -596,6 +596,10 @@ class MatchProcess(models.Model):
         kategori_dict["RS"] = 1
         kategori_dict["KLINIK"] = 2
         kategori_dict["APOTEK"] = 3
+        kategori_dict["LAB"] = 4
+        kategori_dict["PRAKTEK"] = 5
+        kategori_dict["OPTIK"] = 6
+
         return kategori_dict
 
     def set_golden_record_instance(self, golden_record):
