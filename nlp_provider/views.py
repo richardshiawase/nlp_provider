@@ -124,7 +124,7 @@ def master_linked_load(request):
 def newe(request):
     list_provider_model_object.set_empty_provider_list()
     data_list = models.Provider.objects.raw(
-        "select mm.id,mm.match_percentage,mm.id_model,mm.id_file_result,mm.status_finish,mm.created_at,mp.nama_asuransi,mp.file_location,mf.file_location_result from model_matchprocess mm inner join model_provider mp on mm.id_model = mp.id inner join model_fileresult mf on mm.id_file_result = mf.id order by mm.created_at DESC")
+        "select mm.id,mm.match_percentage,mm.id_model,mm.id_file_result,mm.status_finish,mm.created_at,mp.nama_asuransi,mp.file_location,mf.file_location_result from model_matchprocess mm inner join model_provider mp on mm.id_model = mp.id inner join model_fileresult mf on mm.id_file_result = mf.id group by mp.nama_asuransi order by mm.created_at DESC")
     for data in data_list:
         provider = Provider()
         provider.set_nama_asuransi_model(data.nama_asuransi)
