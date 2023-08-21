@@ -243,6 +243,13 @@ def perbandingan_upload_page(request):
     return render(request, 'matching/perbandingan-upload.html', context=context)
 
 
+def perbandingan_versus_page(request):
+    response = requests.get('https://asateknologi.id/api/insuranceall')
+    response = response.json()
+    context = {"list_insurance": response["val"]}
+    return render(request, 'matching/perbandingan-versus.html', context=context)
+
+
 def tampungan(request):
     link_result = file_location
     if link_result is None:
@@ -1030,3 +1037,120 @@ def perbandingan_result(request):
         provider.set_list_item_provider(list_item_provider)
 
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
+def perbandingan_result_versus(request):
+    global uploaded_file
+    global contexte
+    global perbandingan_model
+    sinkron_master_process_not_request()
+    master_data = MasterData()
+
+    if request.method == 'POST':
+        data_provider = []
+        # # # REQUEST DARI PROSES FILE
+        if not bool(request.FILES.get('perbandinganModel1', False)):
+            pembanding_model_return = json.loads(request.POST['processed_file'])
+            nama_asuransi = pembanding_model_return["nama_asuransi"]
+            provider = Provider.get_model_from_filter(nama_asuransi)
+
+        # # # REQUEST DARI UPLOAD FILE
+        else:
+            # # init file storage object
+            file_storage = FileSystemStorage()
+
+            # # init Perbandingan object
+            provider1 = Provider()
+            provider2 = Provider()
+
+            # # get nama asuransi and file request
+            data_asuransi1 = request.POST['insurance_option1']
+            data_asuransi2 = request.POST['insurance_option2']
+
+
+
+            file1 = request.FILES['perbandinganModel1']
+            file2 = request.FILES['perbandinganModel2']
+
+
+
+
+            nama_asuransi1 = str(data_asuransi1).split("#")[0]
+            nama_asuransi2 = str(data_asuransi2).split("#")[0]
+
+            id_asuransi1 = str(data_asuransi1).split("#")[1]
+            id_asuransi2 = str(data_asuransi2).split("#")[1]
+
+
+
+
+            # save the file to /media/
+            c1 = file_storage.save(file1.name, file1)
+            c2 = file_storage.save(file2.name, file2)
+
+
+            # get file url
+            file_url1 = file_storage.path(c1)
+            file_url2 = file_storage.path(c2)
+
+
+            # set file location and nama_asuransi to Perbandingan object
+            provider1.set_file_location(file_url1)
+            provider2.set_file_location(file_url2)
+            print(nama_asuransi1,nama_asuransi2)
+            provider1.set_nama_asuransi_model(nama_asuransi1)
+            provider2.set_nama_asuransi_model(nama_asuransi2)
+
+            provider1.set_id_asuransi_model(id_asuransi1)
+            provider2.set_id_asuransi_model(id_asuransi2)
+
+            provider1.link_to_item_list()
+            provider2.link_to_item_list()
+
+            data_provider.append(provider1)
+            data_provider.append(provider2)
+        for provider in data_provider:
+            print("Asereje")
+
+
+            print(provider.get_id_asuransi())
+            # list_provider_model_object.add_provider(provider)
+            start_time = time.time()
+            match_process.set_master_data(master_data)
+            match_process.process_matching_versus(provider)
+            match_process.create_file_result()
+            master_match_process.set_master_data(master_data)
+            master_match_process.set_file_result_match_processed(match_process.get_file_result())
+            master_match_process.process_master_matching()
+            master_match_process.save_matching_information()
+
+            golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
+            golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
+            golden_record_match.process_golden_record()
+            print("--- %s seconds ---" % (time.time() - start_time))
+
+            list_item_provider_json = []
+            list_item_provider = []
+
+            dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
+                                             [provider.get_primary_key_provider()])
+            for item in dt:
+                item_provider = ItemProvider()
+                item_provider.set_id(item.pk)
+                item_provider.set_provider_name(item.nama_provider)
+                item_provider.set_alamat_prediction(item.alamat_prediction)
+                item_provider.set_alamat(item.alamat)
+                item_provider.set_proba_score(item.proba_score)
+                item_provider.set_total_score(item.total_score)
+                item_provider.set_label_name(item.label_name)
+                item_provider.set_ri(item.ri)
+                item_provider.set_rj(item.rj)
+                item_provider.set_id_asuransi(item.id_asuransi)
+                item_provider.set_selected("-")
+                del item_provider._state
+
+                list_item_provider.append(item_provider)
+                list_item_provider_json.append(item_provider.__dict__)
+            provider.set_list_item_provider_json(list_item_provider_json)
+            provider.set_list_item_provider(list_item_provider)
+
+    return HttpResponse(data_provider)
+    # return JsonResponse(provider.get_list_item_provider_json(), safe=False)
