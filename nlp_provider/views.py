@@ -66,6 +66,7 @@ match_process.start()
 match_process.set_list_provider()
 list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
+master_item_list = []
 
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
@@ -73,7 +74,7 @@ filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
 state = States()
 asuransi = Asuransi()
-
+server_prefix = "http://192.168.20.93:8000"
 
 def index(request):
     context = {"list_pembanding": []}
@@ -194,6 +195,57 @@ def hos_ins_list(request):
         request.session['nama_asuransi'] = nama_asuransi
         request.session['hospital_linked_list'] = asu["hospital_linked_list"]
         return JsonResponse({'data': asu["hospital_linked_list"], 'nama_asuransi': nama_asuransi})
+
+
+
+
+def update_master(request):
+    if request.method == "POST":
+        print("tes update master")
+        data = json.loads(request.POST["processed_file"])
+
+        id_provider = data['id_provider']
+        nama_provider = data["nama_provider"]
+        alamat = data["alamat"]
+        province = data["state"]
+        city_choose = data["city"]
+        telepon = data["telepon"]
+        kategori = data["kategori"]
+
+        state_id = "-"
+        city_id = "-"
+        kategori_id = 0
+
+        kategori_dict = match_process.get_category_dict()
+
+        for provinsi in state.get_item_state_dict().values():
+            if province == provinsi.get_state_name():
+                state_id = provinsi.get_state_id()
+
+        for kota in state.get_item_city_list():
+            if city_choose == kota.get_city_name():
+                city_id = kota.get_city_id()
+
+        for k, v in kategori_dict.items():
+            print(kategori,k,v)
+            if kategori == k:
+                kategori_id = int(v)
+
+        print(id_provider,nama_provider,alamat,telepon,state_id,city_id,kategori_id)
+        url = server_prefix+"/api/hospital/"+id_provider
+        myobj = {'provider_name': nama_provider, 'address': alamat,'category_1':kategori_id,'tel_no':telepon,'state_id':state_id,'city_id':city_id}
+        x = requests.put(url, json=myobj)
+        if x.status_code == 200:
+            return JsonResponse({'data': 200})
+        else:
+            return JsonResponse({'data': 400})
+
+        pass
+    else:
+        # print("tes update master")
+        pass
+
+    return JsonResponse({'data': 400})
 
 
 def unlink_hos(request):
@@ -657,6 +709,90 @@ def temporer_store(request):
     # return HttpResponse(context)
     return render(request, 'matching/temporer.html', context=context)
 
+def temporer_store_master(request):
+    if request.method == "POST":
+        master_item_list.clear()
+        master = json.loads(request.POST['processed_file'])
+        id      = master['provider_id']
+        state_id = master['stateId']
+        city_id = master['cityId']
+        category_1 = master['category_1']
+        category_2 = master['category_2']
+        provider_name = master['provider_name']
+        address = master['address']
+        tel_no = master['tel_no']
+
+        item_master = ItemMaster(id,
+                                 state_id,
+                                 city_id,
+                                 category_1,
+                                 category_2,
+                                 provider_name,
+                                 address,
+                                 tel_no)
+
+        master_item_list.append(item_master)
+    if len(master_item_list) > 0:
+        return JsonResponse({'data':200,'link':'-'})
+    return JsonResponse({'data':404,'link':'-'})
+
+
+def temporer_delete_master(request):
+    if request.method == "POST":
+        master_item_list.clear()
+        master = json.loads(request.POST['processed_file'])
+        id      = master['provider_id']
+        state_id = master['stateId']
+        city_id = master['cityId']
+        category_1 = master['category_1']
+        category_2 = master['category_2']
+        provider_name = master['provider_name']
+        address = master['address']
+        tel_no = master['tel_no']
+
+        item_master = ItemMaster(id,
+                                 state_id,
+                                 city_id,
+                                 category_1,
+                                 category_2,
+                                 provider_name,
+                                 address,
+                                 tel_no)
+
+        url = server_prefix + "/api/hospital/" + id
+
+        x = requests.delete(url)
+
+        if x:
+            return JsonResponse({'data':200,'link':'-'})
+    return JsonResponse({'data':404,'link':'-'})
+
+def edit_master(request):
+    if request.method == "POST":
+        print("Googl")
+    else:
+        item_master = master_item_list[0]
+    kategori_dict = match_process.get_category_dict()
+    state_name = "-"
+    city_name = "-"
+    kategori = "-"
+    for provinsi in state.get_item_state_dict().values():
+        if int(item_master.get_state_id_master()) == int(provinsi.id):
+            state_name = provinsi.state_name
+
+    for kota in state.get_item_city_list():
+        if int(item_master.get_city_id_master()) == int(kota.get_city_id()):
+            city_name = kota.get_city_name()
+
+    for k,v in kategori_dict.items():
+        if int(v) == int(item_master.get_category_1_master()):
+            kategori = k
+
+    context = {"item_master": item_master, "link_result": "-","state_list": state.get_item_state_dict().values(), "city_list": state.get_item_city_list(),
+               "kategori_dict": kategori_dict.keys(),"state_name":state_name,"city_name":city_name,"kategori":kategori}
+    #
+    # return "ooops"
+    return render(request, 'matching/edit_master.html', context=context)
 
 def read_link_result_and_delete_provider_name2(nama_provider, link_result):
     global dfs
