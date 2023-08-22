@@ -84,3 +84,15 @@ class ItemMaster:
 
     def get_state_id_master(self):
         return self.stateId
+
+    def set_master_latitude(self,lat):
+        self.lat = lat
+
+    def set_master_longitude(self,longitude):
+        self.longitude = longitude
+
+    def get_master_latitude(self):
+        return self.lat
+
+    def get_master_longitude(self):
+        return self.longitude
