@@ -24,6 +24,8 @@
                     <th style="width:30%" data-data="rank">Alamat</th>
                     <th style="width:2%" data-data="rank">Kategori</th>
                     <th style="width:10%" data-data="rank">Phone</th>
+                    <th style="width:10%" data-data="rank">Edit</th>
+                    <th style="width:10%" data-data="rank">Delete</th>
 
 
 
@@ -58,7 +60,23 @@
 
            columnDefs: [
 
+                    {
 
+                         "render" : function(data,type,row){
+                          return '<button id="proses_master" type="button" class="btn btn-primary">Proses Master</button>'
+                        },
+                        targets : 5
+
+                    },
+
+                    {
+
+                         "render" : function(data,type,row){
+                          return '<button id="delete_master" type="button" class="btn btn-danger">Delete Master</button>'
+                        },
+                        targets : 6
+
+                    },
 
                    {
                     "render" : function(data,type,row){
@@ -87,12 +105,7 @@
               ],
 
           columns: [
-<!--          {-->
-<!--                className: 'dt-control',-->
-<!--                orderable: false,-->
-<!--                data: null,-->
-<!--                defaultContent: '',-->
-<!--            },-->
+
                   {   data: "provider_id" },
                   {   data: "nama_provider" },
                   {   data: "address" },
@@ -100,27 +113,64 @@
                   {   data: "tel_no" },
 
 
+
               ],
           });
 
 
+           $('#albumse tbody').on('click', '#proses_master', function () {
+            var data = table.row($(this).parents('tr')).data();
+            var temporer_url = "{% url "ajax_temporer_master" %}";
+            $.ajax(
+                {
+                    dataType: 'json',
+                    method:"POST",
+                    url: temporer_url,
+                    data:
+                    {
+                        "processed_file":JSON.stringify(data),
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                        if (data.data == 200)
+                        {
+                             window.location.href = '{% url "edit_master" %}';
+                        }
+                    }
+                 })
+                 return false;
+        });
 
 
-<!--         // Add event listener for opening and closing details-->
-<!--            $('#albumse tbody').on('click', 'td.dt-control', function () {-->
-<!--                var tr = $(this).closest('tr');-->
-<!--                var row = table.row(tr);-->
 
-<!--                if (row.child.isShown()) {-->
-<!--                    // This row is already open - close it-->
-<!--                    row.child.hide();-->
-<!--                    tr.removeClass('shown');-->
-<!--                } else {-->
-<!--                    // Open this row-->
-<!--                    row.child(format(row.data())).show();-->
-<!--                    tr.addClass('shown');-->
-<!--                }-->
-<!--            });-->
+        $('#albumse tbody').on('click', '#delete_master', function () {
+            var data = table.row($(this).parents('tr')).data();
+            console.log(data);
+            var temporer_url = "{% url "ajax_delete_master" %}";
+            $.ajax(
+                {
+                    dataType: 'json',
+                    method:"POST",
+                    url: temporer_url,
+                    data:
+                    {
+                        "processed_file":JSON.stringify(data),
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                        if (data.data == 200)
+                        {
+                            console.log("Hapus berhasil");
+                        }else{
+                            console.log("Hapus gagal");
+                        }
+                    }
+                 })
+                 return false;
+        });
+
 
 
       });
