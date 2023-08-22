@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %} Edit Master {% endblock %}
+
+{% block content %}
+
+
+<div class="container-fluid">
+    <div class="row">
+
+    </div>
+</div>
+
+<div class="container mt-2">
+    <input type="hidden" class="form-control" id="id_link_result" placeholder="Enter Provider" name="link_result" value ="{{ link_result }}">
+
+    <div id="isi_data" class="row">
+<!--        <form id = "configform" action="#" method="post" enctype="multipart/form-data">-->
+            {% csrf_token %}
+        <div class="row mt-3 bg-light text-dark rounded">
+            <div id="alert_success" class="d-none alert alert-success">
+              <strong>Berhasil !</strong> <label>Update item master <label class="h2" id="nama_master_lbl"></label> berhasil</label>
+            </div>
+
+            <div id="alert_gagal" class="d-none alert alert-danger">
+                <strong>Gagal!</strong> Update item master gagal.
+            </div>
+                <div class="mb-2 ">
+                    <label for="nama_provider" class="form-label">Nama Provider</label>
+                    <input type="text" value= "{{ item_master.get_nama_master }}" class="form-control" id="nama_provider" placeholder="Masukan Nama Provider" name="nama_provider"  required>
+                  </div>
+
+                <div class="mb-2">
+                    <label for="alamat_provider" class="form-label">Alamat Provider</label>
+                    <input type="text" class="form-control" value="{{ item_master.get_alamat_master }}" id="alamat_provider" placeholder="Masukan Alamat Provider" name="alamat_provider"  required>
+                  </div>
+
+                <div class="mb-2">
+                    <label class="form-label">Daftar Provinsi</label>
+                     <input class="form-control" value="{{ state_name }}" list="datalistOptionsProvinsi" id="provinsi_provider" placeholder="Provinsi..ketik untuk mencari..." name="provinsi_provider">
+                        <datalist id="datalistOptionsProvinsi">
+
+                            {% for state in state_list %}
+                                    <option value="{{ state.state_name }}" >{{ state.state_name }}</option>
+                            {% endfor %}
+                        </datalist>
+                  </div>
+
+                <div class="mb-2">
+                    <label  class="form-label">Daftar Kota</label>
+                        <input class="form-control" value= "{{ city_name }}" list="datalistOptionsCity" id="city_provider" placeholder="Kota..ketik untuk mencari..." name="city_provider">
+                         <datalist id="datalistOptionsCity">
+                            {% for city in city_list %}
+                                <option value="{{ city.city_name }}" >{{ city.city_name }}</option>
+                            {% endfor %}
+                        </datalist>
+                </div>
+
+                <div class="mb-2">
+                    <label for="alamat_provider" class="form-label">Telepon Provider</label>
+                    <input type="text" value = "{{ item_master.get_telepon_master }} " class="form-control" id="telepon_provider" placeholder="Nomor Telepon Provider"  name="telepon_provider" required>
+                  </div>
+
+                <div class="mb-2">
+                    <label  class="form-label">Kategori</label>
+                    <input class="form-control" value = "{{ kategori }}" list="datalistKategori" id="kategori_provider" placeholder="Kategori..ketik untuk mencari..." name="kategori_provider">
+                         <datalist id="datalistKategori">
+                            {% for kategori_key in kategori_dict %}
+                                <option value="{{ kategori_key }}" >{{ kategori_key }}</option>
+                            {% endfor %}
+                        </datalist>
+                </div>
+
+<!--                <div class="mb-2">-->
+<!--                    <label  class="form-label">Latitude</label>-->
+<!--                  <input type="text" value="{{ item_master.get_}}" class="form-control" placeholder="Latitude" id="latitude_provider"  name="latitude_provider">-->
+<!--                </div>-->
+
+<!--                <div class="mb-2">-->
+<!--                   <label  class="form-label">Longitude</label>-->
+<!--                  <input type="text" class="form-control" placeholder="Longitude" id="longitude_provider" name="longitude_provider">-->
+<!--                </div>-->
+
+                <div class=" mb-2 ">
+                    <input id="submit_btn" type="submit"  class="btn btn-primary" value="Save"/>
+                </div>
+
+        </div>
+
+
+        </form>
+    </div>
+
+
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+
+
+
+
+
+
+    var row_index = 0 ;
+    $(".select_picker").select2();
+
+     $('#submit_btn').click(function(){
+        var id = "{{ item_master.get_id_master }}";
+        var nama_provider = $('#nama_provider').val();
+        var alamat = $('#alamat_provider').val();
+        var state = $('#provinsi_provider').val();
+        var city = $('#city_provider').val();
+        var telepon = $('#telepon_provider').val();
+        var kategori = $('#kategori_provider').val();
+        console.log(id,nama_provider,alamat,state,city,telepon,kategori);
+
+        var data = {
+            id_provider : id,
+            nama_provider: nama_provider,
+            alamat : alamat,
+            state : state,
+            city : city,
+            telepon : telepon,
+            kategori : kategori
+        };
+                $.ajax(
+                {
+                    dataType: 'json',
+                    type:"POST",
+                    url: "{% url 'update_master' %}",
+                    data:{
+                        "processed_file":JSON.stringify(data),
+                        "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                    },
+                    success: function( data )
+                    {
+                            if(data.data == 200){
+                                $("#alert_success").removeClass("d-none");
+                                $("#nama_master_lbl").text($("#nama_provider").val());
+
+                                reset();
+                            }
+
+                            if(data.data !=200){
+                                $("#alert_gagal").removeClass("d-none");
+                            }
+                    }
+                 })
+
+     });
+
+
+
+        $('#isi_data').on('click','.delete_btn_class',function(){
+            console.log("delete");
+            var nilai = $(this).attr("value");
+            var classes = $('#row_'+nilai).remove();
+            console.log(classes);
+
+        });
+
+
+
+
+        $('#select_label_3').on('input',function(e){
+            console.log("ok");
+        });
+
+
+        function reset()
+        {
+            $("#configform").trigger("reset");
+            $("#submit_btn").prop('disabled',false);
+        }
+
+
+
+    });
+
+
+
+
+
+
+
+
+
+
+</script>
+{% endblock %}
