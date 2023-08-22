@@ -20,4 +20,7 @@ class Pembersih:
         self.df5 = self.df4.rename(columns=lambda x: x.strip())
         return self.df5
 
+    def _return_df_master(self):
+        return self.df2
+
 

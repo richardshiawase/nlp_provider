@@ -67,11 +67,18 @@ urlpatterns = [
 
     path('result/', views.perbandingan_result, name="result"),
     path('unlinkhos/', views.unlink_hos, name="unlinkhos"),
+    path('update-master/', views.update_master, name="update_master"),
 
     # add to master by dashboard
     path('master/master-add-item', views.add_master_by_dashboard, name="master-add-item"),
 
     path('temporer-store/',views.temporer_store,name="temporer"),
+    path('temporer-master/', views.temporer_store_master, name="ajax_temporer_master"),
+
+    path('temporer-delete-master/', views.temporer_delete_master, name="ajax_delete_master"),
+
+    path('master/edit-master/', views.edit_master, name="edit_master"),
+
     path('add-to-master/', views.add_master_store, name="add-to-master"),
 
     path('update-temporer/', views.temporer_store, name="update_temporer"),
