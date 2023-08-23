@@ -13,6 +13,7 @@ from django.shortcuts import render
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, SGDClassifier, SGDRegressor
 import django
+from sklearn.neighbors import KNeighborsClassifier
 
 from classM.Pembersih import Pembersih
 django.setup()
@@ -519,7 +520,8 @@ def create_model_bc(df):
 
 def create_model(dfc):
     print("Create Model")
-    lr_model = SGDClassifier(loss='modified_huber',learning_rate='constant',n_jobs=-1,random_state=0,eta0=0.1)
+    # lr_model = SGDClassifier(loss='modified_huber',learning_rate='constant',n_jobs=-1,random_state=0,eta0=0.1)
+    lr_model = KNeighborsClassifier(n_neighbors=5,metric ='minkowski', p=2)
     pembersih = Pembersih(dfc)
     df = pembersih._return_df()
     df['clean_course_title'] = df['course_title']
@@ -537,7 +539,8 @@ def create_model(dfc):
     # print(X.shape)
     try:
         print("Fit Model")
-        lr_model.partial_fit(x_train, y_train, classes=np.unique(ylabels))
+        # lr_model.partial_fit(x_train, y_train, classes=np.unique(ylabels))
+        lr_model.fit(x_train,y_train)
         # calibrator = CalibratedClassifierCV(clf, cv='prefit')
         # model = calibrator.fit(X_tr, y_train)
         print(lr_model.score(x_test, y_test))
@@ -546,44 +549,44 @@ def create_model(dfc):
         print("sumting wonge "+str(e))
 
 
-
-
-
-    print("Open Pickle")
-    pickle.dump(tfidf_vec, open('tfidf_vec.pickle', 'wb'))
-
-    # # save the model to disk
-    print("Save model to disk")
-    filename = 'finalized_model.sav'
-    pickle.dump(lr_model, open(filename, 'wb'))
-
-    print("Save Model")
-    model_create = models.Provider_Model(model_name=filename, accuracy_score=str(lr_model.score(x_test, y_test)),
-                                         model_location='drive C')
-    model_create.save()
-
-    # load the model from disk
-    print("Load Model")
-    loaded_model = pickle.load(open(filename, 'rb'))
-    result = loaded_model.score(x_test, y_test)
-    print(result)
-    from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
-
-
-
-    ## Making A Single Prediction
-    ex = "RS. CIPUTRA CITRA GARDEN CITY"
-
     def vectorize_text(text):
         my_vec = tfidf_vec.transform([text])
         return my_vec.toarray()
+
+        ## Making A Single Prediction
+
+    ex = "internasional gorontalo"
 
     vectorize_text(ex)
     sample1 = vectorize_text(ex)
     pred = lr_model.predict(sample1)
     #
     print(pred)
-    df.to_excel('wew.xlsx')
+
+    # print("Open Pickle")
+    # pickle.dump(tfidf_vec, open('tfidf_vec.pickle', 'wb'))
+    #
+    # # # save the model to disk
+    # print("Save model to disk")
+    # filename = 'finalized_model.sav'
+    # pickle.dump(lr_model, open(filename, 'wb'))
+    #
+    # print("Save Model")
+    # model_create = models.Provider_Model(model_name=filename, accuracy_score=str(lr_model.score(x_test, y_test)),
+    #                                      model_location='drive C')
+    # model_create.save()
+    #
+    # # load the model from disk
+    # print("Load Model")
+    # loaded_model = pickle.load(open(filename, 'rb'))
+    # result = loaded_model.score(x_test, y_test)
+    # print(result)
+    # from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
+    #
+    #
+    #
+    #
+    # df.to_excel('wew.xlsx')
 
     print("Finish Creating Model")
 

@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import pathlib
@@ -16,9 +17,11 @@ from django.core import serializers
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.forms import model_to_dict
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.shortcuts import render
 import warnings
+
+from openpyxl.styles import PatternFill
 
 from classM.Asuransi import Asuransi
 from classM.DFHandler import DFHandler
@@ -293,6 +296,13 @@ def perbandingan_upload_page(request):
     response = response.json()
     context = {"list_insurance": response["val"]}
     return render(request, 'matching/perbandingan-upload.html', context=context)
+
+
+def perbandingan_versus_page(request):
+    response = requests.get('https://asateknologi.id/api/insuranceall')
+    response = response.json()
+    context = {"list_insurance": response["val"]}
+    return render(request, 'matching/perbandingan-versus.html', context=context)
 
 
 def tampungan(request):
@@ -1166,3 +1176,190 @@ def perbandingan_result(request):
         provider.set_list_item_provider(list_item_provider)
 
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
+def perbandingan_result_versus(request):
+    global uploaded_file
+    global contexte
+    global perbandingan_model
+    sinkron_master_process_not_request()
+    master_data = MasterData()
+    master_df = []
+    print(os.getcwd())
+    if request.method == 'POST':
+        data_provider = []
+        # # # REQUEST DARI PROSES FILE
+        if not bool(request.FILES.get('perbandinganModel1', False)):
+            pembanding_model_return = json.loads(request.POST['processed_file'])
+            nama_asuransi = pembanding_model_return["nama_asuransi"]
+            provider = Provider.get_model_from_filter(nama_asuransi)
+
+        # # # REQUEST DARI UPLOAD FILE
+        else:
+            # # init file storage object
+            file_storage = FileSystemStorage()
+
+            # # init Perbandingan object
+            provider1 = Provider()
+            provider2 = Provider()
+
+            # # get nama asuransi and file request
+            data_asuransi1 = request.POST['insurance_option1']
+            data_asuransi2 = request.POST['insurance_option2']
+
+
+
+            file1 = request.FILES['perbandinganModel1']
+            file2 = request.FILES['perbandinganModel2']
+
+
+
+
+            nama_asuransi1 = str(data_asuransi1).split("#")[0]
+            nama_asuransi2 = str(data_asuransi2).split("#")[0]
+
+            id_asuransi1 = str(data_asuransi1).split("#")[1]
+            id_asuransi2 = str(data_asuransi2).split("#")[1]
+
+
+
+
+            # save the file to /media/
+            c1 = file_storage.save(file1.name, file1)
+            c2 = file_storage.save(file2.name, file2)
+
+
+            # get file url
+            file_url1 = file_storage.path(c1)
+            file_url2 = file_storage.path(c2)
+
+
+            # set file location and nama_asuransi to Perbandingan object
+            provider1.set_file_location(file_url1)
+            provider2.set_file_location(file_url2)
+            print(nama_asuransi1,nama_asuransi2)
+            provider1.set_nama_asuransi_model(nama_asuransi1)
+            provider2.set_nama_asuransi_model(nama_asuransi2)
+
+            provider1.set_id_asuransi_model(id_asuransi1)
+            provider2.set_id_asuransi_model(id_asuransi2)
+
+            provider1.link_to_item_list()
+            provider2.link_to_item_list()
+
+            data_provider.append(provider1)
+            data_provider.append(provider2)
+
+
+        for provider in data_provider:
+            start_time = time.time()
+            match_process.set_master_data(master_data)
+            match_process.process_matching_versus(provider)
+            match_process.create_file_result()
+            master_match_process.set_master_data(master_data)
+            master_match_process.set_file_result_match_processed(match_process.get_file_result())
+            master_match_process.process_master_matching()
+
+
+            master_df.append(master_match_process.get_final_result_dataframe())
+
+            master_match_process.save_matching_information()
+
+            golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
+            golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
+            golden_record_match.process_golden_record()
+            print("--- %s seconds ---" % (time.time() - start_time))
+
+            list_item_provider_json = []
+            list_item_provider = []
+
+            dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
+                                             [provider.get_primary_key_provider()])
+            for item in dt:
+                item_provider = ItemProvider()
+                item_provider.set_id(item.pk)
+                item_provider.set_provider_name(item.nama_provider)
+                item_provider.set_alamat_prediction(item.alamat_prediction)
+                item_provider.set_alamat(item.alamat)
+                item_provider.set_proba_score(item.proba_score)
+                item_provider.set_total_score(item.total_score)
+                item_provider.set_label_name(item.label_name)
+                item_provider.set_ri(item.ri)
+                item_provider.set_rj(item.rj)
+                item_provider.set_id_asuransi(item.id_asuransi)
+                item_provider.set_selected("-")
+                del item_provider._state
+
+                list_item_provider.append(item_provider)
+                list_item_provider_json.append(item_provider.__dict__)
+            provider.set_list_item_provider_json(list_item_provider_json)
+            provider.set_list_item_provider(list_item_provider)
+
+    red_fill = PatternFill(start_color='FF0000', end_color='FF0000', fill_type='solid')
+    green_fill = PatternFill(start_color='00FF00', end_color='00FF00', fill_type='solid')
+    master_df[0]['Compared'] = 'False'
+    master_df[1]['Compared'] = 'False'
+
+
+    for index,row in master_df[0].iterrows():
+        id_master1 = row['IdMaster']
+        for index,row in master_df[1].iterrows():
+            id_master2 = row['IdMaster']
+
+            if(id_master1 == id_master2):
+                master_df[0].at[index, 'Compared'] = 'True'
+                master_df[1].at[index, 'Compared'] = 'True'
+
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    output_1 = 'media\\file1_'+timestamp+'.xlsx'
+    output_2 = 'media\\file2_'+timestamp+'.xlsx'
+    master_df[0].to_excel(output_1, index=False, header=True)
+    master_df[1].to_excel(output_2, index=False, header=True)
+
+
+    # Create an Excel writer using pandas and openpyxl
+    # excel_file_path = 'dataframe_data_all_red_rows.xlsx'
+    # with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+    #     master_df[0].to_excel(writer, sheet_name='Sheet1', index=False, header=True)
+    #     worksheet = writer.sheets['Sheet1']
+    #     for row_idx in range(2, len(master_df[0]) + 2):  # Start from row 2 (header is row 1)
+    #         for col_idx in range(1, len(master_df[0].columns) + 1):
+    #             worksheet.cell(row=row_idx, column=col_idx).fill = red_fill
+
+
+
+    # for index,row in master_df[0].iterrows():
+    #     id_master1 = row['IdMaster']
+    #     for index,row in master_df[1].iterrows():
+    #         id_master2 = row['IdMaster']
+
+
+    # return HttpResponse(data_provider)
+    request.session['output1'] = os.getcwd()+'\\'+output_1
+    request.session['output2'] = os.getcwd()+'\\'+output_2
+    return JsonResponse({'data':200,'link1':output_1,'link2':output_2})
+
+
+def download_file(request):
+    file1_path = request.session['output1']  # Replace with the actual file path
+    file2_path = request.session['output2']  # Replace with the actual file path
+
+    if os.path.exists(file1_path) and os.path.exists(file2_path):
+        # Open both files in binary mode
+        file1 = open(file1_path, 'rb')
+        file2 = open(file2_path, 'rb')
+
+        # Create a zip file containing both files
+        response = HttpResponse(content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="files.zip"'
+
+        import zipfile
+        with zipfile.ZipFile(response, 'w') as zipf:
+            zipf.writestr('file1.xlsx', file1.read())
+            zipf.writestr('file2.xlsx', file2.read())
+
+        # Close the files
+        file1.close()
+        file2.close()
+
+        return response
+    else:
+        return HttpResponse("File not found", status=404)

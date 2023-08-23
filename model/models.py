@@ -317,6 +317,8 @@ class MasterMatchProcess(models.Model):
         self.file_final_result_master = FinalResult()
 
     def get_file_final_result_master_match(self):
+        print("FINAL RESULT MASTER")
+        print(self.file_final_result_master.file_final_location_result)
         return self.file_final_result_master
 
     def set_file_result_match_processed(self, file_result):
@@ -388,7 +390,7 @@ class MasterMatchProcess(models.Model):
         provider = self.file_result.get_processed_provider()
 
         # # # # # combine the result with id
-        print("\n\nCreate Result File With ID")
+        print("Create Result File With ID")
         # read excel master provider and get the dataframe
         id_master_list = []
         alamat_master_list = []
@@ -551,6 +553,7 @@ class MasterMatchProcess(models.Model):
 
     def save_matching_information(self):
         self.id_file_result = self.file_result_match.pk
+
         self.id_master_match_file_result = self.file_final_result_master.pk
         self.match_percentage = 1.00
         self.save()
@@ -746,7 +749,6 @@ class MatchProcess(models.Model):
 
     def process_matching(self):
         # get lokasi excel
-        print("Match Process")
 
         self.set_dataset()
         self.file_result = FileResult()
@@ -863,10 +865,131 @@ class MatchProcess(models.Model):
         # set processed provider
         self.file_result.set_processed_provider(self.processed_provider)
 
+
+    def process_matching_versus(self,provider):
+        # get lokasi excel
+        print("Match Process")
+        self.set_dataset()
+        self.file_result = FileResult()
+
+        self.processed_provider = provider
+        self.processed_provider.save_perbandingan_model()
+
+        # Compare and save the Item !
+        pd.options.display.max_colwidth = None
+        df_dataset_non_duplicate = self.get_dataset().get_dataframe_after_cleaned_no_duplicate()
+        self.golden_record.set_golden_record_list_item()
+        golden_record_list_item = self.golden_record.get_golden_record_list_item()
+        print("Compare to golden record list item")
+
+        for item_provider in self.processed_provider.get_list_item_provider():
+            try:
+                for item_golden in golden_record_list_item:
+
+                    if item_golden.get_nama_provider() == item_provider.get_nama_provider():
+                        item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                        item_provider.set_label_name(item_golden.get_label_name())
+                        item_provider.set_proba_score(item_golden.get_proba_score())
+                        item_provider.set_ratio(item_golden.get_ratio())
+
+                        item_provider.set_total_score(item_golden.get_total_score())
+
+                        item_provider.set_alamat_ratio(item_golden.get_alamat_ratio())
+                        item_provider.set_count_label_name(0)
+                        item_provider.set_alamat_prediction(item_golden.get_alamat_prediction())
+                        item_provider.set_golden_record(1)
+                        item_provider.set_saved_in_golden_record(True)
+                        item_provider.set_compared(True)
+                        break
+
+                if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is not True:
+                    item_provider.set_golden_record(0)
+
+                    nama_alamat = item_provider.get_nama_alamat()
+                    sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
+                    y_preds = self.loaded_model1.predict(sample1)
+
+                    # add prediction ke list
+                    y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+
+                    # calculate proba
+                    p = self.loaded_model1.predict_proba(sample1)
+                    ix = p.argmax(1).item()
+                    nil = float("{:.2f}".format(p[0, ix]))
+                    score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
+
+                    # jika prediksi sama dengan dataset maka ambil alamat dari dataset
+                    val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
+
+                    res_master = df_dataset_non_duplicate[val_master]
+                    al = res_master["alamat"].head(1)
+
+                    item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                    item_provider.set_label_name(y_preds)
+                    item_provider.set_proba_score(nil)
+                    item_provider.set_ratio(score)
+
+                    alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
+                    total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
+                    item_provider.set_total_score(total_score)
+                    if total_score < 70:
+                        item_provider.set_compared(False)
+                    else:
+                        item_provider.set_compared(True)
+
+                    item_provider.set_alamat_ratio(alamat_ratio)
+                    item_provider.set_count_label_name(0)
+                    item_provider.set_alamat_prediction(al.values[0])
+                    item_provider.set_golden_record(0)
+                    if total_score >= 70:
+                        item_provider.save()
+                    item_provider.set_saved_in_golden_record(False)
+
+                for item_master in self.master_data.get_list_item_master_provider():
+                    if item_provider.get_compared() is not True:
+                        score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
+                        alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
+                        total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
+
+                        if item_provider.get_total_score() <= total_score:
+                            item_provider.set_total_score(total_score)
+                            item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                            item_provider.set_label_name(item_master.get_nama_master())
+                            item_provider.set_proba_score(0)
+                            item_provider.set_ratio(score)
+                            item_provider.set_alamat_ratio(alamat_ratio)
+                            item_provider.set_count_label_name(0)
+                            item_provider.set_alamat_prediction(item_master.get_alamat_master())
+                            item_provider.set_golden_record(0)
+                            item_provider.set_saved_in_golden_record(False)
+                            item_provider.set_status_item_provider("Direct")
+                            item_provider.set_id_master(item_master.get_id_master())
+                            item_provider.set_nama_master_provider(item_master.get_nama_master())
+                            item_provider.set_alamat_master_provider(item_master.get_alamat_master())
+                            item_provider.save()
+                item_provider.set_compared(True)
+
+
+
+            except Exception as e:
+                # self.error_value_write(item_provider, e)
+                print(str(e))
+
+        # # # map processed dataframe column to output desired column
+        mapped = self.map_list_item_provider_to_column_output(self.processed_provider.get_list_item_provider())
+
+        # # # convert mapped list to dataframe
+        self.result_dataframe = pd.DataFrame(mapped)
+
+        # set processed provider
+        self.file_result.set_processed_provider(self.processed_provider)
+
     def create_file_result(self):
 
         # # get nama asuransi
         nama_asuransi = self.file_result.get_nama()
+        print("NAMA ASURANSI")
+        print(nama_asuransi)
         nama_file = nama_asuransi + "_result.xlsx"
         # # # Declare write
         writer = pd.ExcelWriter('media/' + nama_file,
