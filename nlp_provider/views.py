@@ -17,7 +17,7 @@ from django.core import serializers
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.forms import model_to_dict
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.shortcuts import render
 import warnings
 
@@ -1183,6 +1183,7 @@ def perbandingan_result_versus(request):
     sinkron_master_process_not_request()
     master_data = MasterData()
     master_df = []
+    print(os.getcwd())
     if request.method == 'POST':
         data_provider = []
         # # # REQUEST DARI PROSES FILE
@@ -1308,8 +1309,10 @@ def perbandingan_result_versus(request):
                 master_df[1].at[index, 'Compared'] = 'True'
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    master_df[0].to_excel('media/file1_'+timestamp+'.xlsx')
-    master_df[1].to_excel('media/file2_'+timestamp+'.xlsx')
+    output_1 = 'media\\file1_'+timestamp+'.xlsx'
+    output_2 = 'media\\file2_'+timestamp+'.xlsx'
+    master_df[0].to_excel(output_1, index=False, header=True)
+    master_df[1].to_excel(output_2, index=False, header=True)
 
 
     # Create an Excel writer using pandas and openpyxl
@@ -1329,6 +1332,34 @@ def perbandingan_result_versus(request):
     #         id_master2 = row['IdMaster']
 
 
+    # return HttpResponse(data_provider)
+    request.session['output1'] = os.getcwd()+'\\'+output_1
+    request.session['output2'] = os.getcwd()+'\\'+output_2
+    return JsonResponse({'data':200,'link1':output_1,'link2':output_2})
 
-    return HttpResponse(data_provider)
-    # return JsonResponse(provider.get_list_item_provider_json(), safe=False)
+
+def download_file(request):
+    file1_path = request.session['output1']  # Replace with the actual file path
+    file2_path = request.session['output2']  # Replace with the actual file path
+
+    if os.path.exists(file1_path) and os.path.exists(file2_path):
+        # Open both files in binary mode
+        file1 = open(file1_path, 'rb')
+        file2 = open(file2_path, 'rb')
+
+        # Create a zip file containing both files
+        response = HttpResponse(content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="files.zip"'
+
+        import zipfile
+        with zipfile.ZipFile(response, 'w') as zipf:
+            zipf.writestr('file1.xlsx', file1.read())
+            zipf.writestr('file2.xlsx', file2.read())
+
+        # Close the files
+        file1.close()
+        file2.close()
+
+        return response
+    else:
+        return HttpResponse("File not found", status=404)
