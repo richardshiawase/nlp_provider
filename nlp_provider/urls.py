@@ -33,6 +33,7 @@ urlpatterns = [
 
 
     path('perbandingan-upload-page/', views.perbandingan_upload_page, name="perbandingan-upload-page"),
+    path('perbandingan-versus-page/', views.perbandingan_versus_page, name="perbandingan-versus-page"),
 
     path('open_file_perbandingan/', views.open_file_perbandingan, name="open_file_perbandingan"),
     path('hapus_tampungan',views.hapus_tampungan,name="hapus_tampungan"),
@@ -66,6 +67,10 @@ urlpatterns = [
     path('master/download_master_varian', views.download_master_varian, name="download_master_varian"),
 
     path('result/', views.perbandingan_result, name="result"),
+    path('result_versus/', views.perbandingan_result_versus, name="result_versus"),
+
+    path('download/', views.download_file, name="download_file"),
+
     path('unlinkhos/', views.unlink_hos, name="unlinkhos"),
     path('update-master/', views.update_master, name="update_master"),
 
