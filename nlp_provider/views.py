@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import pathlib
@@ -19,6 +20,8 @@ from django.forms import model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 import warnings
+
+from openpyxl.styles import PatternFill
 
 from classM.Asuransi import Asuransi
 from classM.DFHandler import DFHandler
@@ -1179,7 +1182,7 @@ def perbandingan_result_versus(request):
     global perbandingan_model
     sinkron_master_process_not_request()
     master_data = MasterData()
-
+    master_df = []
     if request.method == 'POST':
         data_provider = []
         # # # REQUEST DARI PROSES FILE
@@ -1243,12 +1246,9 @@ def perbandingan_result_versus(request):
 
             data_provider.append(provider1)
             data_provider.append(provider2)
+
+
         for provider in data_provider:
-            print("Asereje")
-
-
-            print(provider.get_id_asuransi())
-            # list_provider_model_object.add_provider(provider)
             start_time = time.time()
             match_process.set_master_data(master_data)
             match_process.process_matching_versus(provider)
@@ -1256,6 +1256,10 @@ def perbandingan_result_versus(request):
             master_match_process.set_master_data(master_data)
             master_match_process.set_file_result_match_processed(match_process.get_file_result())
             master_match_process.process_master_matching()
+
+
+            master_df.append(master_match_process.get_final_result_dataframe())
+
             master_match_process.save_matching_information()
 
             golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
@@ -1287,6 +1291,44 @@ def perbandingan_result_versus(request):
                 list_item_provider_json.append(item_provider.__dict__)
             provider.set_list_item_provider_json(list_item_provider_json)
             provider.set_list_item_provider(list_item_provider)
+
+    red_fill = PatternFill(start_color='FF0000', end_color='FF0000', fill_type='solid')
+    green_fill = PatternFill(start_color='00FF00', end_color='00FF00', fill_type='solid')
+    master_df[0]['Compared'] = 'False'
+    master_df[1]['Compared'] = 'False'
+
+
+    for index,row in master_df[0].iterrows():
+        id_master1 = row['IdMaster']
+        for index,row in master_df[1].iterrows():
+            id_master2 = row['IdMaster']
+
+            if(id_master1 == id_master2):
+                master_df[0].at[index, 'Compared'] = 'True'
+                master_df[1].at[index, 'Compared'] = 'True'
+
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    master_df[0].to_excel('media/file1_'+timestamp+'.xlsx')
+    master_df[1].to_excel('media/file2_'+timestamp+'.xlsx')
+
+
+    # Create an Excel writer using pandas and openpyxl
+    # excel_file_path = 'dataframe_data_all_red_rows.xlsx'
+    # with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+    #     master_df[0].to_excel(writer, sheet_name='Sheet1', index=False, header=True)
+    #     worksheet = writer.sheets['Sheet1']
+    #     for row_idx in range(2, len(master_df[0]) + 2):  # Start from row 2 (header is row 1)
+    #         for col_idx in range(1, len(master_df[0].columns) + 1):
+    #             worksheet.cell(row=row_idx, column=col_idx).fill = red_fill
+
+
+
+    # for index,row in master_df[0].iterrows():
+    #     id_master1 = row['IdMaster']
+    #     for index,row in master_df[1].iterrows():
+    #         id_master2 = row['IdMaster']
+
+
 
     return HttpResponse(data_provider)
     # return JsonResponse(provider.get_list_item_provider_json(), safe=False)
