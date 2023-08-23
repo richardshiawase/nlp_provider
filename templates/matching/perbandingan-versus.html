@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %} Perbandingan Versus {% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+
+    <form id="data"  method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-3">
+                {% csrf_token %}
+                <input class="form-control" type="file" id="formFile" name="perbandinganModel1">
+            </div>
+
+            <div class="col-sm-3">
+                <select class="form-select" name="insurance_option1">
+                    {% for insurance in list_insurance %}
+                    <option value="{{insurance.nama_asuransi}}#{{ insurance.id_asuransi }}">{{ insurance.nama_asuransi }}</option>
+
+                    {% endfor %}
+                </select>
+            </div>
+
+
+
+        </div>
+        <br>
+            <div class="row">
+            <div class="col-sm-3">
+                {% csrf_token %}
+                <input class="form-control" type="file" id="formFile2" name="perbandinganModel2">
+            </div>
+
+            <div class="col-sm-3">
+                <select class="form-select" name="insurance_option2">
+                    {% for insurance in list_insurance %}
+                    <option value="{{insurance.nama_asuransi}}#{{ insurance.id_asuransi }}">{{ insurance.nama_asuransi }}</option>
+
+                    {% endfor %}
+                </select>
+            </div>
+
+         <div class="col-sm-3">
+                <button id="bandingkan_tombol" type="submit" class="btn btn-primary" ><span id="bandingkan_spinner" class="spinner-border spinner-border-sm d-none"></span> Bandingkan</button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    <div id="result" class="container-fluid d-none">
+        <div class="row">
+
+
+            <div class="mb-3 mt-3 ">
+<!--                    <label class="form-label">Provider:</label><label id="nama_provider" class="h2 ml-2">-</label>-->
+                    <input type="hidden" class="form-control" id="id_link_result" placeholder="Enter Provider" name="link_result" value ="{{ link_result }}">
+
+                  <p>Klik tombol di bawah ini untuk mengunduh file</p>
+                  <a id="first_file" href="path/to/your/file/dataframe_data.xlsx" class="btn btn-primary">Download Zip</a>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+
+        $("form#data").submit(function(e) {
+            e.preventDefault();
+
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: "{% url 'result_versus' %}",
+                type: 'POST',
+                data: formData,
+                beforeSend : function() {
+                      $('#bandingkan_spinner').removeClass("d-none")
+                        $('#bandingkan_tombol').addClass('disabled');
+                 },
+                success: function (data) {
+                    $('#bandingkan_spinner').addClass("d-none")
+                    $('#bandingkan_tombol').removeClass('disabled');
+                    $('#result').removeClass('d-none');
+                    $('#first_file').attr('href',{% url 'download_file' %});
+                    $('#second_file').attr('href',data.link2);
+
+                },
+                cache: true,
+                contentType: false,
+                processData: false
+            });
+
+        });
+
+
+
+
+
+
+
+    });
+
+
+
+
+
+</script>
+{% endblock %}
