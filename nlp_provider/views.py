@@ -55,6 +55,7 @@ from model.models import Provider_Model, Provider
 from tqdm import tqdm
 from django.core.cache import cache
 
+from celery import shared_task
 # from .forms import UploadFileForm
 # Create your views here.
 
@@ -71,13 +72,21 @@ list_provider_model_object = match_process.get_list_provider()
 provider_dict_item = {}
 master_item_list = []
 
+
+@shared_task()
+def my_background_task():
+    global master_data
+    master_data = MasterData()
+
+my_background_task()
+
 filename = 'tfidf_vec.pickle'
 tfidf_vec1 = pickle.load(open(filename, 'rb'))
 filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
 state = States()
 asuransi = Asuransi()
-server_prefix = "http://192.168.20.93:8000"
+server_prefix = "https://www.asateknologi.id"
 
 def index(request):
     context = {"list_pembanding": []}
@@ -204,9 +213,11 @@ def hos_ins_list(request):
 
 def update_master(request):
     if request.method == "POST":
+        request.session["update_master"] = {"status":False,"object": {}}
+
         print("tes update master")
         data = json.loads(request.POST["processed_file"])
-
+        row_index = data["row_index"]
         id_provider = data['id_provider']
         nama_provider = data["nama_provider"]
         alamat = data["alamat"]
@@ -234,13 +245,15 @@ def update_master(request):
             if kategori == k:
                 kategori_id = int(v)
 
-        print(id_provider,nama_provider,alamat,telepon,state_id,city_id,kategori_id)
         url = server_prefix+"/api/hospital/"+id_provider
-        myobj = {'provider_name': nama_provider, 'address': alamat,'category_1':kategori_id,'tel_no':telepon,'state_id':state_id,'city_id':city_id}
+        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider, 'address': alamat,'category_1':kategori_id,'tel_no':telepon,'state_id':state_id,'city_id':city_id}
         x = requests.put(url, json=myobj)
         if x.status_code == 200:
+            request.session["update_master"] = {"status":True,"object":myobj}
             return JsonResponse({'data': 200})
         else:
+            request.session["update_master"] = {"status":False,"object":[]}
+
             return JsonResponse({'data': 400})
 
         pass
@@ -250,6 +263,14 @@ def update_master(request):
 
     return JsonResponse({'data': 400})
 
+def show_updated_master(request):
+    print("Show updated master")
+    message = {"status":False,"object":[]}
+    if "update_master" in request.session:
+        message = request.session.get("update_master")
+        # del request.session['update_master']
+    # object = request.session["update_master"]["object"]
+    return JsonResponse({'message': message})
 
 def unlink_hos(request):
     if request.method == "POST":
@@ -461,14 +482,19 @@ def master_add(request):
 
 
 def list_master_process(request):
-    master_data = MasterData()
     list_item_master = master_data.get_list_item_master_provider_json()
     return JsonResponse(list_item_master, safe=False)
 
-
-def sinkron_master_process(request):
+def get_master_with_api():
     response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
     provider_list = response.json().get("val")
+
+    return provider_list
+
+
+def sinkron_master_process(request):
+    provider_list = get_master_with_api()
+
     master_data_list = []
     # master_data = MasterData()
 
@@ -723,6 +749,7 @@ def temporer_store_master(request):
     if request.method == "POST":
         master_item_list.clear()
         master = json.loads(request.POST['processed_file'])
+        row_index = master['row_index']
         id      = master['provider_id']
         state_id = master['stateId']
         city_id = master['cityId']
@@ -740,7 +767,7 @@ def temporer_store_master(request):
                                  provider_name,
                                  address,
                                  tel_no)
-
+        item_master.set_datatable_row_index(row_index)
         master_item_list.append(item_master)
     if len(master_item_list) > 0:
         return JsonResponse({'data':200,'link':'-'})

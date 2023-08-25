@@ -74,6 +74,8 @@ urlpatterns = [
     path('unlinkhos/', views.unlink_hos, name="unlinkhos"),
     path('update-master/', views.update_master, name="update_master"),
 
+    path('show-updated-master/', views.show_updated_master, name="show_updated_masters"),
+
     # add to master by dashboard
     path('master/master-add-item', views.add_master_by_dashboard, name="master-add-item"),
 
