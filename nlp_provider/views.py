@@ -268,7 +268,7 @@ def show_updated_master(request):
     message = {"status":False,"object":[]}
     if "update_master" in request.session:
         message = request.session.get("update_master")
-        # del request.session['update_master']
+        del request.session['update_master']
     # object = request.session["update_master"]["object"]
     return JsonResponse({'message': message})
 

@@ -187,7 +187,6 @@
                     var status = response.message.status;
                     var item_master = response.message.object;
                     console.log("Tes");
-                    console.log(item_master.category_1);
                     switch(item_master.category_1){
                             case 1:
                                 item_master.category_1 = "Rumah Sakit";
@@ -224,7 +223,10 @@
                         tel_no : item_master.tel_no,
                     };
 
-                    rowToUpdate.data(newData).draw(false);
+
+                    if(status === true){
+                        rowToUpdate.data(newData).draw(false);
+                    }
                 },
                 error: function() {
                     console.log('Error fetching data');
