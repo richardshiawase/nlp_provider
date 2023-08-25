@@ -118,8 +118,13 @@
           });
 
 
+
            $('#albumse tbody').on('click', '#proses_master', function () {
-            var data = table.row($(this).parents('tr')).data();
+            var parent = table.row($(this).parents('tr'));
+            var data = parent.data();
+            data.row_index = parent.index();
+
+
             var temporer_url = "{% url "ajax_temporer_master" %}";
             $.ajax(
                 {
@@ -135,7 +140,8 @@
                     {
                         if (data.data == 200)
                         {
-                             window.location.href = '{% url "edit_master" %}';
+<!--                             window.location.href = '{% url "edit_master" %}';-->
+                             window.open('{% url "edit_master" %}','_blank');
                         }
                     }
                  })
@@ -146,7 +152,6 @@
 
         $('#albumse tbody').on('click', '#delete_master', function () {
             var data = table.row($(this).parents('tr')).data();
-            console.log(data);
             var temporer_url = "{% url "ajax_delete_master" %}";
             $.ajax(
                 {
@@ -169,6 +174,77 @@
                     }
                  })
                  return false;
+        });
+
+
+         function fetchData() {
+            $.ajax({
+                dataType: 'json',
+                url: "{% url "show_updated_masters" %}",
+                method: 'GET',
+                success: function(response) {
+                    // Process the AJAX response
+                    var status = response.message.status;
+                    var item_master = response.message.object;
+                    console.log("Tes");
+                    switch(item_master.category_1){
+                            case 1:
+                                item_master.category_1 = "Rumah Sakit";
+                                break;
+                            case 2:
+                                item_master.category_1 = "Klinik";
+                                break;
+                            case 3:
+                                item_master.category_1 = "Apotek";
+                                break;
+                            case 4:
+                                item_master.category_1 = "Lab";
+                                break;
+                            case 5:
+                                item_master.category_1 = "Praktek";
+                                break;
+                            case 6:
+                                item_master.category_1 = "Optik";
+                                    break;
+
+                    }
+
+                    var rowToUpdate = table.row(item_master.row_index);
+
+                    // Update the data for the row
+                    var newData = {
+                        provider_id: item_master.id_provider,
+                        nama_provider: item_master.provider_name,
+                        stateId : item_master.stateId,
+                        cityId : item_master.cityId,
+                        category_1 : item_master.category_1,
+                        category_2 : item_master.category_2,
+                        address : item_master.address,
+                        tel_no : item_master.tel_no,
+                    };
+
+
+                    if(status === true){
+                        rowToUpdate.data(newData).draw(false);
+                    }
+                },
+                error: function() {
+                    console.log('Error fetching data');
+                }
+            });
+        }
+
+
+
+
+        // Attach visibility change event listener
+        document.addEventListener('visibilitychange', function() {
+            // Check if the page is visible
+            if (!document.hidden) {
+                // Page is visible, trigger AJAX request
+<!--                console.log("Page is visible");-->
+                fetchData();
+            }
         });
 
 
