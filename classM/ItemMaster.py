@@ -96,3 +96,22 @@ class ItemMaster:
 
     def get_master_longitude(self):
         return self.longitude
+
+    def set_datatable_row_index(self,row_index):
+        self.row_index = row_index
+
+    def get_datatable_row_index(self):
+        return self.row_index
+
+
+    def set_state_name_master(self,state_name):
+        self.state_name = state_name
+
+    def set_city_name_master(self,city_name):
+        self.city_name = city_name
+
+    def get_state_name_master(self):
+        return self.state_name
+
+    def get_city_name_master(self):
+        return self.city_name
