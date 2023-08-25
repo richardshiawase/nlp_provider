@@ -106,6 +106,7 @@
     $(".select_picker").select2();
 
      $('#submit_btn').click(function(){
+        var row_index = "{{ item_master.get_datatable_row_index }}";
         var id = "{{ item_master.get_id_master }}";
         var nama_provider = $('#nama_provider').val();
         var alamat = $('#alamat_provider').val();
@@ -113,9 +114,10 @@
         var city = $('#city_provider').val();
         var telepon = $('#telepon_provider').val();
         var kategori = $('#kategori_provider').val();
-        console.log(id,nama_provider,alamat,state,city,telepon,kategori);
+        console.log(row_index,id,nama_provider,alamat,state,city,telepon,kategori);
 
         var data = {
+            row_index: row_index,
             id_provider : id,
             nama_provider: nama_provider,
             alamat : alamat,
