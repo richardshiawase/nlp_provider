@@ -86,7 +86,7 @@ filename = 'finalized_model.sav'
 loaded_model1 = pickle.load(open(filename, 'rb'))
 state = States()
 asuransi = Asuransi()
-server_prefix = "https://www.asateknologi.id"
+server_prefix = "http://192.168.20.93:8000"
 
 def index(request):
     context = {"list_pembanding": []}
