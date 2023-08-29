@@ -268,6 +268,7 @@ def show_updated_master(request):
     message = {"status":False,"object":[]}
     if "update_master" in request.session:
         message = request.session.get("update_master")
+        print(message)
         del request.session['update_master']
     # object = request.session["update_master"]["object"]
     return JsonResponse({'message': message})
@@ -778,6 +779,8 @@ def temporer_delete_master(request):
     if request.method == "POST":
         master_item_list.clear()
         master = json.loads(request.POST['processed_file'])
+        row_index = master['row_index']
+
         id      = master['provider_id']
         state_id = master['stateId']
         city_id = master['cityId']
@@ -795,6 +798,9 @@ def temporer_delete_master(request):
                                  provider_name,
                                  address,
                                  tel_no)
+
+        item_master.set_datatable_row_index(row_index)
+        master_item_list.append(item_master)
 
         url = server_prefix + "/api/hospital/" + id
 
