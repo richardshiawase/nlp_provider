@@ -150,7 +150,13 @@
 
 
         $('#albumse tbody').on('click', '#delete_master', function () {
-            var parent = table.row($(this).parents('tr'));
+
+            var result = confirm("Yakin untuk menghapus provider ini ?");
+
+            if (result) {
+              // The user clicked OK, perform the deletion logic here
+
+              var parent = table.row($(this).parents('tr'));
             var data = parent.data();
             data.row_index = parent.index();
 
@@ -173,11 +179,22 @@
                         {
                             console.log("Hapus berhasil");
                              parent.remove().draw();
+                           alert("Item deleted!");
+
                         }else{
                             console.log("Hapus gagal");
                         }
                     }
                  })
+
+            } else {
+              // The user clicked Cancel, do nothing or provide feedback
+              alert("Deletion canceled.");
+            }
+
+
+
+
                  return false;
         });
 
