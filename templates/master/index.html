@@ -140,7 +140,6 @@
                     {
                         if (data.data == 200)
                         {
-<!--                             window.location.href = '{% url "edit_master" %}';-->
                              window.open('{% url "edit_master" %}','_blank');
                         }
                     }
@@ -151,7 +150,18 @@
 
 
         $('#albumse tbody').on('click', '#delete_master', function () {
-            var data = table.row($(this).parents('tr')).data();
+
+            var result = confirm("Yakin untuk menghapus provider ini ?");
+
+            if (result) {
+              // The user clicked OK, perform the deletion logic here
+
+              var parent = table.row($(this).parents('tr'));
+            var data = parent.data();
+            data.row_index = parent.index();
+
+
+
             var temporer_url = "{% url "ajax_delete_master" %}";
             $.ajax(
                 {
@@ -168,11 +178,23 @@
                         if (data.data == 200)
                         {
                             console.log("Hapus berhasil");
+                             parent.remove().draw();
+                           alert("Item deleted!");
+
                         }else{
                             console.log("Hapus gagal");
                         }
                     }
                  })
+
+            } else {
+              // The user clicked Cancel, do nothing or provide feedback
+              alert("Deletion canceled.");
+            }
+
+
+
+
                  return false;
         });
 
