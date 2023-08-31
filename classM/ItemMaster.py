@@ -50,7 +50,7 @@ class ItemMaster:
         return self.provider_id
 
     def get_nama_master(self):
-        return self.provider_name.strip()
+        return self.provider_name.strip().lower()
 
     def set_varian(self, varian):
         self.varian = varian
