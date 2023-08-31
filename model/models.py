@@ -780,7 +780,7 @@ class MatchProcess(models.Model):
                 if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is not True:
                     item_provider.set_golden_record(0)
 
-                    nama_alamat = item_provider.get_nama_provider()
+                    nama_alamat = item_provider.get_nama_alamat()
                     sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
                     y_preds = self.loaded_model1.predict(sample1)
 
