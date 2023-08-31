@@ -198,7 +198,7 @@ class ItemProvider(models.Model):
         return self.alamat
 
     def get_label_name(self):
-        return self.label_name.strip()
+        return self.label_name.strip().lower()
 
     def get_proba_score(self):
         return float(self.proba_score)
@@ -213,17 +213,17 @@ class ItemProvider(models.Model):
         self.save()
 
     def set_provider_name(self, value):
-        remove_words = ["rsia", "rsu","rumah sakit","rs", "optik", "klinik", "clinic", "laboratorium", "lab", "optic"]
+        remove_words = ["rsia", "rsu","rumah sakit","rs", "optik", "klinik", "clinic", "laboratorium", "lab", "optic",".",","]
         # remove_words = []
         for rem in remove_words:
-            value = value.replace(rem, "")
+            value = value.replace(rem, " ")
         self.nama_provider = value.strip()
 
     def set_alamat(self, param):
         self.alamat = param
 
     def set_nama_alamat(self):
-        self.nama_alamat = self.get_nama_provider() + "#" + self.get_alamat()
+        self.nama_alamat = self.get_nama_provider() + " " + self.get_alamat()
 
     def get_nama_alamat(self):
         return self.nama_alamat
@@ -784,6 +784,8 @@ class MatchProcess(models.Model):
                     sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
                     y_preds = self.loaded_model1.predict(sample1)
 
+
+                    print(nama_alamat,y_preds)
                     # add prediction ke list
                     y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
 
