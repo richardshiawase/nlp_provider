@@ -187,7 +187,6 @@ class DFHandler:
                 item_provider.set_provider_name(provider_name)
                 item_provider.set_alamat_prediction(alamat_prediction)
                 item_provider.set_alamat(alamat)
-                item_provider.set_proba_score(nil)
                 item_provider.set_label_name(y_preds)
 
                 item_provider.set_selected(compared)

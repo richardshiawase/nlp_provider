@@ -1331,11 +1331,11 @@ def perbandingan_result_versus(request):
     master_df[0]['Compared'] = 'False'
     master_df[1]['Compared'] = 'False'
 
-
+    print("Comparing")
     for index,row in master_df[0].iterrows():
-        id_master1 = row['IdMaster']
+        id_master1 = int(row['IdMaster'])
         for index,row in master_df[1].iterrows():
-            id_master2 = row['IdMaster']
+            id_master2 = int(row['IdMaster'])
 
             if(id_master1 == id_master2):
                 master_df[0].at[index, 'Compared'] = 'True'
