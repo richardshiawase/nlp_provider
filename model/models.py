@@ -83,6 +83,8 @@ class ItemProvider(models.Model):
         self.golden_record = bool
 
     def get_golden_record_status(self):
+        if self.golden_record != 1:
+            return 0
         return self.golden_record
 
     def set_id_master(self, id_master):
@@ -105,7 +107,6 @@ class ItemProvider(models.Model):
 
     def set_status_item_provider(self, status):
         self.status = status
-
 
     def get_status_item_provider(self):
         try:
@@ -134,6 +135,7 @@ class ItemProvider(models.Model):
             self.ratio = float(ratio)
         except:
             self.ratio = 0
+
     def get_ratio(self):
         try:
             self.ratio = float(self.ratio)
@@ -142,7 +144,15 @@ class ItemProvider(models.Model):
         return self.ratio
 
     def set_total_score(self, total_score):
-        self.total_score = total_score
+        try:
+            self.total_score = float(total_score)
+        except:
+            self.total_score = 0
+
+        if self.total_score < 70 and self.golden_record == 0:
+            self.set_compared(False)
+        else:
+            self.set_compared(True)
 
     def get_total_score(self):
         total_score = 0
@@ -199,7 +209,7 @@ class ItemProvider(models.Model):
 
     def get_nama_provider(self):
 
-        return self.nama_provider
+        return self.nama_provider.strip().lower()
 
     def get_alamat(self):
         return self.alamat
@@ -220,7 +230,8 @@ class ItemProvider(models.Model):
         self.save()
 
     def set_provider_name(self, value):
-        remove_words = ["rsia", "rsu","rumah sakit","rs", "optik", "klinik", "clinic", "laboratorium", "lab", "optic",".",","]
+        remove_words = ["rsia", "rsu", "rumah sakit", "rs", "optik", "klinik", "clinic", "laboratorium", "lab", "optic",
+                        ".", ","]
         # remove_words = []
         for rem in remove_words:
             value = value.replace(rem, " ")
@@ -260,22 +271,22 @@ class ItemProvider(models.Model):
         return self.id_asuransi
 
     def set_validity(self):
-        if self.get_status_item_provider() == "Master" :
+        if self.get_status_item_provider() == "Master":
             self.validity = True
 
         elif self.get_status_item_provider() == "Ratio":
-            if self.get_ratio() >= 90 or self.get_alamat_ratio() >= 95:
+            if self.get_ratio() >= 90:
                 self.validity = True
             else:
                 self.validity = False
         elif self.get_status_item_provider() == "Direct 1":
-            if self.get_ratio() >= 90 or self.get_alamat_ratio() >= 70:
+            if self.get_ratio() >= 90 :
                 self.validity = True
             else:
                 self.validity = False
 
         elif self.get_status_item_provider() == "Direct 2":
-            if self.get_ratio() >= 94 or self.get_alamat_ratio() >= 80:
+            if  self.get_alamat_ratio() >= 80:
                 self.validity = True
             else:
                 self.validity = False
@@ -284,13 +295,15 @@ class ItemProvider(models.Model):
 
             self.validity = False
 
-    def is_valid(self):
+    def is_validity(self):
         return self.validity
 
     def set_saved_in_golden_record(self, bool):
         self.saved_in_golden_record = bool
 
     def get_saved_in_golden_record(self):
+        if self.saved_in_golden_record is not True:
+            return False
         return self.saved_in_golden_record
 
     def set_city_id(self, city_id):
@@ -362,16 +375,16 @@ class MasterMatchProcess(models.Model):
             for index, row in df2.iterrows():
                 if row['Alamat'] == item_provider.get_alamat():
                     print("Found")
-                    print(item_provider.get_nama_provider(),item_provider.get_state_id())
+                    print(item_provider.get_nama_provider(), item_provider.get_state_id())
                     url = 'https://www.asateknologi.id/api/master'
                     myobj = {'stateId': item_provider.get_state_id(),
                              'cityId': item_provider.get_city_id(),
                              'category1': 2,
                              'provider_name': item_provider.get_nama_provider(),
                              'address': item_provider.get_alamat(),
-                             'tel':'021',
-                             'inpatient':0,
-                             'outpatient':0}
+                             'tel': '021',
+                             'inpatient': 0,
+                             'outpatient': 0}
                     try:
                         x = requests.post(url, json=myobj)
                     except Exception as e:
@@ -403,6 +416,155 @@ class MasterMatchProcess(models.Model):
         except Exception as e:
             print(str(e))
 
+    def compare_golden_record_to_master(self, item):
+        # # Comparing golden record
+        for item_master in self.master_data.get_list_item_master_provider():
+            if item.get_saved_in_golden_record() is True:
+                if item.get_label_name() == item_master.get_nama_master():
+                    item.set_processed(True)
+                    self.id_master_list.append(item_master.get_id_master())
+                    self.provider_name_master_list.append(item_master.get_nama_master())
+                    self.alamat_master_list.append(item_master.get_alamat_master())
+
+                    self.list_item_provider_nama.append(item.get_nama_provider())
+                    self.list_item_provider_alamat.append(item.get_alamat())
+                    self.list_item_provider_ri.append(item.get_ri())
+                    self.list_item_provider_rj.append(item.get_rj())
+                    self.list_item_provider_score.append(item.get_proba_score())
+                    self.list_item_ratio.append(item.get_ratio())
+                    self.list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                    self.list_item_total_score.append(item.get_total_score())
+
+                    item.set_status_item_provider("Master")
+
+                    self.list_item_status.append(item.get_status_item_provider())
+                    item.set_validity()
+                    self.list_item_validity.append(item.is_validity())
+
+                    break
+
+        # # define is it true or false to proceed to next step
+        item.set_validity()
+
+    def compare_label_name_to_master(self, item):
+        # if validity still false
+        if item.is_validity() is False:
+            item.set_total_score(0)
+            item.set_ratio(0)
+
+            for item_master in self.master_data.get_list_item_master_provider():
+                ratio_nama = fuzz.ratio(item.get_label_name(), item_master.get_nama_master().strip())
+
+                total_ratio_extension = float("{:.2f}".format(ratio_nama))
+                item.set_status_item_provider("Ratio")
+
+                if float(item.get_total_score()) < total_ratio_extension:
+                    item.set_ratio(ratio_nama)
+                    item.set_total_score(total_ratio_extension)
+                    item.set_id_master(item_master.get_id_master())
+                    item.set_nama_master_provider(item_master.get_nama_master())
+                    item.set_alamat_master_provider(item_master.get_alamat_master())
+
+            # # add to list if they are true
+            item.set_validity()
+            if item.is_validity():
+                self.id_master_list.append(item.get_id_master())
+                self.provider_name_master_list.append(item.get_nama_master_provider())
+                self.alamat_master_list.append(item.get_alamat_master_provider())
+                self.list_item_provider_nama.append(item.get_nama_provider())
+                self.list_item_provider_alamat.append(item.get_alamat())
+                self.list_item_provider_ri.append(item.get_ri())
+                self.list_item_provider_rj.append(item.get_rj())
+                self.list_item_provider_score.append(item.get_proba_score())
+                self.list_item_ratio.append(item.get_ratio())
+                self.list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                self.list_item_total_score.append(item.get_total_score())
+                self.list_item_status.append(item.get_status_item_provider())
+
+                self.list_item_validity.append(item.is_validity())
+
+    def compare_nama_provider_to_master(self, item):
+        if item.is_validity() is False:
+            item.set_total_score(0)
+            item.set_ratio(0)
+
+            for item_master in self.master_data.get_list_item_master_provider():
+                score = fuzz.ratio(item.get_nama_provider(), item_master.get_nama_master())
+                # alamat_ratio = fuzz.ratio(item.get_alamat_master(), item.get_alamat())
+                total_score = float("{:.2f}".format((score)))
+
+                if item.get_total_score() <= total_score:
+                    item.set_total_score(total_score)
+                    item.set_label_name(item_master.get_nama_master())
+                    item.set_ratio(score)
+                    # item.set_alamat_ratio(alamat_ratio)
+                    item.set_alamat_prediction(item_master.get_alamat_master())
+                    item.set_status_item_provider("Direct 1")
+                    item.set_id_master(item_master.get_id_master())
+                    item.set_nama_master_provider(item_master.get_nama_master())
+                    item.set_alamat_master_provider(item_master.get_alamat_master())
+
+            # set validity
+            item.set_validity()
+            if (item.is_validity()):
+                self.id_master_list.append(item.get_id_master())
+                self.provider_name_master_list.append(item.get_nama_master_provider())
+                self.alamat_master_list.append(item.get_alamat_master_provider())
+                self.list_item_provider_nama.append(item.get_nama_provider())
+                self.list_item_provider_alamat.append(item.get_alamat())
+                self.list_item_provider_ri.append(item.get_ri())
+                self.list_item_provider_rj.append(item.get_rj())
+                self.list_item_provider_score.append(item.get_proba_score())
+                self.list_item_ratio.append(item.get_ratio())
+                self.list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                self.list_item_total_score.append(item.get_total_score())
+                self.list_item_status.append(item.get_status_item_provider())
+
+                self.list_item_validity.append(item.is_validity())
+
+
+    def compare_alamat_provider_to_master(self, item):
+        if item.is_validity() is False:
+            item.set_total_score(0)
+            item.set_alamat_ratio(0)
+
+            for item_master in self.master_data.get_list_item_master_provider():
+                alamat_ratio = fuzz.ratio(item.get_alamat(), item_master.get_alamat_master())
+                total_score = float("{:.2f}".format((alamat_ratio)))
+
+                if item.get_total_score() <= total_score:
+                    item.set_total_score(total_score)
+                    item.set_label_name(item_master.get_nama_master())
+                    # item.set_ratio(score)
+                    item.set_alamat_ratio(alamat_ratio)
+                    item.set_alamat_prediction(item_master.get_alamat_master())
+                    item.set_status_item_provider("Direct 2")
+                    item.set_id_master(item_master.get_id_master())
+                    item.set_nama_master_provider(item_master.get_nama_master())
+                    item.set_alamat_master_provider(item_master.get_alamat_master())
+
+            # set validity
+            item.set_validity()
+            # if (item.is_validity()):
+            self.id_master_list.append(item.get_id_master())
+            self.provider_name_master_list.append(item.get_nama_master_provider())
+            self.alamat_master_list.append(item.get_alamat_master_provider())
+            self.list_item_provider_nama.append(item.get_nama_provider())
+            self.list_item_provider_alamat.append(item.get_alamat())
+            self.list_item_provider_ri.append(item.get_ri())
+            self.list_item_provider_rj.append(item.get_rj())
+            self.list_item_provider_score.append(item.get_proba_score())
+            self.list_item_ratio.append(item.get_ratio())
+            self.list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+            self.list_item_total_score.append(item.get_total_score())
+            self.list_item_status.append(item.get_status_item_provider())
+
+            self.list_item_validity.append(item.is_validity())
+
     def process_master_matching(self):
         self.create_file_final_result_master_match()
         self.file_result = self.get_file_result_match_processed()
@@ -411,129 +573,73 @@ class MasterMatchProcess(models.Model):
         # # # # # combine the result with id
         print("Create Result File With ID")
         # read excel master provider and get the dataframe
-        id_master_list = []
-        alamat_master_list = []
-        provider_name_master_list = []
-        list_item_provider_nama = []
-        list_item_provider_alamat = []
-        list_item_provider_score = []
-        list_item_provider_ri = []
-        list_item_provider_rj = []
-        list_item_ratio = []
-        list_item_total_score = []
-        list_item_alamat_ratio = []
-        list_item_validity = []
-        list_item_status = []
+        self.id_master_list = []
+        self.alamat_master_list = []
+        self.provider_name_master_list = []
+        self.list_item_provider_nama = []
+        self.list_item_provider_alamat = []
+        self.list_item_provider_score = []
+        self.list_item_provider_ri = []
+        self.list_item_provider_rj = []
+        self.list_item_ratio = []
+        self.list_item_total_score = []
+        self.list_item_alamat_ratio = []
+        self.list_item_validity = []
+        self.list_item_status = []
 
         for item in provider.get_list_item_provider():
             item.set_processed(False)
+            item.set_validity()
+            # FILTERING
+            # # 1. First, compare golden record
+            self.compare_golden_record_to_master(item)
 
-            for item_master in self.master_data.get_list_item_master_provider():
-                if item.get_label_name() == item_master.get_nama_master():
-                    item.set_processed(True)
-                    id_master_list.append(item_master.get_id_master())
-                    provider_name_master_list.append(item_master.get_nama_master())
-                    alamat_master_list.append(item_master.get_alamat_master())
+            # # 2. If fail compare label name to master name
+            self.compare_label_name_to_master(item)
 
-                    list_item_provider_nama.append(item.get_nama_provider())
-                    list_item_provider_alamat.append(item.get_alamat())
-                    list_item_provider_ri.append(item.get_ri())
-                    list_item_provider_rj.append(item.get_rj())
-                    list_item_provider_score.append(item.get_proba_score())
-                    list_item_ratio.append(item.get_ratio())
-                    list_item_alamat_ratio.append(item.get_alamat_ratio())
+            # # 3. If fail label value too low compare provider name to master name
+            self.compare_nama_provider_to_master(item)
 
-                    list_item_total_score.append(item.get_total_score())
+            # # 4. If fail , compare address to master address
+            self.compare_alamat_provider_to_master(item)
 
-                    item.set_status_item_provider("Master")
-                    item.set_validity()
-
-                    list_item_status.append(item.get_status_item_provider())
-                    list_item_validity.append(item.is_valid())
-
-                    break
-
-                if item.get_status_item_provider() == "Direct 1" or item.get_status_item_provider() == "Direct 2":
-                    item.set_processed(True)
-                    id_master_list.append(item.get_id_master())
-                    provider_name_master_list.append(item.get_nama_master_provider())
-                    alamat_master_list.append(item.get_alamat_master_provider())
-
-                    list_item_provider_nama.append(item.get_nama_provider())
-                    list_item_provider_alamat.append(item.get_alamat())
-                    list_item_provider_ri.append(item.get_ri())
-                    list_item_provider_rj.append(item.get_rj())
-                    list_item_provider_score.append(item.get_proba_score())
-                    list_item_ratio.append(item.get_ratio())
-                    list_item_alamat_ratio.append(item.get_alamat_ratio())
-
-                    list_item_total_score.append(item.get_total_score())
-
-                    item.set_validity()
-
-                    list_item_status.append(item.get_status_item_provider())
-                    list_item_validity.append(item.is_valid())
-
-                    break
-
-            if item.is_processed() is False:
-                item.set_total_score(0)
-                item.set_ratio(0)
-                item.set_alamat_ratio(0)
-            for item_master in self.master_data.get_list_item_master_provider():
-                if item.is_processed() is False:
-                    ratio_nama = fuzz.ratio(item.get_label_name(), item_master.get_nama_master().strip())
-                    ratio_alamat = fuzz.ratio(item.get_alamat(), item_master.get_alamat_master().strip())
-                    if item.get_proba_score() != 0:
-                        nilai = ((item.get_proba_score() * 100) + ratio_nama + ratio_alamat) / 3
-                    else:
-                        nilai = (ratio_nama + ratio_alamat) / 2
-                    total_ratio_extension = float("{:.2f}".format(nilai))
-                    item.set_status_item_provider("Ratio")
-
-                    if float(item.get_total_score()) < total_ratio_extension or item.get_total_score == 0:
-                        item.set_ratio(ratio_nama)
-                        item.set_alamat_ratio(ratio_alamat)
-                        item.set_total_score(total_ratio_extension)
-                        item.set_id_master(item_master.get_id_master())
-                        item.set_nama_master_provider(item_master.get_nama_master())
-                        item.set_alamat_master_provider(item_master.get_alamat_master())
-
-
-            if item.is_processed() is False:
-                item.set_validity()
-
-                id_master_list.append(item.get_id_master())
-                provider_name_master_list.append(item.get_nama_master_provider())
-                alamat_master_list.append(item.get_alamat_master_provider())
-                list_item_provider_nama.append(item.get_nama_provider())
-                list_item_provider_alamat.append(item.get_alamat())
-                list_item_provider_ri.append(item.get_ri())
-                list_item_provider_rj.append(item.get_rj())
-                list_item_provider_score.append(item.get_proba_score())
-                list_item_ratio.append(item.get_ratio())
-                list_item_alamat_ratio.append(item.get_alamat_ratio())
-
-                list_item_total_score.append(item.get_total_score())
-                list_item_status.append(item.get_status_item_provider())
-
-                list_item_validity.append(item.is_valid())
-
+            # if item.get_status_item_provider() == "Direct 1" or item.get_status_item_provider() == "Direct 2":
+            #     item.set_processed(True)
+            #     id_master_list.append(item.get_id_master())
+            #     provider_name_master_list.append(item.get_nama_master_provider())
+            #     alamat_master_list.append(item.get_alamat_master_provider())
+            #
+            #     list_item_provider_nama.append(item.get_nama_provider())
+            #     list_item_provider_alamat.append(item.get_alamat())
+            #     list_item_provider_ri.append(item.get_ri())
+            #     list_item_provider_rj.append(item.get_rj())
+            #     list_item_provider_score.append(item.get_proba_score())
+            #     list_item_ratio.append(item.get_ratio())
+            #     list_item_alamat_ratio.append(item.get_alamat_ratio())
+            #
+            #     list_item_total_score.append(item.get_total_score())
+            #
+            #     item.set_validity()
+            #
+            #     list_item_status.append(item.get_status_item_provider())
+            #     list_item_validity.append(item.is_valid())
+            #
+            #     break
 
         dict_result = {
-            'IdMaster': pd.Series(id_master_list),
-            'Master_Nama': pd.Series(provider_name_master_list),
-            'Master_Alamat': pd.Series(alamat_master_list),
-            'Nama': pd.Series(list_item_provider_nama),
-            'Alamat': pd.Series(list_item_provider_alamat),
-            'Score': pd.Series(list_item_provider_score),
-            'Ratio': pd.Series(list_item_ratio),
-            'Alamat_Ratio': pd.Series(list_item_alamat_ratio),
-            'Total_Score': pd.Series(list_item_total_score),
-            'RI': pd.Series(list_item_provider_ri),
-            'RJ': pd.Series(list_item_provider_rj),
-            'Validity': pd.Series(list_item_validity),
-            'Status': pd.Series(list_item_status)
+            'IdMaster': pd.Series(self.id_master_list),
+            'Master_Nama': pd.Series(self.provider_name_master_list),
+            'Master_Alamat': pd.Series(self.alamat_master_list),
+            'Nama': pd.Series(self.list_item_provider_nama),
+            'Alamat': pd.Series(self.list_item_provider_alamat),
+            'Score': pd.Series(self.list_item_provider_score),
+            'Ratio': pd.Series(self.list_item_ratio),
+            'Alamat_Ratio': pd.Series(self.list_item_alamat_ratio),
+            'Total_Score': pd.Series(self.list_item_total_score),
+            'RI': pd.Series(self.list_item_provider_ri),
+            'RJ': pd.Series(self.list_item_provider_rj),
+            'Validity': pd.Series(self.list_item_validity),
+            'Status': pd.Series(self.list_item_status)
         }
         self.processed_dataframe = pd.DataFrame(dict_result)
 
@@ -742,6 +848,82 @@ class MatchProcess(models.Model):
         self.df = None
         self.column = ColumnToRead()
 
+    def compare_to_golden_record(self, item_provider):
+        print("Compare to golden record list item")
+
+        golden_record_list_item = self.golden_record.get_golden_record_list_item()
+
+        for item_golden in golden_record_list_item:
+
+            if item_golden.get_nama_provider() == item_provider.get_nama_provider():
+                item_provider.set_saved_in_golden_record(True)
+
+                item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                item_provider.set_label_name(item_golden.get_label_name())
+                item_provider.set_proba_score(item_golden.get_proba_score())
+                item_provider.set_ratio(item_golden.get_ratio())
+
+                item_provider.set_total_score(item_golden.get_total_score())
+
+                item_provider.set_alamat_ratio(item_golden.get_alamat_ratio())
+                item_provider.set_count_label_name(0)
+                item_provider.set_alamat_prediction(item_golden.get_alamat_prediction())
+
+                break
+
+    def calculate_score(self, item_provider):
+        print("Calculate Prediction Score")
+        nama_alamat = item_provider.get_nama_alamat()
+        sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
+        y_preds = self.loaded_model1.predict(sample1)
+
+        print(nama_alamat, y_preds)
+        # add prediction ke list
+        y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
+
+        # calculate proba
+        p = self.loaded_model1.predict_proba(sample1)
+        ix = p.argmax(1).item()
+        nil = float("{:.2f}".format(p[0, ix]))
+        score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
+
+        score_tuple = (y_preds, nil, score)
+        return score_tuple
+
+    def compare_not_golden_record(self, item_provider):
+        print("Compare not golden record")
+        df_dataset_non_duplicate = self.get_dataset().get_dataframe_after_cleaned_no_duplicate()
+
+        # if not golden record
+        if item_provider.get_saved_in_golden_record() is False:
+            # calculate item provider prediction
+            y_preds, nil, score = self.calculate_score(item_provider)
+
+            # set item provider value
+            item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+            item_provider.set_label_name(y_preds)
+            item_provider.set_proba_score(nil)
+            item_provider.set_ratio(score)
+
+            # calculate the fuzzy logic to reinforce the score
+            # # # jika prediksi sama dengan dataset maka ambil alamat dari dataset
+            val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
+            res_master = df_dataset_non_duplicate[val_master]
+            al = res_master["alamat"].head(1)
+
+            alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
+            total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
+
+            item_provider.set_total_score(total_score)
+
+            item_provider.set_alamat_ratio(alamat_ratio)
+            item_provider.set_count_label_name(0)
+            item_provider.set_alamat_prediction(al.values[0])
+
+            item_provider.set_validity()
+            # if total_score >= 70:
+            #     item_provider.save()
+
     def process_matching(self):
         # get lokasi excel
 
@@ -753,121 +935,39 @@ class MatchProcess(models.Model):
 
         # Compare and save the Item !
         pd.options.display.max_colwidth = None
-        df_dataset_non_duplicate = self.get_dataset().get_dataframe_after_cleaned_no_duplicate()
         self.golden_record.set_golden_record_list_item()
-        golden_record_list_item = self.golden_record.get_golden_record_list_item()
-        print("Compare to golden record list item")
 
         for item_provider in self.processed_provider.get_list_item_provider():
             try:
-                for item_golden in golden_record_list_item:
 
-                    if item_golden.get_nama_provider() == item_provider.get_nama_provider():
-                        item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
-                        item_provider.set_label_name(item_golden.get_label_name())
-                        item_provider.set_proba_score(item_golden.get_proba_score())
-                        item_provider.set_ratio(item_golden.get_ratio())
+                self.compare_to_golden_record(item_provider)
+                # # # IF ITEM PROVIDER IS IN GOLDEN RECORD, DO NOT PROCESS IT AGAIN TO SHORTEN TIME
+                # # # IF ITEM PROVIDER IS NOT IN GOLDEN RECORD
+                # # # THEN
+                self.compare_not_golden_record(item_provider)
 
-                        item_provider.set_total_score(item_golden.get_total_score())
-
-                        item_provider.set_alamat_ratio(item_golden.get_alamat_ratio())
-                        item_provider.set_count_label_name(0)
-                        item_provider.set_alamat_prediction(item_golden.get_alamat_prediction())
-                        item_provider.set_golden_record(1)
-                        item_provider.set_saved_in_golden_record(True)
-                        item_provider.set_compared(True)
-                        break
-
-                if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is not True:
-                    item_provider.set_golden_record(0)
-
-                    nama_alamat = item_provider.get_nama_alamat()
-                    sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
-                    y_preds = self.loaded_model1.predict(sample1)
-
-
-                    print(nama_alamat,y_preds)
-                    # add prediction ke list
-                    y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "")
-
-                    # calculate proba
-                    p = self.loaded_model1.predict_proba(sample1)
-                    ix = p.argmax(1).item()
-                    nil = float("{:.2f}".format(p[0, ix]))
-                    score = fuzz.ratio(item_provider.get_nama_provider(), y_preds)
-
-                    # jika prediksi sama dengan dataset maka ambil alamat dari dataset
-                    val_master = (df_dataset_non_duplicate['subject'].eq(y_preds))
-
-                    res_master = df_dataset_non_duplicate[val_master]
-                    al = res_master["alamat"].head(1)
-
-                    item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
-                    item_provider.set_label_name(y_preds)
-                    item_provider.set_proba_score(nil)
-                    item_provider.set_ratio(score)
-
-                    alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
-                    total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
-                    item_provider.set_total_score(total_score)
-                    if total_score < 70:
-                        item_provider.set_compared(False)
-                    else:
-                        item_provider.set_compared(True)
-
-                    item_provider.set_alamat_ratio(alamat_ratio)
-                    item_provider.set_count_label_name(0)
-                    item_provider.set_alamat_prediction(al.values[0])
-                    item_provider.set_golden_record(0)
-                    if total_score >= 70:
-                        item_provider.save()
-                    item_provider.set_saved_in_golden_record(False)
-
-                for item_master in self.master_data.get_list_item_master_provider():
-                    if item_provider.get_compared() is not True:
-                        score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
-                        alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
-                        total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
-
-                        if item_provider.get_total_score() <= total_score:
-                            item_provider.set_total_score(total_score)
-                            item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
-                            item_provider.set_label_name(item_master.get_nama_master())
-                            item_provider.set_proba_score(nil)
-                            item_provider.set_ratio(score)
-                            item_provider.set_alamat_ratio(alamat_ratio)
-                            item_provider.set_count_label_name(0)
-                            item_provider.set_alamat_prediction(item_master.get_alamat_master())
-                            item_provider.set_golden_record(0)
-                            item_provider.set_saved_in_golden_record(False)
-                            item_provider.set_status_item_provider("Direct 1")
-                            item_provider.set_id_master(item_master.get_id_master())
-                            item_provider.set_nama_master_provider(item_master.get_nama_master())
-                            item_provider.set_alamat_master_provider(item_master.get_alamat_master())
-                            item_provider.save()
-
-                for item_master in self.master_data.get_list_item_master_provider():
-                    if item_provider.get_total_score() <= 70 and item_provider.get_ratio() <= 90 :
-                        score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
-                        # alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
-                        total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
-
-                        if item_provider.get_ratio() <= score:
-                            item_provider.set_total_score(total_score)
-                            item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
-                            item_provider.set_label_name(item_master.get_nama_master())
-                            item_provider.set_proba_score(nil)
-                            item_provider.set_ratio(score)
-                            # item_provider.set_alamat_ratio(alamat_ratio)
-                            item_provider.set_count_label_name(0)
-                            item_provider.set_alamat_prediction(item_master.get_alamat_master())
-                            item_provider.set_golden_record(0)
-                            item_provider.set_saved_in_golden_record(False)
-                            item_provider.set_status_item_provider("Direct 2")
-                            item_provider.set_id_master(item_master.get_id_master())
-                            item_provider.set_nama_master_provider(item_master.get_nama_master())
-                            item_provider.set_alamat_master_provider(item_master.get_alamat_master())
-                            item_provider.save()
+                # for item_master in self.master_data.get_list_item_master_provider():
+                #     if item_provider.get_total_score() <= 70 and item_provider.get_ratio() <= 90 :
+                #         score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
+                #         # alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
+                #         total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
+                #
+                #         if item_provider.get_ratio() <= score:
+                #             item_provider.set_total_score(total_score)
+                #             item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
+                #             item_provider.set_label_name(item_master.get_nama_master())
+                #             item_provider.set_proba_score(nil)
+                #             item_provider.set_ratio(score)
+                #             # item_provider.set_alamat_ratio(alamat_ratio)
+                #             item_provider.set_count_label_name(0)
+                #             item_provider.set_alamat_prediction(item_master.get_alamat_master())
+                #             item_provider.set_golden_record(0)
+                #             item_provider.set_saved_in_golden_record(False)
+                #             item_provider.set_status_item_provider("Direct 2")
+                #             item_provider.set_id_master(item_master.get_id_master())
+                #             item_provider.set_nama_master_provider(item_master.get_nama_master())
+                #             item_provider.set_alamat_master_provider(item_master.get_alamat_master())
+                #             item_provider.save()
 
                 item_provider.set_compared(True)
 
@@ -886,8 +986,7 @@ class MatchProcess(models.Model):
         # set processed provider
         self.file_result.set_processed_provider(self.processed_provider)
 
-
-    def process_matching_versus(self,provider):
+    def process_matching_versus(self, provider):
         # get lokasi excel
         print("Match Process")
         self.set_dataset()
@@ -918,12 +1017,12 @@ class MatchProcess(models.Model):
                         item_provider.set_alamat_ratio(item_golden.get_alamat_ratio())
                         item_provider.set_count_label_name(0)
                         item_provider.set_alamat_prediction(item_golden.get_alamat_prediction())
-                        item_provider.set_golden_record(1)
+                        # item_provider.set_golden_record(1)
                         item_provider.set_saved_in_golden_record(True)
                         item_provider.set_compared(True)
                         break
 
-                if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is not True:
+                if item_provider.get_golden_record_status() == "" and item_provider.get_saved_in_golden_record() is False:
                     item_provider.set_golden_record(0)
 
                     nama_alamat = item_provider.get_nama_alamat()
@@ -990,7 +1089,7 @@ class MatchProcess(models.Model):
                             item_provider.save()
 
                 for item_master in self.master_data.get_list_item_master_provider():
-                    if item_provider.get_total_score() <= 70 and item_provider.get_ratio() <= 90 :
+                    if item_provider.get_total_score() <= 70 and item_provider.get_ratio() <= 90:
                         score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
                         # alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
                         # total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
@@ -1048,7 +1147,7 @@ class MatchProcess(models.Model):
 
     def save_matching_information(self):
         if self.id is not None:
-            self.id+=1
+            self.id += 1
         self.id_file_result = self.file_result.pk
         self.id_model = self.processed_provider.get_primary_key_provider()
         self.match_percentage = 1.00
@@ -1230,7 +1329,7 @@ class Provider(models.Model):
             provider_object.set_saved_in_golden_record(False)
 
             url = 'https://www.asateknologi.id/api/stateId'
-            myobj = {'stateName': state_name,'cityName':city_name}
+            myobj = {'stateName': state_name, 'cityName': city_name}
             try:
                 x = requests.post(url, json=myobj)
                 state_id = x.json()["state_id"]

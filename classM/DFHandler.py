@@ -247,7 +247,7 @@ class DFHandler:
                     # item.set_status_item_provider("Master")
 
                     list_item_status.append(item.get_status_item_provider())
-                    list_item_validity.append(item.is_valid())
+                    list_item_validity.append(item.is_validity())
 
                     break
 
