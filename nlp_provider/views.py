@@ -1334,12 +1334,13 @@ def perbandingan_result_versus(request):
     print("Comparing")
     for index,row in master_df[0].iterrows():
         id_master1 = int(row['IdMaster'])
-        for index,row in master_df[1].iterrows():
-            id_master2 = int(row['IdMaster'])
+        for index2,row2 in master_df[1].iterrows():
+            id_master2 = int(row2['IdMaster'])
 
             if(id_master1 == id_master2):
                 master_df[0].at[index, 'Compared'] = 'True'
-                master_df[1].at[index, 'Compared'] = 'True'
+                master_df[1].at[index2, 'Compared'] = 'True'
+
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     output_1 = 'media\\file1_'+timestamp+'.xlsx'
