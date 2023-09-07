@@ -272,7 +272,8 @@ class ItemProvider(models.Model):
 
     def set_validity(self):
         if self.get_status_item_provider() == "Master":
-            self.validity = True
+            if self.get_alamat_ratio() >= 85:
+                self.validity = True
 
         elif self.get_status_item_provider() == "Ratio":
             if self.get_ratio() >= 90:
@@ -945,29 +946,6 @@ class MatchProcess(models.Model):
                 # # # IF ITEM PROVIDER IS NOT IN GOLDEN RECORD
                 # # # THEN
                 self.compare_not_golden_record(item_provider)
-
-                # for item_master in self.master_data.get_list_item_master_provider():
-                #     if item_provider.get_total_score() <= 70 and item_provider.get_ratio() <= 90 :
-                #         score = fuzz.ratio(item_provider.get_nama_provider(), item_master.get_nama_master())
-                #         # alamat_ratio = fuzz.ratio(item_master.get_alamat_master(), item_provider.get_alamat())
-                #         total_score = float("{:.2f}".format((score + alamat_ratio) / 2))
-                #
-                #         if item_provider.get_ratio() <= score:
-                #             item_provider.set_total_score(total_score)
-                #             item_provider.set_id_model(self.processed_provider.get_primary_key_provider())
-                #             item_provider.set_label_name(item_master.get_nama_master())
-                #             item_provider.set_proba_score(nil)
-                #             item_provider.set_ratio(score)
-                #             # item_provider.set_alamat_ratio(alamat_ratio)
-                #             item_provider.set_count_label_name(0)
-                #             item_provider.set_alamat_prediction(item_master.get_alamat_master())
-                #             item_provider.set_golden_record(0)
-                #             item_provider.set_saved_in_golden_record(False)
-                #             item_provider.set_status_item_provider("Direct 2")
-                #             item_provider.set_id_master(item_master.get_id_master())
-                #             item_provider.set_nama_master_provider(item_master.get_nama_master())
-                #             item_provider.set_alamat_master_provider(item_master.get_alamat_master())
-                #             item_provider.save()
 
                 item_provider.set_compared(True)
 

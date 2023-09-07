@@ -75,6 +75,7 @@ master_item_list = []
 
 
 
+server_prefix = "https://www.asateknologi.id"
 
 class BackgroundTask(threading.Thread):
     def run(self):
@@ -108,7 +109,6 @@ t.start()
 
 
 
-server_prefix = "https://www.asateknologi.id"
 
 def index(request):
     context = {"list_pembanding": []}
