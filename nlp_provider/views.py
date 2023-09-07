@@ -56,6 +56,7 @@ from tqdm import tqdm
 from django.core.cache import cache
 
 from celery import shared_task
+import threading
 # from .forms import UploadFileForm
 # Create your views here.
 
@@ -73,20 +74,37 @@ provider_dict_item = {}
 master_item_list = []
 
 
-@shared_task()
-def my_background_task():
-    global master_data
-    master_data = MasterData()
 
-my_background_task()
-
-filename = 'tfidf_vec.pickle'
-tfidf_vec1 = pickle.load(open(filename, 'rb'))
-filename = 'finalized_model.sav'
-loaded_model1 = pickle.load(open(filename, 'rb'))
-state = States()
-asuransi = Asuransi()
 server_prefix = "https://www.asateknologi.id"
+
+class BackgroundTask(threading.Thread):
+    def run(self):
+        global master_data
+        global tfidf_vec1
+        global loaded_model1
+        global state
+        global asuransi
+        master_data = MasterData()
+        print("{0} is loaded".format("Master Data"))
+        filename = 'tfidf_vec.pickle'
+        tfidf_vec1 = pickle.load(open(filename, 'rb'))
+        print("{} is loaded".format("tfidf_vec1"))
+        filename = 'finalized_model.sav'
+        loaded_model1 = pickle.load(open(filename, 'rb'))
+        print("{} is loaded".format("loaded_model1"))
+        state = States()
+        print("{} is loaded".format("state"))
+
+        asuransi = Asuransi()
+        print("{} list is loaded".format("asuransi"))
+
+
+
+t = BackgroundTask()
+t.start()
+
+
+
 
 def index(request):
     context = {"list_pembanding": []}
@@ -944,11 +962,11 @@ def add_master_by_dashboard(request):
                  }
         try:
             pass
-            x = requests.post(url, json=myobj)
+            # x = requests.post(url, json=myobj)
             token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
             header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
             url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            d = requests.get(url_sinkron_sinta,headers=header)
+            # d = requests.get(url_sinkron_sinta,headers=header)
         except Exception as e:
             print(e)
 
@@ -1179,8 +1197,8 @@ def perbandingan_result(request):
         golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
-        master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        # master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
 
         list_item_provider_json = []
@@ -1330,9 +1348,8 @@ def perbandingan_result_versus(request):
     green_fill = PatternFill(start_color='00FF00', end_color='00FF00', fill_type='solid')
     master_df[0]['Compared'] = 'False'
     master_df[1]['Compared'] = 'False'
-    master_df[0]['IdMaster'] = master_df[0]['IdMaster'].astype(int)
-    master_df[1]['IdMaster'] = master_df[1]['IdMaster'].astype(int)
 
+    print("Comparing")
     for index,row in master_df[0].iterrows():
         id_master1 = int(row['IdMaster'])
         for index2,row2 in master_df[1].iterrows():

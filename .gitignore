@@ -4,3 +4,4 @@
 *.xlsx
 /settings.py
 *.sql
+*.sav
