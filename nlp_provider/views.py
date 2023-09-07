@@ -1340,7 +1340,7 @@ def perbandingan_result_versus(request):
             if(id_master1 == id_master2):
                 master_df[0].at[index, 'Compared'] = 'True'
                 master_df[1].at[index2, 'Compared'] = 'True'
-
+                break
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     output_1 = 'media\\file1_'+timestamp+'.xlsx'
