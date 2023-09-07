@@ -56,6 +56,7 @@ from tqdm import tqdm
 from django.core.cache import cache
 
 from celery import shared_task
+import threading
 # from .forms import UploadFileForm
 # Create your views here.
 
@@ -73,19 +74,40 @@ provider_dict_item = {}
 master_item_list = []
 
 
-@shared_task()
-def my_background_task():
-    global master_data
-    master_data = MasterData()
 
-my_background_task()
 
-filename = 'tfidf_vec.pickle'
-tfidf_vec1 = pickle.load(open(filename, 'rb'))
-filename = 'finalized_model.sav'
-loaded_model1 = pickle.load(open(filename, 'rb'))
-state = States()
-asuransi = Asuransi()
+class BackgroundTask(threading.Thread):
+    def run(self):
+        global master_data
+        global tfidf_vec1
+        global loaded_model1
+        global state
+        global asuransi
+        master_data = MasterData()
+        print("{0} is loaded".format("Master Data"))
+        filename = 'tfidf_vec.pickle'
+        tfidf_vec1 = pickle.load(open(filename, 'rb'))
+        print("{} is loaded".format("tfidf_vec1"))
+        filename = 'finalized_model.sav'
+        loaded_model1 = pickle.load(open(filename, 'rb'))
+        print("{} is loaded".format("loaded_model1"))
+        state = States()
+        print("{} is loaded".format("state"))
+
+        asuransi = Asuransi()
+        print("{} list is loaded".format("asuransi"))
+
+
+        while True:
+            print('Background task running...')
+            time.sleep(1)
+
+
+t = BackgroundTask()
+t.start()
+
+
+
 server_prefix = "https://www.asateknologi.id"
 
 def index(request):
