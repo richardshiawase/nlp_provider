@@ -339,26 +339,26 @@ class MasterMatchProcess(models.Model):
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
 
-        for item_provider in provider.get_list_item_provider():
-            for index, row in df2.iterrows():
-                if row['Alamat'] == item_provider.get_alamat():
-                    print("Found")
-                    print(item_provider.get_nama_provider(),item_provider.get_state_id())
-                    url = 'https://www.asateknologi.id/api/master'
-                    myobj = {'stateId': item_provider.get_state_id(),
-                             'cityId': item_provider.get_city_id(),
-                             'category1': 2,
-                             'provider_name': item_provider.get_nama_provider(),
-                             'address': item_provider.get_alamat(),
-                             'tel':'021',
-                             'inpatient':0,
-                             'outpatient':0}
-                    try:
-                        x = requests.post(url, json=myobj)
-                    except Exception as e:
-                        print(str(e))
-
-                    pass
+        # for item_provider in provider.get_list_item_provider():
+        #     for index, row in df2.iterrows():
+        #         if row['Alamat'] == item_provider.get_alamat():
+        #             print("Found")
+        #             print(item_provider.get_nama_provider(),item_provider.get_state_id())
+        #             url = 'https://www.asateknologi.id/api/master'
+        #             myobj = {'stateId': item_provider.get_state_id(),
+        #                      'cityId': item_provider.get_city_id(),
+        #                      'category1': 2,
+        #                      'provider_name': item_provider.get_nama_provider(),
+        #                      'address': item_provider.get_alamat(),
+        #                      'tel':'021',
+        #                      'inpatient':0,
+        #                      'outpatient':0}
+        #             try:
+        #                 x = requests.post(url, json=myobj)
+        #             except Exception as e:
+        #                 print(str(e))
+        #
+        #             pass
 
         id_asuransi = provider.get_id_asuransi()
         print(id_asuransi)
