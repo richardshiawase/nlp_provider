@@ -99,10 +99,6 @@ class BackgroundTask(threading.Thread):
         print("{} list is loaded".format("asuransi"))
 
 
-        while True:
-            print('Background task running...')
-            time.sleep(1)
-
 
 t = BackgroundTask()
 t.start()
@@ -547,7 +543,7 @@ def sinkron_master_process(request):
 
 
 def sinkron_master_process_not_request():
-    print("Sinkron master proses")
+    print("Sinkron master prosessss")
     response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
     provider_list = response.json().get("val")
     master_data_list = []
@@ -1152,7 +1148,7 @@ def perbandingan_result(request):
     global contexte
     global perbandingan_model
     sinkron_master_process_not_request()
-    master_data = MasterData()
+    # master_data = MasterData()
 
     if request.method == 'POST':
         # # # REQUEST DARI PROSES FILE
@@ -1160,75 +1156,79 @@ def perbandingan_result(request):
             pembanding_model_return = json.loads(request.POST['processed_file'])
             nama_asuransi = pembanding_model_return["nama_asuransi"]
             provider = Provider.get_model_from_filter(nama_asuransi)
-
+            print("tes 1")
         # # # REQUEST DARI UPLOAD FILE
         else:
-            # # init file storage object
-            file_storage = FileSystemStorage()
+            print("tes 2")
+            try:
+                # # init file storage object
+                file_storage = FileSystemStorage()
 
-            # # init Perbandingan object
-            provider = Provider()
+                # # init Perbandingan object
+                provider = Provider()
 
-            # # get nama asuransi and file request
-            data_asuransi = request.POST['insurance_option']
-            file = request.FILES['perbandinganModel']
+                # # get nama asuransi and file request
+                data_asuransi = request.POST['insurance_option']
+                file = request.FILES['perbandinganModel']
 
-            nama_asuransi = str(data_asuransi).split("#")[0]
-            id_asuransi = str(data_asuransi).split("#")[1]
-            # save the file to /media/
-            c = file_storage.save(file.name, file)
+                nama_asuransi = str(data_asuransi).split("#")[0]
+                id_asuransi = str(data_asuransi).split("#")[1]
+                # save the file to /media/
+                c = file_storage.save(file.name, file)
 
-            # get file url
-            file_url = file_storage.path(c)
+                # get file url
+                file_url = file_storage.path(c)
 
-            # set file location and nama_asuransi to Perbandingan object
-            provider.set_file_location(file_url)
-            provider.set_nama_asuransi_model(nama_asuransi)
-            provider.set_id_asuransi_model(id_asuransi)
-            provider.link_to_item_list()
+                # set file location and nama_asuransi to Perbandingan object
+                provider.set_file_location(file_url)
+                provider.set_nama_asuransi_model(nama_asuransi)
+                provider.set_id_asuransi_model(id_asuransi)
+                provider.link_to_item_list()
+            except Exception as e:
+                print(e)
 
         list_provider_model_object.add_provider(provider)
         start_time = time.time()
         match_process.set_master_data(master_data)
         match_process.process_matching()
         match_process.create_file_result()
-
-        master_match_process.set_master_data(master_data)
-        master_match_process.set_file_result_match_processed(match_process.get_file_result())
-        master_match_process.process_master_matching()
-        master_match_process.save_matching_information()
-
-        golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
-        golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
-        golden_record_match.process_golden_record()
-        master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        master_match_process.insert_into_end_point_andika_assistant_item_provider()
-        print("--- %s seconds ---" % (time.time() - start_time))
-
-        list_item_provider_json = []
-        list_item_provider = []
-
-        dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
-                                         [provider.get_primary_key_provider()])
-        for item in dt:
-            item_provider = ItemProvider()
-            item_provider.set_id(item.pk)
-            item_provider.set_provider_name(item.nama_provider)
-            item_provider.set_alamat_prediction(item.alamat_prediction)
-            item_provider.set_alamat(item.alamat)
-            item_provider.set_proba_score(item.proba_score)
-            item_provider.set_total_score(item.total_score)
-            item_provider.set_label_name(item.label_name)
-            item_provider.set_ri(item.ri)
-            item_provider.set_rj(item.rj)
-            item_provider.set_id_asuransi(item.id_asuransi)
-            item_provider.set_selected("-")
-            del item_provider._state
-
-            list_item_provider.append(item_provider)
-            list_item_provider_json.append(item_provider.__dict__)
-        provider.set_list_item_provider_json(list_item_provider_json)
-        provider.set_list_item_provider(list_item_provider)
+        #
+        # master_match_process.set_master_data(master_data)
+        # master_match_process.set_file_result_match_processed(match_process.get_file_result())
+        # master_match_process.process_master_matching()
+        # master_match_process.save_matching_information()
+        #
+        # golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
+        # golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
+        # golden_record_match.process_golden_record()
+        # # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        # # master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        # print("--- %s seconds ---" % (time.time() - start_time))
+        #
+        # list_item_provider_json = []
+        # list_item_provider = []
+        #
+        # dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
+        #                                  [provider.get_primary_key_provider()])
+        # for item in dt:
+        #     item_provider = ItemProvider()
+        #     item_provider.set_id(item.pk)
+        #     item_provider.set_provider_name(item.nama_provider)
+        #     item_provider.set_alamat_prediction(item.alamat_prediction)
+        #     item_provider.set_alamat(item.alamat)
+        #     item_provider.set_proba_score(item.proba_score)
+        #     item_provider.set_total_score(item.total_score)
+        #     item_provider.set_label_name(item.label_name)
+        #     item_provider.set_ri(item.ri)
+        #     item_provider.set_rj(item.rj)
+        #     item_provider.set_id_asuransi(item.id_asuransi)
+        #     item_provider.set_selected("-")
+        #     del item_provider._state
+        #
+        #     list_item_provider.append(item_provider)
+        #     list_item_provider_json.append(item_provider.__dict__)
+        # provider.set_list_item_provider_json(list_item_provider_json)
+        # provider.set_list_item_provider(list_item_provider)
 
     return JsonResponse(provider.get_list_item_provider_json(), safe=False)
 def perbandingan_result_versus(request):

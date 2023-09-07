@@ -935,7 +935,7 @@ class MatchProcess(models.Model):
 
     def process_matching(self):
         # get lokasi excel
-
+        print("Match Process")
         self.set_dataset()
         self.file_result = FileResult()
 
@@ -1114,7 +1114,7 @@ class MatchProcess(models.Model):
         self.file_result.set_processed_provider(self.processed_provider)
 
     def create_file_result(self):
-
+        print("Create File Result")
         # # get nama asuransi
         nama_asuransi = self.file_result.get_nama()
         print("NAMA ASURANSI")
@@ -1235,6 +1235,7 @@ class GoldenRecordMatch(models.Model):
 
 
 class Provider(models.Model):
+    print("Provider")
     nama_asuransi = models.CharField(max_length=500)
     file_location = models.CharField(max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True)
