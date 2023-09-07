@@ -157,14 +157,16 @@ class PerbandinganResult():
         dataframe_insert_new = dataframe_insert.loc[dataframe_insert['Validity'] == True]
         id_asuransi = df_handler.perbandingan_model.get_id_asuransi()
         url = 'https://www.asateknologi.id/api/inshos'
+        count = 0
         for index, row in dataframe_insert_new.iterrows():
             myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
                      'inpatient': row['RI']}
             try:
                 x = requests.post(url, json=myobj)
+                c+=1
             except Exception as e:
                 print(str(e))
-
+        print("Inserted "+str(count))
         pass
 
     def create_file_result_with_id_master(self, df_handler):

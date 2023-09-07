@@ -339,39 +339,39 @@ class MasterMatchProcess(models.Model):
         self.file_result = self.get_file_result_match_processed()
         provider = self.file_result.get_processed_provider()
 
-        for item_provider in provider.get_list_item_provider():
-            for index, row in df2.iterrows():
-                if row['Alamat'] == item_provider.get_alamat():
-                    print("Found")
-                    print(item_provider.get_nama_provider(),item_provider.get_state_id())
-                    url = 'https://www.asateknologi.id/api/master'
-                    myobj = {'stateId': item_provider.get_state_id(),
-                             'cityId': item_provider.get_city_id(),
-                             'category1': 2,
-                             'provider_name': item_provider.get_nama_provider(),
-                             'address': item_provider.get_alamat(),
-                             'tel':'021',
-                             'inpatient':0,
-                             'outpatient':0}
-                    try:
-                        x = requests.post(url, json=myobj)
-                    except Exception as e:
-                        print(str(e))
-
-                    pass
+        # for item_provider in provider.get_list_item_provider():
+        #     for index, row in df2.iterrows():
+        #         if row['Alamat'] == item_provider.get_alamat():
+        #             print("Found")
+        #             print(item_provider.get_nama_provider(),item_provider.get_state_id())
+        #             url = 'https://www.asateknologi.id/api/master'
+        #             myobj = {'stateId': item_provider.get_state_id(),
+        #                      'cityId': item_provider.get_city_id(),
+        #                      'category1': 2,
+        #                      'provider_name': item_provider.get_nama_provider(),
+        #                      'address': item_provider.get_alamat(),
+        #                      'tel':'021',
+        #                      'inpatient':0,
+        #                      'outpatient':0}
+        #             try:
+        #                 x = requests.post(url, json=myobj)
+        #             except Exception as e:
+        #                 print(str(e))
+        #
+        #             pass
 
         id_asuransi = provider.get_id_asuransi()
         print(id_asuransi)
-        # url = 'https://www.asateknologi.id/api/inshos'
-        # for index, row in dataframe_insert_new.iterrows():
-        #     myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
-        #              'inpatient': row['RI']}
-        #     try:
-        #         x = requests.post(url, json=myobj)
-        #     except Exception as e:
-        #         print(str(e))
-        #
-        # pass
+        url = 'https://www.asateknologi.id/api/inshos'
+        for index, row in dataframe_insert_new.iterrows():
+            myobj = {'hospitalId': row['IdMaster'], 'insuranceId': id_asuransi, 'outpatient': row['RJ'],
+                     'inpatient': row['RI']}
+            try:
+                x = requests.post(url, json=myobj)
+            except Exception as e:
+                print(str(e))
+
+        pass
 
     def delete_provider_item_hospital_insurances_with_id_insurances(self):
         self.file_result = self.get_file_result_match_processed()
@@ -599,6 +599,10 @@ class MatchProcess(models.Model):
         kategori_dict["RS"] = 1
         kategori_dict["KLINIK"] = 2
         kategori_dict["APOTEK"] = 3
+        kategori_dict["LAB"] = 4
+        kategori_dict["PRAKTEK"] = 5
+        kategori_dict["OPTIK"] = 6
+
         return kategori_dict
 
     def set_golden_record_instance(self, golden_record):
@@ -643,6 +647,8 @@ class MatchProcess(models.Model):
         # self.list_provider.set_empty_provider_list()
 
     def get_list_provider(self):
+        print("tengen")
+        print(self.list_provider)
         return self.list_provider
 
     def set_dataset(self):
