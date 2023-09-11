@@ -8,6 +8,7 @@ import shutil
 from collections import defaultdict
 import time
 from functools import reduce
+from io import BytesIO
 from multiprocessing import Process, Pool
 from time import sleep
 
@@ -230,6 +231,43 @@ def hos_ins_list(request):
         request.session['hospital_linked_list'] = asu["hospital_linked_list"]
         return JsonResponse({'data': asu["hospital_linked_list"], 'nama_asuransi': nama_asuransi})
 
+def export_excel_linked_list(request):
+    if request.method == "POST":
+        # Get the raw JSON data from the request's body
+        json_data = request.body.decode('utf-8')
+
+
+        # Parse the JSON data into a Python dictionary
+        data = json.loads(json_data)
+
+        # Access the data and perform any necessary processing
+        raw_data = data.get("data")
+        print(raw_data)
+        hospital_linked_dict_list = raw_data['hospital_linked_list']
+        hospital_linked_list = hospital_linked_dict_list.values()
+
+        result = None
+        for item in hospital_linked_list:
+            result = pd.concat([result, pd.DataFrame({
+                'id_master': [item['hospital_id']],
+                'nama_provider': [item['hospital_name']],
+                'alamat': [item['hospital_address']]
+            })], ignore_index=True)
+
+
+        # Create a DataFrame
+        # Export DataFrame to Excel
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        result.to_excel(writer, sheet_name='Sheet1', index=False)
+        writer.save()
+        output.seek(0)
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename='+raw_data['singkatan']+".xlsx"
+        response.write(output.getvalue())
+
+        return response
 
 
 
