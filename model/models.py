@@ -850,8 +850,14 @@ class MatchProcess(models.Model):
         self.provider_name_predict_list = []
         filename = 'tfidf_vec.pickle'
         self.tfidf_vec1 = pickle.load(open(filename, 'rb'))
+        print("{} is loaded".format("tfidf_vec1"))
+
         filename = 'finalized_model.sav'
         self.loaded_model1 = pickle.load(open(filename, 'rb'))
+        print("{} is loaded".format("loaded_model1"))
+
+        self.set_dataset()
+
         self.ex = ExcelBacaTulis()
         self.provider_list = []
         self.df = None
@@ -936,7 +942,6 @@ class MatchProcess(models.Model):
     def process_matching(self):
         # get lokasi excel
         print("Match Process")
-        self.set_dataset()
         self.file_result = FileResult()
 
         self.processed_provider = self.list_provider.get_provider_list().pop()
@@ -1229,7 +1234,7 @@ class GoldenRecordMatch(models.Model):
                         golden.alamat = item_provider.get_alamat()
                         golden.status = item_provider.get_status_item_provider()
                         golden.total_ratio = item_provider.get_total_score()
-                        golden.save()
+                        # golden.save()
 
         pass
 
