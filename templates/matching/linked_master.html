@@ -52,7 +52,7 @@
 
                    {
                     "render" : function(data,type,row){
-                      return '<button id="buka_file" type="button" class="btn btn-primary">Process</button>'
+                      return '<button id="buka_file" type="button" class="btn btn-primary">Process</button> <button id="export_file" type="button" class="btn btn-primary">Export</button>'
                     },
                     targets : 2
                   }
@@ -90,6 +90,56 @@
                     }
                  })
                  return false;
+
+        });
+
+
+        $('#albums tbody').on('click', '#export_file', function () {
+            var datas = table.row($(this).parents('tr')).data();
+           // random data
+          let data = JSON.stringify({data:datas});
+          console.log("Tes");
+            console.log(datas);
+
+          let request = new XMLHttpRequest();
+          request.open('POST', '{% url "export-linked-list" %}', true);
+          request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+          request.responseType = 'blob';
+
+
+        // Get the CSRF token from the cookie
+        var csrfToken = $( "input[name='csrfmiddlewaretoken']" ).val();
+        // Set the CSRF token in the request headers
+        request.setRequestHeader('X-CSRFToken', csrfToken);
+
+        request.onload = function (e) {
+            if (this.status === 200) {
+                let filename = "";
+                let disposition = request.getResponseHeader('Content-Disposition');
+                // check if filename is given
+                if (disposition && disposition.indexOf('attachment') !== -1) {
+                    let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    let matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+                }
+              let blob = this.response;
+              if (window.navigator.msSaveOrOpenBlob) {
+                  window.navigator.msSaveBlob(blob, filename);
+              }
+            else {
+                let downloadLink = window.document.createElement('a');
+                let contentTypeHeader = request.getResponseHeader("Content-Type");
+                downloadLink.href = window.URL.createObjectURL(new Blob([blob], {type: contentTypeHeader}));
+                    downloadLink.download = filename;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                }
+            } else {
+                alert('Download failed.')
+            }
+        };
+        request.send(data);
 
         });
 

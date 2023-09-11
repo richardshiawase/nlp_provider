@@ -43,11 +43,13 @@ urlpatterns = [
     path('match-page/', views.perbandingan_page, name="perbandingan-page"),
 
     path('hos_ins_list/', views.hos_ins_list, name="hos_ins_list"),
+
     path('hos_ins_list_page/', views.hos_ins_list_page, name="hos_ins_list_page"),
     path('hos_ins_list_item/', views.hos_ins_list_item, name="hos_ins_list_item"),
 
     path('tampungan/', views.tampungan, name="tampungan"),
     path('linked-master/', views.linked_master, name="linked-master"),
+    path('export-linked-list/', views.export_excel_linked_list, name="export-linked-list"),
 
     path('master/', views.upload_master, name="upload_master"),
     path('master/list', views.list_master, name="master"),
