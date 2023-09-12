@@ -8,6 +8,7 @@ import shutil
 from collections import defaultdict
 import time
 from functools import reduce
+from io import BytesIO
 from multiprocessing import Process, Pool
 from time import sleep
 
@@ -56,37 +57,59 @@ from tqdm import tqdm
 from django.core.cache import cache
 
 from celery import shared_task
+import threading
 # from .forms import UploadFileForm
 # Create your views here.
 
 
-golden_record_match = GoldenRecordMatch()
-golden_record_match.set_master_match_process()
 
-master_match_process = golden_record_match.get_master_match_process()
-match_process = MatchProcess()
-match_process.set_golden_record_instance(golden_record_match)
-match_process.start()
-match_process.set_list_provider()
-list_provider_model_object = match_process.get_list_provider()
+
+
 provider_dict_item = {}
 master_item_list = []
 
 
-@shared_task()
-def my_background_task():
-    global master_data
-    master_data = MasterData()
 
-my_background_task()
-
-filename = 'tfidf_vec.pickle'
-tfidf_vec1 = pickle.load(open(filename, 'rb'))
-filename = 'finalized_model.sav'
-loaded_model1 = pickle.load(open(filename, 'rb'))
-state = States()
-asuransi = Asuransi()
 server_prefix = "https://www.asateknologi.id"
+
+class BackgroundTask(threading.Thread):
+    def run(self):
+        global master_data
+        global tfidf_vec1
+        global loaded_model1
+        global state
+        global asuransi
+        global match_process
+        global list_provider_model_object
+        global golden_record_match
+        global master_match_process
+
+        golden_record_match = GoldenRecordMatch()
+        golden_record_match.set_master_match_process()
+        master_match_process = golden_record_match.get_master_match_process()
+
+        match_process = MatchProcess()
+        match_process.set_golden_record_instance(golden_record_match)
+        match_process.start()
+        match_process.set_list_provider()
+        list_provider_model_object = match_process.get_list_provider()
+
+        master_data = MasterData()
+        print("{0} is loaded".format("Master Data"))
+
+        state = States()
+        print("{} is loaded".format("state"))
+
+        asuransi = Asuransi()
+        print("{} list is loaded".format("asuransi"))
+
+
+
+t = BackgroundTask()
+t.start()
+
+
+
 
 def index(request):
     context = {"list_pembanding": []}
@@ -208,6 +231,43 @@ def hos_ins_list(request):
         request.session['hospital_linked_list'] = asu["hospital_linked_list"]
         return JsonResponse({'data': asu["hospital_linked_list"], 'nama_asuransi': nama_asuransi})
 
+def export_excel_linked_list(request):
+    if request.method == "POST":
+        # Get the raw JSON data from the request's body
+        json_data = request.body.decode('utf-8')
+
+
+        # Parse the JSON data into a Python dictionary
+        data = json.loads(json_data)
+
+        # Access the data and perform any necessary processing
+        raw_data = data.get("data")
+        print(raw_data)
+        hospital_linked_dict_list = raw_data['hospital_linked_list']
+        hospital_linked_list = hospital_linked_dict_list.values()
+
+        result = None
+        for item in hospital_linked_list:
+            result = pd.concat([result, pd.DataFrame({
+                'id_master': [item['hospital_id']],
+                'nama_provider': [item['hospital_name']],
+                'alamat': [item['hospital_address']]
+            })], ignore_index=True)
+
+
+        # Create a DataFrame
+        # Export DataFrame to Excel
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        result.to_excel(writer, sheet_name='Sheet1', index=False)
+        writer.save()
+        output.seek(0)
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename='+raw_data['singkatan']+".xlsx"
+        response.write(output.getvalue())
+
+        return response
 
 
 
@@ -587,27 +647,18 @@ def sinkron_dataset_process(request):
 
     find = False
     master_data_list = []
-    dfs = None
     dfs_varian = None
     try:
-        dfs = pd.read_excel("master_provider.xlsx")
-        df = cache.get('dataset')
-        if df is None:
-            df = pd.read_excel("dataset_excel_copy.xlsx")
-            cache.set('dataset', df)
-        dfs_varian = df.groupby('subject')
+        dataset_df = cache.get('dataset')
+        if dataset_df is None:
+            dataset_df = pd.read_excel("dataset_excel_copy.xlsx")
+            cache.set('dataset', dataset_df)
+        dfs_varian = dataset_df.groupby('subject')
     except:
         print("dataframe not found")
-    for index, row in dfs.iterrows():
-        id = row['ProviderId']
-        stateId = row['stateId']
-        cityId = row['cityId']
-        category_1 = row['Category_1']
-        category_2 = row['Category_2']
-        provider_name_master = row['PROVIDER_NAME']
-        address = row['ADDRESS']
-        tel_no = row['TEL_NO']
-        master_data = MasterData(id, provider_name_master, address, category_1, category_2, tel_no, stateId, cityId)
+    for item_master in master_data.get_dict_item_master_provider().values():
+        provider_name_master = item_master.get_nama_master()
+        alamat = item_master.get_alamat_master()
         varian_list = []
 
         try:
@@ -618,22 +669,21 @@ def sinkron_dataset_process(request):
 
         except:
             row = pd.Series(
-                {'course_title': master_data.nama_provider + "#" + master_data.alamat, 'alamat': master_data.alamat,
-                 'subject': master_data.nama_provider},
+                {'course_title': provider_name_master, 'alamat': alamat,
+                 'subject': provider_name_master},
                 name=3)
-            df = df.append(row)
-            df.reset_index(drop=True, inplace=True)
+            dataset_df = dataset_df.append(row)
+            dataset_df.reset_index(drop=True, inplace=True)
 
             continue
 
-    df.to_excel("dataset_excel_copy.xlsx", index=False)
+    dataset_df.to_excel("dataset_excel_copy.xlsx", index=False)
     return HttpResponse("Tes")
 
 
 def master_varian_process(request):
     dff = pd.DataFrame()
     dataset = match_process.get_dataset()
-    master_data = MasterData()
     master_data_list = []
     dfs_varian = dataset.get_bulk_dataset().groupby('subject')
     for item_master in tqdm(master_data.get_list_item_master_provider(),
@@ -642,7 +692,10 @@ def master_varian_process(request):
         try:
             dfe = dfs_varian.get_group(item_master.get_nama_master())
             for index_varian, row_varian in dfe.iterrows():
-                varian_list.append(row_varian['course_title'])
+                nama_varian = row_varian['course_title']
+                alamat = row_varian['alamat']
+                nama_varian_alamat = tuple(nama_varian,alamat)
+                varian_list.append(nama_varian_alamat)
         except Exception as e:
             # print(e)
             continue
@@ -659,11 +712,13 @@ def master_varian_process(request):
             name=3))
 
         for varian in item_master.get_varian():
+            nama,alamat = varian
+            print(nama)
             dff = dff.append(pd.Series(
                 {'ProviderId': item_master.get_id_master(), 'ProviderType': "Varian",
                  'stateId': item_master.get_state_id_master(), 'cityId': item_master.get_city_id_master(),
                  'Category_1': item_master.get_category_1_master(), 'Category_2': item_master.get_category_2_master(),
-                 'PROVIDER_NAME': varian, 'ADDRESS': "-", 'TEL_NO': "-"},
+                 'PROVIDER_NAME': nama, 'ADDRESS': alamat, 'TEL_NO': "-"},
                 name=3))
 
         # master_data_list.append(master_data.__dict__)
@@ -944,11 +999,11 @@ def add_master_by_dashboard(request):
                  }
         try:
             pass
-            x = requests.post(url, json=myobj)
+            # x = requests.post(url, json=myobj)
             token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
             header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
             url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            d = requests.get(url_sinkron_sinta,headers=header)
+            # d = requests.get(url_sinkron_sinta,headers=header)
         except Exception as e:
             print(e)
 
@@ -1179,8 +1234,8 @@ def perbandingan_result(request):
         golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
-        master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        # master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
 
         list_item_provider_json = []
@@ -1330,9 +1385,8 @@ def perbandingan_result_versus(request):
     green_fill = PatternFill(start_color='00FF00', end_color='00FF00', fill_type='solid')
     master_df[0]['Compared'] = 'False'
     master_df[1]['Compared'] = 'False'
-    master_df[0]['IdMaster'] = master_df[0]['IdMaster'].astype(int)
-    master_df[1]['IdMaster'] = master_df[1]['IdMaster'].astype(int)
 
+    print("Comparing")
     for index,row in master_df[0].iterrows():
         id_master1 = int(row['IdMaster'])
         for index2,row2 in master_df[1].iterrows():

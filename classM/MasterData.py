@@ -12,7 +12,7 @@ class MasterData:
         # clean the dataframe
         pembersih = Pembersih(df)
 
-        self.dataframe_master = pembersih._return_df_master()
+        self.dataframe_master = pembersih._return_df()
         self.list_item_master_provider = []
         self.dict_item_master_provider = {}
         self.set_list_item_master_provider()

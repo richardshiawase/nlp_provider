@@ -4,7 +4,7 @@ class Prediction:
         self.alamat = alamat
 
     def get_nama_provider(self):
-        return self.nama_provider
+        return self.nama_provider.strip().lower()
 
     def get_count_refer(self):
         return self.count_refer
