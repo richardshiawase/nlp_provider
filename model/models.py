@@ -614,12 +614,12 @@ class MasterMatchProcess(models.Model):
 
                 if item.get_total_score() <= total_score :
                     item.set_total_score(total_score)
-                    # item.set_label_name(item_master.get_nama_master())
+                    item.set_label_name(item_master.get_nama_master())
                     item.set_alamat_ratio(alamat_ratio)
                     item.set_alamat_prediction(item_master.get_alamat_master())
-                    # item.set_id_master(item_master.get_id_master())
-                    # item.set_nama_master_provider(item_master.get_nama_master())
-                    # item.set_alamat_master_provider(item_master.get_alamat_master())
+                    item.set_id_master(item_master.get_id_master())
+                    item.set_nama_master_provider(item_master.get_nama_master())
+                    item.set_alamat_master_provider(item_master.get_alamat_master())
 
 
             item.set_status_item_provider("Direct 2")
@@ -1028,7 +1028,7 @@ class MatchProcess(models.Model):
             res_master = df_dataset_non_duplicate[val_master]
             al = res_master["alamat"].head(1)
 
-            alamat_ratio = fuzz.token_set_ratio(al.values[0], item_provider.get_alamat())
+            alamat_ratio = fuzz.ratio(al.values[0], item_provider.get_alamat())
             total_score = float("{:.2f}".format((score + (nil * 100) + alamat_ratio) / 3))
 
             item_provider.set_total_score(total_score)
