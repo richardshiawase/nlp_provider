@@ -298,7 +298,7 @@ class ItemProvider(models.Model):
                 self.validity = False
 
         elif self.get_status_item_provider() == "Direct 2":
-            if  self.get_alamat_ratio() >= 80:
+            if  (self.get_alamat_ratio() >= 80 and self.get_proba_score() > 0.40) or self.get_alamat_ratio() > 95:
                 self.validity = True
             else:
                 self.validity = False
@@ -486,7 +486,7 @@ class MasterMatchProcess(models.Model):
 
     def if_proba_score_high_add_to_list(self, item, list_item_master_provider):
         # if validity still false
-        if item.get_status_item_provider() != "Master" and (item.get_proba_score() > 0.8 or item.get_alamat_ratio() >= 95):
+        if item.get_status_item_provider() != "Master" and (item.get_proba_score() > 0.3 or item.get_alamat_ratio() >= 95):
             item.set_total_score(0)
             item.set_ratio(0)
 
