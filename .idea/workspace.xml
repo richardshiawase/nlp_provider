@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c41a05f3-401c-48aa-9389-cd39e7d1c49f" name="Changes" comment="er">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/matching/linked_master.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/matching/linked_master.html" afterDir="false" />
-    </list>
+    <list default="true" id="c41a05f3-401c-48aa-9389-cd39e7d1c49f" name="Changes" comment="er" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -26,7 +21,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="versus_error" />
+        <entry key="$PROJECT_DIR$" value="matching_error" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
