@@ -643,19 +643,19 @@ def download_master_varian(request):
 
 
 def sinkron_dataset_process(request):
-    dff = pd.DataFrame()
+    dataset_df = pd.DataFrame()
 
     find = False
     master_data_list = []
     dfs_varian = None
-    try:
-        dataset_df = cache.get('dataset')
-        if dataset_df is None:
-            dataset_df = pd.read_excel("dataset_excel_copy.xlsx")
-            cache.set('dataset', dataset_df)
-        dfs_varian = dataset_df.groupby('subject')
-    except:
-        print("dataframe not found")
+    # try:
+    #     dataset_df = cache.get('dataset')
+    #     if dataset_df is None:
+    #         dataset_df = pd.read_excel("dataset_excel_copy.xlsx")
+    #         cache.set('dataset', dataset_df)
+    #     dfs_varian = dataset_df.groupby('subject')
+    # except:
+    #     print("dataframe not found")
     for item_master in master_data.get_dict_item_master_provider().values():
         provider_name_master = item_master.get_nama_master()
         alamat = item_master.get_alamat_master()
@@ -999,11 +999,11 @@ def add_master_by_dashboard(request):
                  }
         try:
             pass
-            # x = requests.post(url, json=myobj)
+            x = requests.post(url, json=myobj)
             token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
             header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
             url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            # d = requests.get(url_sinkron_sinta,headers=header)
+            d = requests.get(url_sinkron_sinta,headers=header)
         except Exception as e:
             print(e)
 
@@ -1234,8 +1234,8 @@ def perbandingan_result(request):
         golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
-        # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        # master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
 
         list_item_provider_json = []
