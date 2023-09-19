@@ -643,19 +643,19 @@ def download_master_varian(request):
 
 
 def sinkron_dataset_process(request):
-    dff = pd.DataFrame()
+    dataset_df = pd.DataFrame()
 
     find = False
     master_data_list = []
     dfs_varian = None
-    try:
-        dataset_df = cache.get('dataset')
-        if dataset_df is None:
-            dataset_df = pd.read_excel("dataset_excel_copy.xlsx")
-            cache.set('dataset', dataset_df)
-        dfs_varian = dataset_df.groupby('subject')
-    except:
-        print("dataframe not found")
+    # try:
+    #     dataset_df = cache.get('dataset')
+    #     if dataset_df is None:
+    #         dataset_df = pd.read_excel("dataset_excel_copy.xlsx")
+    #         cache.set('dataset', dataset_df)
+    #     dfs_varian = dataset_df.groupby('subject')
+    # except:
+    #     print("dataframe not found")
     for item_master in master_data.get_dict_item_master_provider().values():
         provider_name_master = item_master.get_nama_master()
         alamat = item_master.get_alamat_master()
