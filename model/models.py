@@ -72,6 +72,7 @@ class ItemProvider(models.Model):
     alamat_prediction = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     golden_record = models.CharField(max_length=2)
+    validity = models.CharField(max_length=255)
 
     def set_compared(self, bool):
         self.compared = bool
@@ -274,7 +275,7 @@ class ItemProvider(models.Model):
     def get_id_asuransi(self):
         return self.id_asuransi
 
-    def set_validity(self):
+    def set_validity(self,validity=None):
         if self.get_status_item_provider() == "Master":
             # if self.get_alamat_ratio() >= 85 or self.get_ratio() >= 95 or self.get_proba_score() > 0.8:
             self.validity = True
@@ -306,7 +307,8 @@ class ItemProvider(models.Model):
         else:
 
             self.validity = False
-
+        if validity is not None:
+            self.validity = validity
     def is_validity(self):
         return self.validity
 
@@ -682,28 +684,8 @@ class MasterMatchProcess(models.Model):
             # # 4. If fail , compare address to master address
             self.compare_alamat_provider_to_master(item,list_item_master_provider)
 
-            # if item.get_status_item_provider() == "Direct 1" or item.get_status_item_provider() == "Direct 2":
-            #     item.set_processed(True)
-            #     id_master_list.append(item.get_id_master())
-            #     provider_name_master_list.append(item.get_nama_master_provider())
-            #     alamat_master_list.append(item.get_alamat_master_provider())
-            #
-            #     list_item_provider_nama.append(item.get_nama_provider())
-            #     list_item_provider_alamat.append(item.get_alamat())
-            #     list_item_provider_ri.append(item.get_ri())
-            #     list_item_provider_rj.append(item.get_rj())
-            #     list_item_provider_score.append(item.get_proba_score())
-            #     list_item_ratio.append(item.get_ratio())
-            #     list_item_alamat_ratio.append(item.get_alamat_ratio())
-            #
-            #     list_item_total_score.append(item.get_total_score())
-            #
-            #     item.set_validity()
-            #
-            #     list_item_status.append(item.get_status_item_provider())
-            #     list_item_validity.append(item.is_valid())
-            #
-            #     break
+            # # # SAVE THE ITEM
+            item.save()
 
         dict_result = {
             'IdMaster': pd.Series(self.id_master_list),
@@ -1066,6 +1048,7 @@ class MatchProcess(models.Model):
                 self.predict_item_provider(item_provider)
 
                 item_provider.set_compared(True)
+
 
 
 

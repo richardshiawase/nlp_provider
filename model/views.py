@@ -13,12 +13,15 @@ from django.shortcuts import render
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, SGDClassifier, SGDRegressor
 import django
+from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
+import sklearn.linear_model as lm
 
 from classM.Pembersih import Pembersih
 django.setup()
 import pickle
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer
+from sklearn.preprocessing import StandardScaler
 
 import model.models
 from . import views, models
@@ -520,30 +523,56 @@ def create_model_bc(df):
 
 def create_model(dfc):
     print("Create Model")
-    # lr_model = SGDClassifier(loss='modified_huber',learning_rate='constant',n_jobs=-1,random_state=0,eta0=0.1)
-    lr_model = KNeighborsClassifier(n_neighbors=5,metric ='minkowski', p=2)
+
+    tfidf_transformer = TfidfTransformer()
+    tfidf_vec = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8', input='content',
+                                lowercase=True, max_df=0.85, max_features=25000, min_df=1, ngram_range=(1, 1),
+                                norm='l2', preprocessor=None, smooth_idf=True, stop_words=None, strip_accents=None,
+                                sublinear_tf=False, token_pattern='(?u)\\b\\w\\w+\\b', tokenizer=None, use_idf=True,
+                                vocabulary=None)
+
+
+    lr_model = lm.LogisticRegression(C=15e1, solver='sag', multi_class='multinomial', random_state=17, n_jobs=-1,
+                                     warm_start=True)
+
     pembersih = Pembersih(dfc)
     df = pembersih._return_df()
-    df['clean_course_title'] = df['course_title']
-
-
-
     print("Improt Tfidf")
-    Xfeatures = df['clean_course_title']
-    ylabels = df['subject']
-    tfidf_vec = TfidfVectorizer()
-    X = tfidf_vec.fit_transform(Xfeatures.values.astype('U'))
-    print("Split Dataset ")
+    Xfeatures = df[['course_title', 'alamat']]
+    ylabels = df['subject'].str.lower()
 
-    x_train, x_test, y_train, y_test = train_test_split(X, ylabels, test_size=0.2, random_state=1)
+
+    con = pd.DataFrame()
+
+    con['combined'] = Xfeatures.course_title.str.replace("rsia", "").str.replace("rs", "").str.replace("klinik","") + " " + Xfeatures.alamat.str.replace("Jl.", "").str.replace("jl.", "").str.replace("Jalan", "").str.replace("NO.", "")
+    con['combined'] = con.apply(lambda x: x.astype(str).str.lower())
+    con['combined'] = con['combined'].str.replace(r'\.', " ")
+    m_nm = tfidf_vec.fit_transform(con.combined.values.astype('U'))
+
+    m_al = ylabels
+
+
+
+
+    print("Split Dataset ")
+    X_train, X_test, y_train, y_test = train_test_split(m_nm, m_al, test_size=0.2, random_state=42)
+
+    # Scale the features using TfidfTransformer
+    tfidf_train_scaled = tfidf_transformer.fit_transform(X_train)
+    # tfidf_train_scaled = tfidf_transformer.transform(X_train)
+    tfidf_test_scaled = tfidf_transformer.transform(X_test)
+
     # print(X.shape)
     try:
         print("Fit Model")
-        # lr_model.partial_fit(x_train, y_train, classes=np.unique(ylabels))
-        lr_model.fit(x_train,y_train)
-        # calibrator = CalibratedClassifierCV(clf, cv='prefit')
-        # model = calibrator.fit(X_tr, y_train)
-        print(lr_model.score(x_test, y_test))
+        lr_model.fit(tfidf_train_scaled, y_train)
+        print("lr_model fit finished")
+
+        y_pred = lr_model.predict(X_test)
+        print("lr_model y_pred finished")
+
+        accuracy = accuracy_score(y_test, y_pred)
+        print(accuracy)
 
     except Exception as e:
         print("sumting wonge "+str(e))
@@ -563,31 +592,13 @@ def create_model(dfc):
     #
     print(pred)
 
-    # print("Open Pickle")
-    # pickle.dump(tfidf_vec, open('tfidf_vec.pickle', 'wb'))
-    #
-    # # # save the model to disk
-    # print("Save model to disk")
-    # filename = 'finalized_model.sav'
-    # pickle.dump(lr_model, open(filename, 'wb'))
-    #
-    # print("Save Model")
-    # model_create = models.Provider_Model(model_name=filename, accuracy_score=str(lr_model.score(x_test, y_test)),
-    #                                      model_location='drive C')
-    # model_create.save()
-    #
-    # # load the model from disk
-    # print("Load Model")
-    # loaded_model = pickle.load(open(filename, 'rb'))
-    # result = loaded_model.score(x_test, y_test)
-    # print(result)
-    # from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
-    #
-    #
-    #
-    #
-    # df.to_excel('wew.xlsx')
+    # Save the model to a file using pickle
+    with open('tfidf_vec.pickle', 'wb') as model_file:
+        pickle.dump(tfidf_vec, model_file)
 
+    # Save the model to a file using pickle
+    with open('finalized_model.sav', 'wb') as model_file:
+        pickle.dump(lr_model, model_file)
     print("Finish Creating Model")
 
 
