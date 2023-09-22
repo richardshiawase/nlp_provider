@@ -64,7 +64,7 @@ import threading
 
 
 
-
+ITERASI = 10
 provider_dict_item = {}
 master_item_list = []
 
@@ -989,6 +989,8 @@ def add_master_by_dashboard(request):
         provinsi_provider = state.get_item_state_dict().get(provinsi_provider)
         city = state.get_city()
         city_provider = city.get_item_city_only_dict().get(city_provider)
+
+        item_master = ItemMaster("-",provinsi_provider.get_state_id(),city_provider.get_city_id(),kategori_provider,"-",nama_provider,alamat_provider,telepon_provider)
         url = 'https://www.asateknologi.id/api/master'
         myobj = {'stateId': provinsi_provider.get_state_id(),
                  'cityId': city_provider.get_city_id(),
@@ -999,13 +1001,40 @@ def add_master_by_dashboard(request):
                  'latitude': latitude_provider,
                  'longitude': longitude_provider
                  }
+        # try:
+        #     pass
+        #     x = requests.post(url, json=myobj)
+        #     token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
+        #     header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+        #     url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
+        #     d = requests.get(url_sinkron_sinta,headers=header)
+        #
+        # except Exception as e:
+        #     print(e)
+
         try:
-            pass
-            x = requests.post(url, json=myobj)
-            token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
-            header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-            url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            d = requests.get(url_sinkron_sinta,headers=header)
+
+            # # # CLEAR ALL DATASET CACHE
+            # # # READ DATASET FRESHLY FROM EXCEL
+            # # # ADD TO DATASET
+            # # # SAVE TO DATASET AND CREATE CACHE
+            cache.delete('dataset')
+            match_process.set_dataset()
+            dataset = match_process.get_dataset()
+            df = dataset.get_bulk_dataset()
+
+            print(df['updated'])
+            for x in range(ITERASI):
+                row = pd.Series(
+                    {'course_title': item_master.get_nama_master(), 'alamat': item_master.get_alamat_master(),'updated':int(0),
+                     'subject': item_master.get_nama_master()}, name=3)
+                df = df.append(row, ignore_index=True)
+
+            pembersih = Pembersih(df)
+            df = pembersih._return_df()
+            print(df['updated'])
+            df.to_excel("dataset_excel_copy.xlsx", index=False)
+            match_process.set_dataset()
         except Exception as e:
             print(e)
 
@@ -1029,7 +1058,7 @@ def add_master_store(request):
 
         read_link_result_and_delete_provider_name(nama_provider)
 
-
+        # # # tambahin ke dataset
 
     else:
         return HttpResponse("OK")
@@ -1099,7 +1128,7 @@ def add_to_dataset(request):
 
             try:
                 rowe = pd.Series(
-                    {'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat()}, name=3)
+                    {'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat(),'subject': label_name}, name=3)
                 df_basket = df_basket.append(rowe, ignore_index=True)
             except:
                 break
