@@ -64,7 +64,7 @@ import threading
 
 
 
-
+ITERASI = 10
 provider_dict_item = {}
 master_item_list = []
 
@@ -160,7 +160,7 @@ def master_linked_load(request):
 def newe(request):
     list_provider_model_object.set_empty_provider_list()
     data_list = models.Provider.objects.raw(
-        "select mm.id,mm.match_percentage,mm.id_model,mm.id_file_result,mm.status_finish,mm.created_at,mp.nama_asuransi,mp.file_location,mf.file_location_result from model_matchprocess mm inner join model_provider mp on mm.id_model = mp.id inner join model_fileresult mf on mm.id_file_result = mf.id group by mp.nama_asuransi order by mm.created_at DESC")
+        "select mm.id,mm.match_percentage,mm.id_model,mm.id_file_result,mm.status_finish,mm.created_at,mp.nama_asuransi,mp.file_location,mf.file_location_result from model_matchprocess mm inner join model_provider mp on mm.id_model = mp.id inner join model_fileresult mf on mm.id_file_result = mf.id  order by mm.created_at DESC")
     for data in data_list:
         provider = Provider()
         provider.set_nama_asuransi_model(data.nama_asuransi)
@@ -174,7 +174,6 @@ def newe(request):
         list_item_provider_json = []
         dt = models.Provider.objects.raw("select * from model_itemprovider where id_model = %s",
                                          [provider.get_primary_key_provider()])
-
         for item in dt:
             item_provider = ItemProvider()
             item_provider.set_id(item.pk)
@@ -188,6 +187,7 @@ def newe(request):
             item_provider.set_rj(item.rj)
             item_provider.set_id_asuransi(item.id_asuransi)
             item_provider.set_selected("-")
+            item_provider.set_validity(item.validity)
             del item_provider._state
 
             # list_item_provider.append(item_provider)
@@ -204,6 +204,7 @@ def newe(request):
 
 def open_file_perbandingan(request):
     data = request.session['data_provider']
+    print(data)
     id_provider = data['id']
     # provider = list_provider_model_object.get_a_provider_from_id(id_provider)
     return JsonResponse(data["list_item_provider_json"], safe=False)
@@ -368,6 +369,7 @@ def perbandingan_page(request):
     data = request.session['data_provider']
     nama_asuransi = data['nama_asuransi']
     link_result = data["file_location_result"]
+    print(link_result)
 
     context = {"list": [], "link_result": link_result, 'nama_asuransi': nama_asuransi}
     return render(request, 'matching/perbandingan_page_open_result.html', context=context)
@@ -987,6 +989,8 @@ def add_master_by_dashboard(request):
         provinsi_provider = state.get_item_state_dict().get(provinsi_provider)
         city = state.get_city()
         city_provider = city.get_item_city_only_dict().get(city_provider)
+
+        item_master = ItemMaster("-",provinsi_provider.get_state_id(),city_provider.get_city_id(),kategori_provider,"-",nama_provider,alamat_provider,telepon_provider)
         url = 'https://www.asateknologi.id/api/master'
         myobj = {'stateId': provinsi_provider.get_state_id(),
                  'cityId': city_provider.get_city_id(),
@@ -997,13 +1001,40 @@ def add_master_by_dashboard(request):
                  'latitude': latitude_provider,
                  'longitude': longitude_provider
                  }
+        # try:
+        #     pass
+        #     x = requests.post(url, json=myobj)
+        #     token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
+        #     header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+        #     url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
+        #     d = requests.get(url_sinkron_sinta,headers=header)
+        #
+        # except Exception as e:
+        #     print(e)
+
         try:
-            pass
-            x = requests.post(url, json=myobj)
-            token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
-            header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-            url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-            d = requests.get(url_sinkron_sinta,headers=header)
+
+            # # # CLEAR ALL DATASET CACHE
+            # # # READ DATASET FRESHLY FROM EXCEL
+            # # # ADD TO DATASET
+            # # # SAVE TO DATASET AND CREATE CACHE
+            cache.delete('dataset')
+            match_process.set_dataset()
+            dataset = match_process.get_dataset()
+            df = dataset.get_bulk_dataset()
+
+            print(df['updated'])
+            for x in range(ITERASI):
+                row = pd.Series(
+                    {'course_title': item_master.get_nama_master(), 'alamat': item_master.get_alamat_master(),'updated':int(0),
+                     'subject': item_master.get_nama_master()}, name=3)
+                df = df.append(row, ignore_index=True)
+
+            pembersih = Pembersih(df)
+            df = pembersih._return_df()
+            print(df['updated'])
+            df.to_excel("dataset_excel_copy.xlsx", index=False)
+            match_process.set_dataset()
         except Exception as e:
             print(e)
 
@@ -1027,7 +1058,7 @@ def add_master_store(request):
 
         read_link_result_and_delete_provider_name(nama_provider)
 
-
+        # # # tambahin ke dataset
 
     else:
         return HttpResponse("OK")
@@ -1065,28 +1096,45 @@ def add_to_dataset(request):
             label_name = label_name.split("#")[0]
 
             item_provider = ItemProvider.objects.get(pk=key_provider)
+            ctr = 0
 
-            for x in range(10):
-                try:
-                    row = pd.Series(
-                        {'course_title': item_provider.get_nama_alamat(), 'alamat': item_provider.get_alamat(),
-                         'subject': label_name}, name=3)
-                    df = df.append(row, ignore_index=True)
-                    cache.delete('dataset')
-                except:
-                    break
+            for index, row in df.iterrows():
+                alamat = str(row['alamat'])
+                label = row["subject"]
+                updated = row['updated']
+
+
+                if label == label_name:
+                    if row['updated'] == str(0):
+                        if ctr > 0 :
+                            df.at[index, 'course_title'] = item_provider.get_nama_provider()
+                            df.at[index, 'alamat'] = item_provider.get_alamat()
+                            df.at[index, 'updated'] = str(1)
+                            df.at[index, 'subject'] = label_name
+                            break
+                    ctr += 1
+
+
+        #
+        #     for x in range(10):
+        #         try:
+        #             row = pd.Series(
+        #                 {'course_title': item_provider.get_nama_alamat(), 'alamat': item_provider.get_alamat(),
+        #                  'subject': label_name}, name=3)
+        #             df = df.append(row, ignore_index=True)
+        #             cache.delete('dataset')
+        #         except:
+        #             break
 
             try:
                 rowe = pd.Series(
-                    {'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat()}, name=3)
+                    {'course_title': item_provider.get_nama_provider(), 'alamat': item_provider.get_alamat(),'subject': label_name}, name=3)
                 df_basket = df_basket.append(rowe, ignore_index=True)
             except:
                 break
 
-        # df = df.reset_index(drop=True)
         df_basket.to_excel("basket_provider.xlsx", index=False)
         df.to_excel("dataset_excel_copy.xlsx", index=False)
-        # create_model(df)
 
         context = {"list_pembanding": []}
 
@@ -1234,8 +1282,8 @@ def perbandingan_result(request):
         golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
-        master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        # master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
 
         list_item_provider_json = []
