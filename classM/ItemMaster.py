@@ -6,12 +6,12 @@ class ItemMaster:
         self.category_1 = category_1
         self.category_2 = category_2
         self.provider_name = str(provider_name).replace("_x000d_", "").replace("'","").replace("'","")
-        self.address = str(address).replace("_x000d_", "")
+        self.address = str(address).lower().replace("_x000d_", "").replace(".","")
         self.tel_no = tel_no
 
         remove_words = ["rs", "rsia", "rumah sakit", "optik", "klinik", "clinic", "lab", "laboratorium", "optic"]
         for rem in remove_words:
-            self.provider_name = self.provider_name.replace(rem, "")
+            self.provider_name = self.provider_name.lower().replace(rem, "")
         self.nama_provider = self.provider_name.strip()
 
 

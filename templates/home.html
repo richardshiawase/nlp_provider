@@ -20,7 +20,7 @@
             <tr>
               <th data-data="rank">Asuransi</th>
               <th data-data="rank">Result File</th>
-              <th data-data="rank">Status</th>
+              <th data-data="rank">Created At</th>
               <th data-data="rank">Report</th>
               <th data-data="rank">Action</th>
             </tr>
@@ -43,6 +43,7 @@
               url: "{% url 'newe' %}",
               type: 'GET',
               dataSrc: "",
+
           },
 
           columnDefs: [
@@ -64,9 +65,10 @@
           columns: [
                   {   data: "nama_asuransi" },
                   {   data: "file_location_result" },
-                  {   data: "status_matching" },
+                  {   data: "created_at" },
               ],
 
+             order: [[2, 'desc']],
 
           });
 
