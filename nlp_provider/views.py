@@ -974,6 +974,35 @@ def loop_delete(link_result):
     dfs.to_excel(link_result, sheet_name='Sheet1', index=False)
 
 
+
+
+class BackgroundTaskDataset(threading.Thread):
+    def run(self):
+        item_master = self.item_master
+        cache.delete('dataset')
+        match_process.set_dataset()
+        dataset = match_process.get_dataset()
+        df = dataset.get_bulk_dataset()
+
+        print(df['updated'])
+        for x in range(ITERASI):
+            row = pd.Series(
+                {'course_title': item_master.get_nama_master(), 'alamat': item_master.get_alamat_master(),
+                 'updated': int(0),
+                 'subject': item_master.get_nama_master()}, name=3)
+            df = df.append(row, ignore_index=True)
+
+        pembersih = Pembersih(df)
+        df = pembersih._return_df()
+        print(df['updated'])
+        df.to_excel("dataset_excel_copy.xlsx", index=False)
+        match_process.set_dataset()
+
+    def set_item_master(self,item_master):
+        self.item_master
+
+
+
 def add_master_by_dashboard(request):
     if request.method == "POST":
         nama_provider = request.POST["nama_provider"]
@@ -1001,16 +1030,16 @@ def add_master_by_dashboard(request):
                  'latitude': latitude_provider,
                  'longitude': longitude_provider
                  }
-        # try:
-        #     pass
-        #     x = requests.post(url, json=myobj)
-        #     token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
-        #     header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-        #     url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
-        #     d = requests.get(url_sinkron_sinta,headers=header)
-        #
-        # except Exception as e:
-        #     print(e)
+        try:
+            pass
+            x = requests.post(url, json=myobj)
+            token = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ1c2VyZm9ycHJvdmlkZXIiLCJpYXQiOjE2ODMyNzExNjYsIm5hbWUiOiJ1c2VyZm9ycHJvdmlkZXIifQ.l65gkzEqH-uuN9b84ZU4aADwM2Rb3nZRgsmmAqwTQsc"
+            header = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+            url_sinkron_sinta = "http://192.168.80.210/be/api/dashboard/syncronize"
+            d = requests.get(url_sinkron_sinta,headers=header)
+
+        except Exception as e:
+            print(e)
 
         try:
 
@@ -1018,23 +1047,11 @@ def add_master_by_dashboard(request):
             # # # READ DATASET FRESHLY FROM EXCEL
             # # # ADD TO DATASET
             # # # SAVE TO DATASET AND CREATE CACHE
-            cache.delete('dataset')
-            match_process.set_dataset()
-            dataset = match_process.get_dataset()
-            df = dataset.get_bulk_dataset()
+            dt = BackgroundTaskDataset()
 
-            print(df['updated'])
-            for x in range(ITERASI):
-                row = pd.Series(
-                    {'course_title': item_master.get_nama_master(), 'alamat': item_master.get_alamat_master(),'updated':int(0),
-                     'subject': item_master.get_nama_master()}, name=3)
-                df = df.append(row, ignore_index=True)
+            dt.set_item_master(item_master)
+            dt.start()
 
-            pembersih = Pembersih(df)
-            df = pembersih._return_df()
-            print(df['updated'])
-            df.to_excel("dataset_excel_copy.xlsx", index=False)
-            match_process.set_dataset()
         except Exception as e:
             print(e)
 
@@ -1282,8 +1299,8 @@ def perbandingan_result(request):
         golden_record_match.set_final_result(master_match_process.get_file_final_result_master_match())
         golden_record_match.set_file_result(master_match_process.get_file_result_match_processed())
         golden_record_match.process_golden_record()
-        # master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
-        # master_match_process.insert_into_end_point_andika_assistant_item_provider()
+        master_match_process.delete_provider_item_hospital_insurances_with_id_insurances()
+        master_match_process.insert_into_end_point_andika_assistant_item_provider()
         print("--- %s seconds ---" % (time.time() - start_time))
 
         list_item_provider_json = []
