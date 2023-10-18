@@ -98,6 +98,8 @@ urlpatterns = [
     path("training/",include("training.urls")),
     path("model/",include("model.urls"))
 
+
+
 ]
 
 if settings.DEBUG:

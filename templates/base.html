@@ -102,6 +102,22 @@
                     </ul>
                 </li>
 
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Audit Trail</a>
+                     <ul class="dropdown-menu">
+                        <li><a class="dropdown-item disabled" href="{% url 'sinkron_master_process'%}">Total Jumlah User</a></li>
+                         <li><a class="dropdown-item disabled" href="{% url 'master_varian_process'%}">Total jumlah provider</a></li>
+                         <li><a class="dropdown-item disabled" href="{% url 'sinkron_dataset_process'%}">Total Device Info</a></li>
+
+                         <li><a class="dropdown-item disabled" href="{% url 'master_varian_list'%}">Client paling banyak pengguna mobile app</a></li>
+
+                        <li><a class="dropdown-item disabled" href="{% url 'upload_master'%}">Screen Tracking</a></li>
+                        <li><a class="dropdown-item disabled" href="{% url 'model:model_route'%}">Daerah akses pengguna</a></li>
+
+
+                    </ul>
+                </li>
+
 
 
 
