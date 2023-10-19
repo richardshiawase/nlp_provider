@@ -1,0 +1,96 @@
+<!-- templates/home.html-->
+{% extends 'base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'myfirst.css' %}">
+{% block title %}Instant Search{% endblock %}
+{% block content %}
+
+<div class="container mt-3">
+  <div class="container">
+
+
+
+    <div class="row">
+
+        <div id="tampungan" class="col-sm-12">
+             <div class="form-group">
+              <label for="comment">Nama Provider:</label>
+              <textarea id="text_field" class="form-control" rows="1" id="comment"></textarea>
+            </div>
+            <button id="buka_file" type="button" class="btn btn-primary">Temukan !</button>
+        </div>
+
+        <div class="col-sm-3">
+        </div>
+         <div  class="col-sm-6">
+            <h1 id="answer" class="text-center"></h1>
+        </div>
+         <div  class="col-sm-3">
+        </div>
+
+
+
+    </div>
+  </div>
+
+
+</div>
+
+ <script>
+      $(document).ready(function() {
+
+            $('#buka_file').click(function () {
+                var data = $('#text_field').val();
+                console.log(data);
+                    $.ajax({
+                        datatype: "json",
+                        method: "POST",
+                        url: "{% url 'instant-search-process' %}",
+                        data: {
+                            "data": JSON.stringify(data),
+                            "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                        },
+                        success: function (data) {
+                            console.log(data);
+                            setInterval(blink_text, 400);
+
+                            $('#answer').text(data.data);
+                        }
+                    });
+            return false;
+            });
+
+
+            function blink_text() {
+                $('#answer').fadeOut(500);
+                $('#answer').fadeIn(500);
+            }
+
+            $('#text_field').keydown(function (e) {
+
+              if (e.ctrlKey && e.keyCode == 13) {
+                // Ctrl + Enter pressed
+                 var data = $('#text_field').val();
+                console.log(data);
+                    $.ajax({
+                        datatype: "json",
+                        method: "POST",
+                        url: "{% url 'instant-search-process' %}",
+                        data: {
+                            "data": JSON.stringify(data),
+                            "csrfmiddlewaretoken":$( "input[name='csrfmiddlewaretoken']" ).val()
+                        },
+                        success: function (data) {
+                            console.log(data);
+                            setInterval(blink_text, 400);
+
+                            $('#answer').text(data.data);
+                        }
+                    });
+            return false;
+              }
+            });
+      });
+  </script>
+
+{% endblock %}

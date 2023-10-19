@@ -22,6 +22,7 @@ from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.shortcuts import render
 import warnings
 
+from fuzzywuzzy import fuzz
 from openpyxl.styles import PatternFill
 
 from classM.Asuransi import Asuransi
@@ -373,6 +374,23 @@ def perbandingan_page(request):
 
     context = {"list": [], "link_result": link_result, 'nama_asuransi': nama_asuransi}
     return render(request, 'matching/perbandingan_page_open_result.html', context=context)
+
+
+def instant_search(request):
+    return render(request, 'matching/instant_search.html')
+
+
+
+
+def instant_search_process(request):
+    if request.method == "POST":
+        data = json.loads(request.POST["data"])
+
+        y_preds, nil, score = match_process.calculate_score_instant(data)
+        if nil < 0.5:
+            y_preds = "Data belum dipelajari"
+
+        return JsonResponse({'data': y_preds, 'nil': nil, 'score': score})
 
 
 def perbandingan_upload_page(request):

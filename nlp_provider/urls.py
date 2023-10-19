@@ -31,6 +31,8 @@ urlpatterns = [
     path('new', views.newe, name='newe'),  # new
     path('master-linked-load', views.master_linked_load, name='master_linked_load'),  # new
 
+    path('instant-search/', views.instant_search, name="instant-search"),
+    path('instant-search-process/', views.instant_search_process, name="instant-search-process"),
 
     path('perbandingan-upload-page/', views.perbandingan_upload_page, name="perbandingan-upload-page"),
     path('perbandingan-versus-page/', views.perbandingan_versus_page, name="perbandingan-versus-page"),
