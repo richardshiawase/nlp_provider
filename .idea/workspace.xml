@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="21c3950f-0483-4789-a1b5-f9a45241ed29" name="Changes" comment="er">
-      <change afterPath="$PROJECT_DIR$/static/myfirst.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/matching/instant_search.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-    </list>
+    <list default="true" id="21c3950f-0483-4789-a1b5-f9a45241ed29" name="Changes" comment="er" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
