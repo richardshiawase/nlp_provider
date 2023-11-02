@@ -82,6 +82,9 @@ class ItemMaster:
     def set_state_id_master(self, id):
         self.stateId = id
 
+    def set_city_id_master(self, id):
+        self.cityId = id
+
     def get_state_id_master(self):
         return self.stateId
 

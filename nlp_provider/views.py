@@ -22,6 +22,7 @@ from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.shortcuts import render
 import warnings
 
+from fuzzywuzzy import fuzz
 from openpyxl.styles import PatternFill
 
 from classM.Asuransi import Asuransi
@@ -307,10 +308,27 @@ def update_master(request):
                 kategori_id = int(v)
 
         url = server_prefix+"/api/hospital/"+id_provider
-        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider, 'address': alamat,'category_1':kategori_id,'tel_no':telepon,'state_id':state_id,'city_id':city_id}
+        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider, 'address': alamat,'category_1':str(kategori_id),'tel_no':telepon,'state_id':str(state_id),'city_id':str(city_id)}
         x = requests.put(url, json=myobj)
         if x.status_code == 200:
-            request.session["update_master"] = {"status":True,"object":myobj}
+            # request.session["update_master"] = {"status":True,"object":myobj}
+            df_raw_master = master_data.get_dataframe()
+            result = df_raw_master[df_raw_master['ProviderId'] == str(id_provider)].copy()
+            # Update the selected columns in the filtered row
+
+            result.loc[:, 'PROVIDER_NAME'] = nama_provider
+            result.loc[:, 'ADDRESS'] = str(alamat)
+            result.loc[:, 'TEL_NO'] = str(telepon)
+            result.loc[:, 'Category_1'] = str(kategori_id)
+            result.loc[:, 'stateId'] = str(state_id)
+            result.loc[:, 'cityId'] = str(city_id)
+
+            df_raw_master.update(result)
+            print(df_raw_master.head())
+            df_raw_master.to_excel("master_provider.xlsx", index=False)
+
+            master_data.set_new_datafarame(df_raw_master)
+
             return JsonResponse({'data': 200})
         else:
             request.session["update_master"] = {"status":False,"object":[]}
@@ -373,6 +391,23 @@ def perbandingan_page(request):
 
     context = {"list": [], "link_result": link_result, 'nama_asuransi': nama_asuransi}
     return render(request, 'matching/perbandingan_page_open_result.html', context=context)
+
+
+def instant_search(request):
+    return render(request, 'matching/instant_search.html')
+
+
+
+
+def instant_search_process(request):
+    if request.method == "POST":
+        data = json.loads(request.POST["data"])
+
+        y_preds, nil, score = match_process.calculate_score_instant(data)
+        if nil < 0.5:
+            y_preds = "Data belum dipelajari"
+
+        return JsonResponse({'data': y_preds, 'nil': nil, 'score': score})
 
 
 def perbandingan_upload_page(request):
@@ -588,8 +623,8 @@ def sinkron_master_process(request):
 
 def sinkron_master_process_not_request():
     print("Sinkron master proses")
-    response = requests.get('https://asateknologi.id/api/daftar-rs-1234')
-    provider_list = response.json().get("val")
+    provider_list = get_master_with_api()
+
     master_data_list = []
     # master_data = MasterData()
 

@@ -969,6 +969,29 @@ class MatchProcess(models.Model):
 
                 break
 
+    def calculate_score_instant(self, item_provider):
+        print("Calculate Prediction Score")
+
+        sample1 = self.vectorize_text(item_provider, self.tfidf_vec1)
+        y_preds = self.loaded_model1.predict(sample1)
+
+        print(item_provider, y_preds)
+        # add prediction ke list
+        y_preds = str(y_preds).replace("[", "").replace("]", "").replace("'", "").replace("rs", "").replace("lab",
+                                                                                                            "").replace(
+            ",", "").replace(".", "")
+
+        # calculate proba
+        p = self.loaded_model1.predict_proba(sample1)
+        ix = p.argmax(1).item()
+        nil = float("{:.2f}".format(p[0, ix]))
+        score = fuzz.ratio(item_provider, y_preds)
+
+        score_tuple = (y_preds, nil, score)
+
+        print(score, item_provider, y_preds)
+        return score_tuple
+
     def calculate_score(self, item_provider):
         print("Calculate Prediction Score")
         nama_alamat = item_provider.get_nama_alamat()
