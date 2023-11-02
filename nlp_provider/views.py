@@ -308,26 +308,25 @@ def update_master(request):
                 kategori_id = int(v)
 
         url = server_prefix+"/api/hospital/"+id_provider
-        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider, 'address': alamat,'category_1':kategori_id,'tel_no':telepon,'state_id':state_id,'city_id':city_id}
+        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider, 'address': alamat,'category_1':str(kategori_id),'tel_no':telepon,'state_id':str(state_id),'city_id':str(city_id)}
         x = requests.put(url, json=myobj)
         if x.status_code == 200:
             # request.session["update_master"] = {"status":True,"object":myobj}
-            df_raw_master = master_data.get_raw_master()
-            result = df_raw_master[df_raw_master['ProviderId'] == int(id_provider)].copy()
+            df_raw_master = master_data.get_dataframe()
+            result = df_raw_master[df_raw_master['ProviderId'] == str(id_provider)].copy()
             # Update the selected columns in the filtered row
 
             result.loc[:, 'PROVIDER_NAME'] = nama_provider
-            result.loc[:, 'ADDRESS'] = alamat
-            result.loc[:, 'TEL_NO'] = telepon
-            result.loc[:, 'Category_1'] = kategori_id
-            result.loc[:, 'stateId'] = state_id
-            result.loc[:, 'cityId'] = city_id
+            result.loc[:, 'ADDRESS'] = str(alamat)
+            result.loc[:, 'TEL_NO'] = str(telepon)
+            result.loc[:, 'Category_1'] = str(kategori_id)
+            result.loc[:, 'stateId'] = str(state_id)
+            result.loc[:, 'cityId'] = str(city_id)
 
             df_raw_master.update(result)
             print(df_raw_master.head())
             df_raw_master.to_excel("master_provider.xlsx", index=False)
 
-            master_data.clear()
             master_data.set_new_datafarame(df_raw_master)
 
             return JsonResponse({'data': 200})

@@ -29,6 +29,7 @@ class MasterData:
         self.list_item_master_provider.append(item)
 
     def set_new_datafarame(self,df):
+        self.clear()
         self.dataframe_master = None
         # clean the dataframe
         pembersih = Pembersih(df)
@@ -40,7 +41,7 @@ class MasterData:
         for row in self.dataframe_master.itertuples(index=True, name='Sheet1'):
 
 
-            master_provider_id = row.ProviderId
+            master_provider_id = str(row.ProviderId)
             master_state_id = row.stateId
             master_city_id = row.cityId
             master_category_1 = row.Category_1
