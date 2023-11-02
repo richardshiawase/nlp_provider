@@ -544,7 +544,8 @@ def create_model(dfc):
 
     con = pd.DataFrame()
 
-    con['combined'] = Xfeatures.course_title.str.replace("rsia", "").str.replace("rs", "").str.replace("klinik","") + " " + Xfeatures.alamat.str.replace("Jl.", "").str.replace("jl.", "").str.replace("Jalan", "").str.replace("NO.", "")
+    con['combined'] = Xfeatures.course_title.str.replace("rsia", "").str.replace("rs", "").str.replace("klinik","")
+                      # + " " + Xfeatures.alamat.str.replace("Jl.", "").str.replace("jl.", "").str.replace("Jalan", "").str.replace("NO.", "")
     con['combined'] = con.apply(lambda x: x.astype(str).str.lower())
     con['combined'] = con['combined'].str.replace(r'\.', " ")
     m_nm = tfidf_vec.fit_transform(con.combined.values.astype('U'))
