@@ -4,6 +4,8 @@ class Pembersih:
         self._rubah_dataframe_astype_str()
         self._hilangkan_tanda_baca()
         self._kecilkan_tulisan()
+
+
     def _kecilkan_tulisan(self):
         self.df4 = self.df3.applymap(str.lower)
     def _hilangkan_tanda_baca(self):
