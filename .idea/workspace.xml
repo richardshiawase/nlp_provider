@@ -4,17 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63bb43ef-8876-4ac2-976c-fe6dca15ff77" name="Changes" comment="er">
-      <change afterPath="$PROJECT_DIR$/classM/ItemMasterRaw.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/DFHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/DFHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/Dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/Dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classM/MasterData.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/MasterData.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/matching/edit_master.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/matching/edit_master.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/matching/perbandingan_page_open_result.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/matching/perbandingan_page_open_result.html" afterDir="false" />
+    <list default="true" id="21c3950f-0483-4789-a1b5-f9a45241ed29" name="Changes" comment="er">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
