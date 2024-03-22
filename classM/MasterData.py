@@ -1,6 +1,7 @@
 import pandas as pd
 
 from classM.ItemMaster import ItemMaster
+from classM.ItemMasterRaw import ItemMasterRaw
 from classM.Pembersih import Pembersih
 
 
@@ -14,9 +15,46 @@ class MasterData:
         pembersih = Pembersih(self.df)
 
         self.dataframe_master = pembersih._return_df()
+        self.dataframe_master_raw = self.df.astype(str)
         self.list_item_master_provider = []
+        self.list_item_master_provider_raw = []
+
         self.dict_item_master_provider = {}
         self.set_list_item_master_provider()
+        self.set_list_item_master_provider_raw()
+
+
+    def set_list_item_master_provider_raw(self):
+        for row in self.dataframe_master_raw.itertuples(index=True, name='Sheet1'):
+
+
+            master_provider_id = str(row.ProviderId)
+            master_state_id = row.stateId
+            master_city_id = row.cityId
+            master_category_1 = row.Category_1
+            master_category_2 = row.Category_2
+            master_nama_provider = row.PROVIDER_NAME
+            master_alamat = row.ADDRESS
+            master_tel = row.TEL_NO
+
+
+            try:
+                master_lat = row.latitude
+                master_longitude = row.longitude
+                itemMaster = ItemMasterRaw(master_provider_id,
+                                        master_state_id,
+                                        master_city_id,
+                                        master_category_1,
+                                        master_category_2,
+                                        master_nama_provider,
+                                        master_alamat,
+                                        master_tel)
+                itemMaster.set_master_latitude(master_lat)
+                itemMaster.set_master_longitude(master_longitude)
+                self.list_item_master_provider_raw.append(itemMaster)
+            except:
+                pass
+
 
 
     def get_raw_master(self):
@@ -25,8 +63,7 @@ class MasterData:
     def get_master_excel_location(self):
         return self.lokasi_excel
 
-    def add_to_list_master_provider(self,item):
-        self.list_item_master_provider.append(item)
+
 
     def set_new_datafarame(self,df):
         self.clear()
@@ -35,6 +72,7 @@ class MasterData:
         pembersih = Pembersih(df)
         self.dataframe_master = pembersih._return_df()
         self.set_list_item_master_provider()
+        self.set_list_item_master_provider_raw()
 
     def set_list_item_master_provider(self):
         print("Create provider item list")
@@ -72,8 +110,12 @@ class MasterData:
     def get_list_item_master_provider(self):
         return self.list_item_master_provider
 
+    def get_list_item_master_provider_raw(self):
+        return self.list_item_master_provider_raw
+
     def clear(self):
         self.list_item_master_provider = []
+        self.list_item_master_provider_raw = []
         self.dict_item_master_provider = {}
     def set_description(self,description):
         self.description=description
@@ -84,9 +126,9 @@ class MasterData:
 
     def get_list_item_master_provider_json(self):
         ls = []
-        for item_master in self.get_list_item_master_provider():
+        for item_master in self.get_list_item_master_provider_raw():
             ls.append(item_master.__dict__)
         return ls
 
     def get_dataframe(self):
-        return self.dataframe_master
+        return self.dataframe_master_raw

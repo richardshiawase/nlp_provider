@@ -455,36 +455,6 @@ class MasterMatchProcess(models.Model):
 
 
 
-    def compare_golden_record_to_master(self, item):
-        # # Comparing golden record
-        for item_master in self.master_data.get_list_item_master_provider():
-            if item.get_saved_in_golden_record() is True:
-                if item.get_label_name() == item_master.get_nama_master():
-                    item.set_processed(True)
-                    self.id_master_list.append(item_master.get_id_master())
-                    self.provider_name_master_list.append(item_master.get_nama_master())
-                    self.alamat_master_list.append(item_master.get_alamat_master())
-
-                    self.list_item_provider_nama.append(item.get_nama_provider())
-                    self.list_item_provider_alamat.append(item.get_alamat())
-                    self.list_item_provider_ri.append(item.get_ri())
-                    self.list_item_provider_rj.append(item.get_rj())
-                    self.list_item_provider_score.append(item.get_proba_score())
-                    self.list_item_ratio.append(item.get_ratio())
-                    self.list_item_alamat_ratio.append(item.get_alamat_ratio())
-
-                    self.list_item_total_score.append(item.get_total_score())
-
-                    item.set_status_item_provider("Master")
-
-                    self.list_item_status.append(item.get_status_item_provider())
-                    item.set_validity()
-                    self.list_item_validity.append(item.is_validity())
-
-                    break
-
-        # # define is it true or false to proceed to next step
-        item.set_validity()
 
     def if_proba_score_high_add_to_list(self, item, list_item_master_provider):
         # if validity still false
@@ -562,47 +532,6 @@ class MasterMatchProcess(models.Model):
 
                 self.list_item_validity.append(item.is_validity())
 
-    def compare_nama_provider_to_master(self, item):
-        if item.is_validity() is False:
-            item.set_total_score(0)
-            item.set_ratio(0)
-
-            for item_master in self.master_data.get_list_item_master_provider():
-                score = fuzz.ratio(item.get_nama_provider(), item_master.get_nama_master())
-                # alamat_ratio = fuzz.ratio(item.get_alamat_master(), item.get_alamat())
-                total_score = float("{:.2f}".format((score)))
-
-                if item.get_total_score() <= total_score:
-                    item.set_total_score(total_score)
-                    item.set_label_name(item_master.get_nama_master())
-                    item.set_ratio(score)
-                    print(item.get_label_name(), item_master.get_nama_master(), ratio_nama)
-
-                    # item.set_alamat_ratio(alamat_ratio)
-                    item.set_alamat_prediction(item_master.get_alamat_master())
-                    item.set_status_item_provider("Direct 1")
-                    item.set_id_master(item_master.get_id_master())
-                    item.set_nama_master_provider(item_master.get_nama_master())
-                    item.set_alamat_master_provider(item_master.get_alamat_master())
-
-            # set validity
-            item.set_validity()
-            if (item.is_validity()):
-                self.id_master_list.append(item.get_id_master())
-                self.provider_name_master_list.append(item.get_nama_master_provider())
-                self.alamat_master_list.append(item.get_alamat_master_provider())
-                self.list_item_provider_nama.append(item.get_nama_provider())
-                self.list_item_provider_alamat.append(item.get_alamat())
-                self.list_item_provider_ri.append(item.get_ri())
-                self.list_item_provider_rj.append(item.get_rj())
-                self.list_item_provider_score.append(item.get_proba_score())
-                self.list_item_ratio.append(item.get_ratio())
-                self.list_item_alamat_ratio.append(item.get_alamat_ratio())
-
-                self.list_item_total_score.append(item.get_total_score())
-                self.list_item_status.append(item.get_status_item_provider())
-
-                self.list_item_validity.append(item.is_validity())
 
 
     def compare_alamat_provider_to_master(self, item,list_item_master_provider):

@@ -205,7 +205,6 @@ def newe(request):
 
 def open_file_perbandingan(request):
     data = request.session['data_provider']
-    print(data)
     id_provider = data['id']
     # provider = list_provider_model_object.get_a_provider_from_id(id_provider)
     return JsonResponse(data["list_item_provider_json"], safe=False)
@@ -287,6 +286,8 @@ def update_master(request):
         city_choose = data["city"]
         telepon = data["telepon"]
         kategori = data["kategori"]
+        latitude = data['latitude']
+        longitude = data['longitude']
 
         state_id = "-"
         city_id = "-"
@@ -308,7 +309,7 @@ def update_master(request):
                 kategori_id = int(v)
 
         url = server_prefix+"/api/hospital/"+id_provider
-        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider, 'address': alamat,'category_1':str(kategori_id),'tel_no':telepon,'state_id':str(state_id),'city_id':str(city_id)}
+        myobj = {'row_index':row_index,'id_provider':id_provider,'provider_name': nama_provider,'latitude':latitude,'longitude':longitude, 'address': alamat,'category_1':str(kategori_id),'tel_no':telepon,'state_id':str(state_id),'city_id':str(city_id)}
         x = requests.put(url, json=myobj)
         if x.status_code == 200:
             # request.session["update_master"] = {"status":True,"object":myobj}
@@ -322,6 +323,8 @@ def update_master(request):
             result.loc[:, 'Category_1'] = str(kategori_id)
             result.loc[:, 'stateId'] = str(state_id)
             result.loc[:, 'cityId'] = str(city_id)
+            result.loc[:, 'latitude'] = str(latitude)
+            result.loc[:, 'longitude'] = str(longitude)
 
             df_raw_master.update(result)
             print(df_raw_master.head())
@@ -387,7 +390,6 @@ def perbandingan_page(request):
     data = request.session['data_provider']
     nama_asuransi = data['nama_asuransi']
     link_result = data["file_location_result"]
-    print(link_result)
 
     context = {"list": [], "link_result": link_result, 'nama_asuransi': nama_asuransi}
     return render(request, 'matching/perbandingan_page_open_result.html', context=context)
@@ -610,10 +612,11 @@ def sinkron_master_process(request):
         telephone = prov["TEL_NO"]
         provider_name_master = prov["PROVIDER_NAME"]
         address = prov["ADDRESS"]
-
+        latitude = prov['lat']
+        longitude = prov['longitude']
         df = df.append(pd.Series(
             {'ProviderId': id, 'stateId': stateId, 'cityId': cityId, 'Category_1': category_1, 'Category_2': category_2,
-             'PROVIDER_NAME': provider_name_master, 'ADDRESS': address, 'TEL_NO': telephone},
+             'PROVIDER_NAME': provider_name_master, 'ADDRESS': address, 'TEL_NO': telephone, 'latitude':latitude,'longitude':longitude},
             name=3))
 
     df.to_excel("master_provider.xlsx", index=False)
@@ -858,7 +861,8 @@ def temporer_store_master(request):
         provider_name = master['provider_name']
         address = master['address']
         tel_no = master['tel_no']
-
+        latitude = master['lat']
+        longitude = master['longitude']
         item_master = ItemMaster(id,
                                  state_id,
                                  city_id,
@@ -867,6 +871,10 @@ def temporer_store_master(request):
                                  provider_name,
                                  address,
                                  tel_no)
+        item_master.set_master_latitude(latitude)
+        item_master.set_master_longitude(longitude)
+        print(item_master)
+
         item_master.set_datatable_row_index(row_index)
         master_item_list.append(item_master)
     if len(master_item_list) > 0:

@@ -4,10 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="21c3950f-0483-4789-a1b5-f9a45241ed29" name="Changes" comment="er">
+    <list default="true" id="63bb43ef-8876-4ac2-976c-fe6dca15ff77" name="Changes" comment="er">
+      <change afterPath="$PROJECT_DIR$/classM/ItemMasterRaw.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classM/DFHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/DFHandler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/classM/Dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/Dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classM/MasterData.py" beforeDir="false" afterPath="$PROJECT_DIR$/classM/MasterData.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlp_provider/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlp_provider/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/nlp_provider/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/matching/edit_master.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/matching/edit_master.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/matching/perbandingan_page_open_result.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/matching/perbandingan_page_open_result.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,6 +38,19 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RESET_MODE" value="HARD" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">
+    <option name="selectedUrlAndAccountId">
+      <UrlAndAccount>
+        <option name="accountId" value="8e942eb7-198e-4041-b568-2675819c66f1" />
+        <option name="url" value="https://github.com/richardshiawase/nlp_provider.git" />
+      </UrlAndAccount>
+    </option>
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -45,7 +65,7 @@
     &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/User/PycharmProjects/nlp_provider/templates/matching&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Administrator/PycharmProjects/nlp_provider/classM&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -57,6 +77,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Administrator\PycharmProjects\nlp_provider\classM" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\matching" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates\master" />
       <recent name="C:\Users\User\PycharmProjects\nlp_provider\templates" />
@@ -69,7 +90,7 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="21c3950f-0483-4789-a1b5-f9a45241ed29" name="Changes" comment="" />
+      <changelist id="63bb43ef-8876-4ac2-976c-fe6dca15ff77" name="Changes" comment="" />
       <created>1665394394507</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />

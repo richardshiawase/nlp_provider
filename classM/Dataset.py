@@ -15,7 +15,8 @@ class Dataset:
 
         self.bulk_dataset_copy = self.df_dataset.copy()
         self.bulk_dataset_copy['course_title'] = self.bulk_dataset_copy['course_title'].str.lower()
-        self.pembersih = Pembersih((self.bulk_dataset_copy.drop_duplicates(['course_title'],keep='first')))
+        # self.pembersih = Pembersih((self.bulk_dataset_copy.drop_duplicates(['course_title'],keep='first')))
+        self.pembersih = Pembersih(self.bulk_dataset_copy)
 
     def get_bulk_dataset(self):
         return self.df_dataset

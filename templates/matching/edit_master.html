@@ -70,6 +70,17 @@
                         </datalist>
                 </div>
 
+
+                <div class="mb-2 ">
+                    <label for="latitude" class="form-label">Latitude</label>
+                    <input type="text" value= "{{ item_master.get_master_latitude }}" class="form-control" id="latitude" placeholder="Masukan Latitude" name="latitude"  required>
+                </div>
+
+                <div class="mb-2 ">
+                    <label for="longitude" class="form-label">Longitude</label>
+                    <input type="text" value= "{{ item_master.get_master_longitude }}" class="form-control" id="longitude" placeholder="Masukan Longitude" name="longitude"  required>
+                </div>
+
 <!--                <div class="mb-2">-->
 <!--                    <label  class="form-label">Latitude</label>-->
 <!--                  <input type="text" value="{{ item_master.get_}}" class="form-control" placeholder="Latitude" id="latitude_provider"  name="latitude_provider">-->
@@ -114,7 +125,10 @@
         var city = $('#city_provider').val();
         var telepon = $('#telepon_provider').val();
         var kategori = $('#kategori_provider').val();
-        console.log(row_index,id,nama_provider,alamat,state,city,telepon,kategori);
+        var latitude = $('#latitude').val();
+        var longitude = $('#longitude').val();
+
+        console.log(row_index,id,nama_provider,alamat,state,city,telepon,kategori,latitude,longitude);
 
         var data = {
             row_index: row_index,
@@ -124,7 +138,9 @@
             state : state,
             city : city,
             telepon : telepon,
-            kategori : kategori
+            kategori : kategori,
+            latitude : latitude,
+            longitude : longitude
         };
                 $.ajax(
                 {
