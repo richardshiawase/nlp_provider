@@ -523,22 +523,26 @@ def create_model_bc(df):
 
 def create_model(dfc):
     print("Create Model")
+    stopwords = ['indah', 'sumatera', 'no1', 'dr', 'raya', 'optik', 'ruko', 'kabupaten', 'mall', 'dental', 'nan',
+                 'khusus', 'ibukota', 'ibukota jakarta', 'khusus ibukota', 'blok', 'no', 'barat', 'timur', 'jawa barat',
+                 'selatan', 'daerah', 'utara', 'rs', 'klinik', 'lab', 'apotik', 'apotek', 'jl', 'jalan', 'rsud', 'rsu',
+                 'rsab']
 
     tfidf_transformer = TfidfTransformer()
     tfidf_vec = TfidfVectorizer(analyzer='word', binary=False, decode_error='strict', encoding='utf-8', input='content',
-                                lowercase=True, max_df=0.85, max_features=25000, min_df=1, ngram_range=(1, 1),
-                                norm='l2', preprocessor=None, smooth_idf=True, stop_words=None, strip_accents=None,
+                                lowercase=True, max_df=0.1, max_features=80000, min_df=1, ngram_range=(2, 3),
+                                norm='l2', preprocessor=None, smooth_idf=True, stop_words=stopwords, strip_accents=None,
                                 sublinear_tf=False, token_pattern='(?u)\\b\\w\\w+\\b', tokenizer=None, use_idf=True,
                                 vocabulary=None)
 
 
-    lr_model = lm.LogisticRegression(C=15e1, solver='sag', multi_class='multinomial', random_state=17, n_jobs=-1,
+    lr_model = lm.LogisticRegression(C=15e1, solver='liblinear', multi_class='ovr', random_state=17, n_jobs=-1,
                                      warm_start=True)
 
     pembersih = Pembersih(dfc)
     df = pembersih._return_df()
     print("Improt Tfidf")
-    Xfeatures = df[['course_title', 'alamat']]
+    Xfeatures = df[['course_title']]
     ylabels = df['subject'].str.lower()
 
 

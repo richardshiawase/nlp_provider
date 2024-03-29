@@ -472,12 +472,34 @@ class MasterMatchProcess(models.Model):
                     item.set_alamat_master_provider(item_master.get_alamat_master())
                     break
 
+                if "dolot" in item.get_label_name():
+                    print(item.get_label_name())
+
+
             # # add to list if they are true
             item.set_validity()
-            if item.is_validity():
+
+            # if item.is_validity():
+            try:
                 self.id_master_list.append(item.get_id_master())
                 self.provider_name_master_list.append(item.get_nama_master_provider())
                 self.alamat_master_list.append(item.get_alamat_master_provider())
+                self.list_item_provider_nama.append(item.get_nama_provider())
+                self.list_item_provider_alamat.append(item.get_alamat())
+                self.list_item_provider_ri.append(item.get_ri())
+                self.list_item_provider_rj.append(item.get_rj())
+                self.list_item_provider_score.append(item.get_proba_score())
+                self.list_item_ratio.append(item.get_ratio())
+                self.list_item_alamat_ratio.append(item.get_alamat_ratio())
+
+                self.list_item_total_score.append(item.get_total_score())
+                self.list_item_status.append(item.get_status_item_provider())
+
+                self.list_item_validity.append(item.is_validity())
+            except:
+                self.id_master_list.append("-")
+                self.provider_name_master_list.append("-")
+                self.alamat_master_list.append("-")
                 self.list_item_provider_nama.append(item.get_nama_provider())
                 self.list_item_provider_alamat.append(item.get_alamat())
                 self.list_item_provider_ri.append(item.get_ri())
@@ -608,13 +630,13 @@ class MasterMatchProcess(models.Model):
             self.if_proba_score_high_add_to_list(item, list_item_master_provider)
 
             # # 3. If proba score is lower than threshold
-            self.if_proba_score_lower_than_threshold(item, list_item_master_provider)
+            # self.if_proba_score_lower_than_threshold(item, list_item_master_provider)
 
             # # 4. If fail , compare address to master address
-            self.compare_alamat_provider_to_master(item,list_item_master_provider)
+            # self.compare_alamat_provider_to_master(item,list_item_master_provider)
 
             # # # SAVE THE ITEM
-            item.save()
+            # item.save()
 
         dict_result = {
             'IdMaster': pd.Series(self.id_master_list),
@@ -923,7 +945,7 @@ class MatchProcess(models.Model):
 
     def calculate_score(self, item_provider):
         print("Calculate Prediction Score")
-        nama_alamat = item_provider.get_nama_alamat()
+        nama_alamat = item_provider.get_nama_provider()
         sample1 = self.vectorize_text(nama_alamat, self.tfidf_vec1)
         y_preds = self.loaded_model1.predict(sample1)
 
